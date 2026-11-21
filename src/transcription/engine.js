@@ -10,19 +10,29 @@ const { normalizeWhisperJson } = require('./formats');
 const MAX_BYTES = 80 * 1024 * 1024;
 const MAX_SECONDS = 30 * 60;
 
-function resolveExecutable(name, override) {
+/** Locate native executable tools on Windows and macOS without invoking a shell.
+ * Windows commonly exposes ffmpeg.exe / whisper-server.exe, not bare names.
+ * searchDirectories and platform are injectable to test Windows resolution on CI Linux.
+ */
+function resolveExecutable(name, override, { platform = process.platform, searchDirectories } = {}) {
   if (override) {
     const pathToBinary = path.resolve(override);
     if (!fs.existsSync(pathToBinary)) throw new Error(`${name} executable not found at ${pathToBinary}`);
     return pathToBinary;
   }
-  const directories = [...new Set([
+  const directories = [...new Set((searchDirectories || [
     ...(process.env.PATH || '').split(path.delimiter),
-    '/opt/homebrew/bin', '/usr/local/bin', '/usr/bin'
-  ].filter(Boolean))];
+    ...(platform === 'darwin' ? ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin'] : [])
+  ]).filter(Boolean))];
+  const variants = platform === 'win32' && !/\.exe$/i.test(name) ? [name + '.exe', name] : [name];
   for (const directory of directories) {
-    const candidate = path.join(directory, name);
-    try { fs.accessSync(candidate, fs.constants.X_OK); return candidate; } catch { /* keep looking */ }
+    for (const variant of variants) {
+      const candidate = path.join(directory, variant);
+      try {
+        fs.accessSync(candidate, fs.constants.X_OK);
+        if (fs.statSync(candidate).isFile()) return candidate;
+      } catch { /* keep looking */ }
+    }
   }
   return null;
 }

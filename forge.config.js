@@ -1,5 +1,4 @@
 'use strict';
-const fs = require('node:fs');
 // Never include signing credentials in the codebase. Signing is opt-in and
 // enforced by scripts/release-macos.sh when creating a public release.
 const signing = process.platform === 'darwin' && process.env.GO1_SIGNED_RELEASE === '1';
@@ -28,6 +27,14 @@ module.exports = {
   packagerConfig,
   makers: [
     { name: '@electron-forge/maker-zip', platforms: ['darwin'] },
-    { name: '@electron-forge/maker-dmg', platforms: ['darwin'] }
+    { name: '@electron-forge/maker-dmg', platforms: ['darwin'] },
+    { name: '@electron-forge/maker-wix', platforms: ['win32'], config: {
+      manufacturer: 'GO1 Project',
+      description: 'Local, privacy-first multilingual transcription',
+      defaultInstallMode: 'perUser',
+      shortcutName: 'GO1',
+      // Fixed ID must not change across releases, or MSI upgrades may break.
+      upgradeCode: '6DD60BAC-2AC4-41AC-BB14-8FC5F194B918'
+    } }
   ]
 };

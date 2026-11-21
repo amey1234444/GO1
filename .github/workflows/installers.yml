@@ -1,0 +1,60 @@
+name: Cross-platform unsigned installer builds
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-msi:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify pre-installed WiX 3 tools
+        shell: pwsh
+        run: |
+          $wixDir = "${env:ProgramFiles(x86)}\WiX Toolset v3.14\bin"
+          if (Test-Path "$wixDir\candle.exe") { $env:PATH = "$wixDir;$env:PATH"; $wixDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append }
+          where.exe candle.exe
+          where.exe light.exe
+      - run: npm install --no-audit --no-fund
+      - run: npm run check && npm test
+      - name: Build MSI for Windows x64
+        run: npx electron-forge make --platform win32 --arch x64
+      - name: Validate MSI file and metadata
+        shell: pwsh
+        run: .\scripts\verify-msi.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GO1-Windows-x64-unsigned-MSI
+          path: out/make/**/*.msi
+          if-no-files-found: error
+          retention-days: 14
+
+  macos-dmg:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run check && npm test
+      - name: Build DMG for macOS Apple Silicon
+        run: npx electron-forge make --platform darwin --arch arm64
+      - name: Verify DMG structure
+        run: bash scripts/verify-dmg.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GO1-macOS-arm64-unsigned-DMG
+          path: out/make/**/*.dmg
+          if-no-files-found: error
+          retention-days: 14

@@ -31,7 +31,7 @@ async function saveSettings() {
 }
 function setup() {
   const status = getSetup({ modelDirectory: modelDirectory(), selectedModel });
-  return { ...status, models: modelState(modelDirectory()), selectedModel, whisperServer: require('./transcription/engine').resolveExecutable('whisper-server', process.env.GO1_WHISPER_SERVER_PATH) };
+  return { ...status, models: modelState(modelDirectory()), selectedModel, platform: process.platform, systemAudioSupported: process.platform === 'darwin', whisperServer: require('./transcription/engine').resolveExecutable('whisper-server', process.env.GO1_WHISPER_SERVER_PATH) };
 }
 function getWorker() {
   if (!worker) worker = createWorker({ modelDirectory: modelDirectory(), selectedModel, vadModel: path.join(modelDirectory(), MODEL_CATALOG.silero.file) });

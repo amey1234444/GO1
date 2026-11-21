@@ -112,6 +112,27 @@ Run `npm test`; then see [MACOS_QA.md](docs/MACOS_QA.md) for the physical-device
 - No covert audio recording, proctoring evasion, process hiding, or guarantees that an overlay is invisible to screen sharing are provided.
 - Test live input and screen-sharing from a second participant on macOS before release.
 
+## GO1 v0.7.0 — Windows MSI and macOS DMG release pipeline
+
+GO1 now has two OS-native unsigned installer builds in `.github/workflows/installers.yml`:
+
+| Runner | Architecture | Output | Build check |
+| --- | --- | --- | --- |
+| `windows-2025` | Windows x64 | `.msi` (WiX 3) | MSI database metadata validation |
+| `macos-15` | macOS arm64 | `.dmg` | `hdiutil verify` and `imageinfo` |
+
+**These installers do not yet bundle FFmpeg or whisper.cpp**, and they are not signed.
+They package the Electron application, while first-run local transcription still requires the user to install the native tools and a multilingual model. A successful installer build does not establish fully working ASR on a fresh Windows PC or Mac.
+
+Windows prerequisites: install FFmpeg, install/compile whisper.cpp's `whisper-cli.exe` and `whisper-server.exe`, then run `powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1` to review any missing dependencies. To install FFmpeg explicitly with winget, use `-InstallFFmpeg`.
+
+Windows currently supports microphone recording and file import; GO1 explicitly disables the macOS-only system playback option on Windows. The permission-based Windows capture pipeline is not yet implemented.
+
+Release evidence and testing matrix: [docs/RELEASE_AND_PRIVACY_QA.md](docs/RELEASE_AND_PRIVACY_QA.md).
+GitHub Actions artifacts are available under the corresponding **Cross-platform unsigned installer builds** workflow, if the jobs succeeded. Neither unsigned installer is a trusted commercial release until code signing, notarization where applicable, QA, and dependency packaging are complete.
+
+**Presentation privacy is not concealment:** GO1 stops local capture and redacts its transcript when activated. The app remains visible in an entire-screen share; there is no universal or guaranteed undetectable mode.
+
 ## GO1 v0.6.0 — measured latency and local mock-interview review
 
 - **Fast captions:** Choose Fast (260 ms silence holdback) or Balanced (550 ms). Faster chunk dispatch trades away sentence continuity; no device-specific speed guarantee.

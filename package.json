@@ -1,13 +1,13 @@
 {
   "name": "go1-multilingual-transcription",
-  "version": "0.6.0",
-  "description": "Offline multilingual transcription with measured latency and consent-based mock interview review",
+  "version": "0.7.0",
+  "description": "Offline multilingual audio transcription with consent-based presentation privacy and macOS/Windows installers",
   "main": "src/main.js",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/transcription/vad.js && node --check src/transcription/vad-live.js && node --check src/transcription/worker.js && node --check src/transcription/models.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js && node --check forge.config.js && node --check src/privacy/presentation.js && node --check src/transcription/latency.js && node --check src/practice/feedback.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/transcription/vad.js && node --check src/transcription/vad-live.js && node --check src/transcription/worker.js && node --check src/transcription/models.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js && node --check forge.config.js && node --check src/privacy/presentation.js && node --check src/transcription/latency.js && node --check src/practice/feedback.js && node --check src/privacy/platform.js",
     "make": "electron-forge make",
     "package": "electron-forge package"
   },
@@ -15,6 +15,7 @@
     "@electron-forge/cli": "^7.10.0",
     "@electron-forge/maker-dmg": "^7.10.0",
     "@electron-forge/maker-zip": "^7.10.0",
-    "electron": "^39.0.0"
+    "electron": "^39.0.0",
+    "@electron-forge/maker-wix": "^7.10.0"
   }
 }

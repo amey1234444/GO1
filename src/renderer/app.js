@@ -82,13 +82,21 @@ function showError(error) {
 }
 function hideError() { $('errorBox').hidden = true; }
 function renderSetup(status) {
+  // macOS currently provides explicit system playback capture. Windows offers
+  // microphone and imported-file transcription until a supported audio path is built.
+  const systemOption = $('sourceSelect').querySelector('option[value="system"]');
+  if (systemOption) systemOption.disabled = status.systemAudioSupported === false;
+  if (status.systemAudioSupported === false && $('sourceSelect').value === 'system') $('sourceSelect').value = 'microphone';
+  $('recordSourceHelp').textContent = status.systemAudioSupported === false
+    ? 'Windows: microphone or imported audio only. System playback capture is not yet available. Recording requires consent.'
+    : 'Mac system playback requires macOS 14.2+ and recording permission. GO1 does not save display video.';
   $('setupAlert').hidden = status.ready && Boolean(status.whisperServer);
   $('modelSelect').value = status.selectedModel || 'small';
   const installed = status.models?.[status.selectedModel]?.installed;
   if (!state.modelDownloading) $('modelProgress').textContent = installed ? `Selected model: ${status.selectedModel} (installed).` : `Selected model: ${status.selectedModel} (download required).`;
   if (!status.ready) {
     const missing = [!status.ffmpeg && 'FFmpeg', !status.ffprobe && 'FFprobe', !status.whisper && 'whisper-cli', !status.whisperServer && 'whisper-server', !status.modelFound && 'multilingual Whisper model'].filter(Boolean).join(', ');
-    $('setupMessage').textContent = `Missing: ${missing}. Run bash scripts/setup-macos.sh small in Terminal, then press Recheck. Model location: ${status.model}`;
+    $('setupMessage').textContent = `Missing: ${missing}. ${status.platform === 'win32' ? 'Run PowerShell scripts/setup-windows.ps1 and follow its dependency instructions' : 'Run bash scripts/setup-macos.sh small in Terminal'}, then press Recheck. Model location: ${status.model}`;
   }
   $('recordButton').disabled = !status.ready || !status.whisperServer || state.busy;
   $('transcribeFileButton').disabled = !status.ready || !state.file || state.busy;
