@@ -1,3 +1,9 @@
+## Mac-first Apple Silicon DMG (v0.8.0)
+
+The macOS build now **bundles** `ffmpeg`, `ffprobe`, `whisper-cli`, and a persistent `whisper-server` in `GO1.app/Contents/Resources/native/bin`. Download the language model using GO1's existing model manager. To compile on an Apple Silicon Mac: `npm install && bash scripts/build-macos-native.sh && npm run make:mac`. Verify with `GO1_BUNDLE_NATIVE=1 bash scripts/verify-dmg.sh`. See [macOS first-install checklist](docs/MAC_FIRST_INSTALL_AND_QA.md).
+
+This is an **unsigned developer preview**, not an Apple-notarized public release. Presentation Privacy stops capture and masks transcripts; it does **not** enable undetectable interview assistance or prevent every screen-sharing application from capturing the window.
+
 # GO1 0.6.0 — Private multilingual transcription and measured latency for macOS
 
 GO1 is a **local-first Electron application for consent-based recording and transcription**. It has two recording sources—microphone and macOS system playback audio—plus file import and exports. No model API key, cloud account, or subscription is required for local speech recognition.

@@ -1,25 +1,35 @@
-name: macOS compile and smoke test
+name: macOS Apple Silicon DMG with bundled transcription runtime
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  unsigned-preview:
+  macos-arm64-dmg:
     runs-on: macos-15
-    timeout-minutes: 35
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
-      - run: npm run check && npm test
-      - name: Build unsigned preview artifact
-        run: npm run make
+      - name: Install app dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run syntax checks and tests
+        run: npm run check && npm test
+      - name: Build bundled transcription executables
+        run: bash scripts/build-macos-native.sh
+      - name: Build Apple Silicon DMG
+        run: npm run make:mac
+      - name: Mount DMG and verify bundled executables
+        env:
+          GO1_BUNDLE_NATIVE: '1'
+        run: bash scripts/verify-dmg.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: go1-macos-unsigned-preview
-          path: out/make/**
+          name: GO1-macOS-arm64-v0.8.0-unsigned-DMG
+          path: out/make/**/*.dmg
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14

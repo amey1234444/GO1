@@ -14,16 +14,18 @@ const MAX_SECONDS = 30 * 60;
  * Windows commonly exposes ffmpeg.exe / whisper-server.exe, not bare names.
  * searchDirectories and platform are injectable to test Windows resolution on CI Linux.
  */
-function resolveExecutable(name, override, { platform = process.platform, searchDirectories } = {}) {
+function resolveExecutable(name, override, { platform = process.platform, searchDirectories, resourcePath = process.resourcesPath } = {}) {
   if (override) {
     const pathToBinary = path.resolve(override);
     if (!fs.existsSync(pathToBinary)) throw new Error(`${name} executable not found at ${pathToBinary}`);
     return pathToBinary;
   }
-  const directories = [...new Set((searchDirectories || [
+  // When packaged, prefer native tools shipped outside app.asar.
+  const bundled = platform === 'darwin' && resourcePath ? path.join(resourcePath, 'native', 'bin') : null;
+  const directories = [...new Set([bundled, ...(searchDirectories || [
     ...(process.env.PATH || '').split(path.delimiter),
     ...(platform === 'darwin' ? ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin'] : [])
-  ]).filter(Boolean))];
+  ])].filter(Boolean))];
   const variants = platform === 'win32' && !/\.exe$/i.test(name) ? [name + '.exe', name] : [name];
   for (const directory of directories) {
     for (const variant of variants) {
