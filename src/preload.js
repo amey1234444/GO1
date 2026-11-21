@@ -1,0 +1,22 @@
+'use strict';
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('go1', Object.freeze({
+  checkSetup: () => ipcRenderer.invoke('go1:setup'),
+  requestMicrophone: () => ipcRenderer.invoke('go1:microphone'),
+  transcribe: payload => ipcRenderer.invoke('go1:transcribe', payload),
+  cancel: () => ipcRenderer.invoke('go1:cancel'),
+  startLive: options => ipcRenderer.invoke('go1:live-start', options),
+  sendLiveChunk: (id, pcm) => ipcRenderer.send('go1:live-frame', { id, pcm }),
+  stopLive: id => ipcRenderer.invoke('go1:live-stop', id),
+  cancelLive: id => ipcRenderer.invoke('go1:live-cancel', id),
+  onLiveUpdate: callback => { const cb = (_event, data) => callback(data); ipcRenderer.on('go1:live-update', cb); return () => ipcRenderer.removeListener('go1:live-update', cb); },
+  onLiveStatus: callback => { const cb = (_event, data) => callback(data); ipcRenderer.on('go1:live-status', cb); return () => ipcRenderer.removeListener('go1:live-status', cb); },
+  copy: text => ipcRenderer.invoke('go1:copy', text),
+  save: (format, content) => ipcRenderer.invoke('go1:save', { format, content }),
+  onStage: callback => {
+    const listener = (_event, message) => callback(message);
+    ipcRenderer.on('go1:stage', listener);
+    return () => ipcRenderer.removeListener('go1:stage', listener);
+  }
+}));

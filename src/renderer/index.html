@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>GO1 — Local Multilingual Transcription</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-mark">G<span>1</span></span><div><strong>GO1</strong><small>VOICE WORKSPACE</small></div></div>
+      <nav class="navigation" aria-label="Main navigation">
+        <div class="nav-label">WORKSPACE</div>
+        <div class="nav-item selected"><span class="nav-icon">◎</span><span>Transcription</span><span class="nav-dot"></span></div>
+      </nav>
+      <div class="side-spacer"></div>
+      <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
+      <div class="version">GO1 • version 0.2.0</div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span class="top-right">Speech recognition · Offline</span></header>
+      <div class="content">
+        <div class="heading-line"><div><div class="eyebrow">SPEECH INTELLIGENCE</div><h1>Audio to text<span class="gradient-dot">.</span></h1><p class="subtitle">Accurate multilingual transcription, completely on your Mac.</p></div><span class="feature-pill"><span class="dot"></span> 99-language model family</span></div>
+        <div id="setupAlert" class="setup-alert" role="status" aria-live="polite" hidden><div><strong>Local transcription engine setup required</strong><p id="setupMessage"></p></div><button id="recheckButton" class="small-button" type="button">Recheck</button></div>
+        <div class="workspace-grid">
+          <section class="card input-card" aria-labelledby="sourceTitle">
+            <div class="card-heading"><div><span class="card-overline">01 / INPUT</span><h2 id="sourceTitle">Choose your audio</h2></div><span class="round-icon">♫</span></div>
+            <div class="mode-tabs" role="tablist" aria-label="Audio source"><button class="mode-tab active" id="recordTab" type="button" role="tab" aria-selected="true">● Record microphone</button><button class="mode-tab" id="uploadTab" type="button" role="tab" aria-selected="false">↥ Upload file</button></div>
+            <div id="recordPanel" class="source-panel"><div class="mic-circle" id="micCircle"><span class="mic-symbol">♩</span></div><div id="recordMessage" class="record-message">Ready to record</div><p class="microcopy">Your microphone is only active while recording.</p><label class="switch-line" for="liveToggle"><span><strong>Live captions</strong><small>Rolling offline recognition while you speak (experimental)</small></span><input type="checkbox" id="liveToggle" checked /></label><div id="recordTimer" class="record-timer">00:00</div><button class="primary-button" id="recordButton" type="button">Start recording</button></div>
+            <div id="uploadPanel" class="source-panel" hidden><div id="dropZone" class="dropzone" tabindex="0" role="button" aria-label="Choose or drop an audio file"><span class="upload-symbol">↥</span><strong>Drop your audio here</strong><p>or click to browse your files</p><span class="small-hint">MP3 · M4A · WAV · FLAC · OGG · WEBM · MP4</span></div><input type="file" id="fileInput" accept="audio/*,.mp3,.m4a,.wav,.flac,.ogg,.webm,.mp4,.aac,.opus" hidden /><div id="chosenFile" class="chosen-file" hidden></div><button class="primary-button" id="transcribeFileButton" type="button" disabled>Transcribe selected file</button></div>
+            <div class="settings-divider"></div>
+            <div class="settings-head">RECOGNITION SETTINGS</div>
+            <label class="setting-label" for="languageSelect">Spoken language <span>Auto-detection recommended</span></label>
+            <select id="languageSelect" class="select"><option value="auto">✧ Auto detect language</option><option value="en">English</option><option value="hi">Hindi · हिंदी</option><option value="mr">Marathi · मराठी</option><option value="gu">Gujarati · ગુજરાતી</option><option value="bn">Bengali · বাংলা</option><option value="ta">Tamil · தமிழ்</option><option value="te">Telugu · తెలుగు</option><option value="kn">Kannada · ಕನ್ನಡ</option><option value="ml">Malayalam · മലയാളം</option><option value="pa">Punjabi · ਪੰਜਾਬੀ</option><option value="ur">Urdu · اردو</option><option value="ne">Nepali · नेपाली</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option><option value="nl">Dutch</option><option value="ru">Russian</option><option value="uk">Ukrainian</option><option value="ar">Arabic · العربية</option><option value="fa">Persian · فارسی</option><option value="tr">Turkish</option><option value="zh">Chinese · 中文</option><option value="ja">Japanese · 日本語</option><option value="ko">Korean · 한국어</option><option value="th">Thai · ไทย</option><option value="vi">Vietnamese</option><option value="id">Indonesian</option><option value="ms">Malay</option><option value="sw">Swahili</option><option value="he">Hebrew</option><option value="pl">Polish</option><option value="sv">Swedish</option><option value="fi">Finnish</option><option value="el">Greek</option></select>
+            <label class="switch-line" for="translateToggle"><span><strong>Translate to English</strong><small>Instead of retaining original-language speech</small></span><input type="checkbox" id="translateToggle" /></label>
+            <div class="footnote">Powered by the multilingual Whisper model. Recognition accuracy depends on audio quality, language and model size.</div>
+          </section>
+          <section class="card results-card" aria-labelledby="resultsTitle">
+            <div class="card-heading"><div><span class="card-overline">02 / OUTPUT</span><h2 id="resultsTitle">Your transcript</h2></div><div class="action-group"><button class="icon-button" id="copyButton" title="Copy transcript" aria-label="Copy transcript" disabled>⧉</button><button class="icon-button" id="exportButton" title="Export transcript" aria-label="Export transcript" disabled>⇩</button></div></div>
+            <div id="statusLine" class="status-line" role="status" aria-live="polite"><span class="pulse-dot"></span><span id="statusText">Waiting for audio</span></div>
+            <div id="emptyResult" class="empty-result"><div class="document-image">≡<span>···</span></div><h3>Words will appear here</h3><p>Record your voice with optional rolling live captions, or upload audio for a timestamped transcript.</p></div>
+            <div id="transcriptContent" hidden><div class="result-meta"><span id="resultLanguage" class="meta-chip">Language: —</span><span id="resultDuration" class="meta-chip">Duration: —</span><span id="resultSegments" class="meta-chip">0 segments</span></div><div class="transcript-body" id="transcriptBody" tabindex="0" aria-label="Transcript text"></div><div class="segment-heading">TIMESTAMPED SEGMENTS</div><div id="segmentList" class="segment-list"></div></div>
+            <div id="processingPane" class="processing-pane" hidden><div class="spinner"></div><h3>Turning speech into text</h3><p id="processingMessage">Preparing local model...</p><button type="button" id="cancelButton" class="secondary-button">Cancel transcription</button></div>
+            <div id="errorBox" class="error-box" role="alert" hidden></div>
+            <div id="exportMenu" class="export-menu" hidden><button data-format="txt" type="button">Plain text <span>.txt</span></button><button data-format="srt" type="button">Subtitles <span>.srt</span></button><button data-format="vtt" type="button">Web subtitles <span>.vtt</span></button><button data-format="json" type="button">Segments + metadata <span>.json</span></button></div>
+          </section>
+        </div>
+        <footer class="footer"><span>Designed for private, consent-based recording and transcription.</span><span>No API key required</span></footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

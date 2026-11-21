@@ -1,0 +1,20 @@
+{
+  "name": "go1-multilingual-transcription",
+  "version": "0.2.0",
+  "description": "Privacy-first multilingual speech transcription for macOS using Electron and whisper.cpp",
+  "main": "src/main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js",
+    "make": "electron-forge make",
+    "package": "electron-forge package"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.10.0",
+    "@electron-forge/maker-dmg": "^7.10.0",
+    "@electron-forge/maker-zip": "^7.10.0",
+    "electron": "^39.0.0"
+  }
+}
