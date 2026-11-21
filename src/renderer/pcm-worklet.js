@@ -10,6 +10,9 @@ class Pcm16Resampler extends AudioWorkletProcessor {
     this.ratio = sampleRate / 16000;
     this.samples = new Int16Array(8000); // 0.5 second frame
     this.length = 0;
+    this.levelSum = 0;
+    this.levelSamples = 0;
+    this.levelCallbacks = 0;
     this.port.onmessage = event => {
       if (event.data?.type === 'flush') {
         this.emit();
@@ -31,6 +34,8 @@ class Pcm16Resampler extends AudioWorkletProcessor {
       let value = 0;
       for (const channel of channels) value += channel[i] || 0;
       value /= channels.length;
+      this.levelSum += value * value;
+      this.levelSamples++;
       const index = this.inputIndex++;
       while (this.nextOutputAt <= index) {
         const fraction = index === 0 ? 1 : Math.max(0, Math.min(1, this.nextOutputAt - (index - 1)));
@@ -41,6 +46,12 @@ class Pcm16Resampler extends AudioWorkletProcessor {
         this.nextOutputAt += this.ratio;
       }
       this.lastSample = value;
+    }
+    if (++this.levelCallbacks >= 24) {
+      this.port.postMessage({ type: 'level', rms: Math.sqrt(this.levelSum / Math.max(1, this.levelSamples)) });
+      this.levelSum = 0;
+      this.levelSamples = 0;
+      this.levelCallbacks = 0;
     }
     return true;
   }

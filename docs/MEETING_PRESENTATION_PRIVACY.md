@@ -31,3 +31,10 @@ No stealth overlay, anti-detection trick, hidden continued recording, meeting-ap
 - [ ] Exit privacy and verify recording remains off until user explicitly starts it
 - [ ] In Google Meet, Teams and Zoom: preview shares for tab, window, desktop; ensure only intentionally shared content appears
 - [ ] Confirm previously exported transcript files are unchanged and this is clearly communicated to users
+
+
+## Meeting sharing guide (v0.5)
+
+GO1 includes a visible capture-status indicator, input level meter and a sharing guide for Google Meet, Microsoft Teams and Zoom. Select a specific window or tab when presenting rather than an entire desktop. Do not rely on window masking APIs to guarantee confidentiality. The **Stop capture & mask transcript** action invokes the existing privacy process, stops recording, and requires the user to restart audio manually.
+
+This does not conceal GO1 from monitoring, proctoring utilities, or full-desktop sharing. Verify the recipient view from a second participant account.

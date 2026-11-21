@@ -18,12 +18,17 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.4.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.5.0</div>
     </aside>
     <main class="main">
-      <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span class="top-right">Speech recognition · Offline</span></header>
+      <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
       <div class="content">
         <div class="heading-line"><div><div class="eyebrow">SPEECH INTELLIGENCE</div><h1>Audio to text<span class="gradient-dot">.</span></h1><p class="subtitle">Accurate multilingual transcription, completely on your Mac.</p></div><span class="feature-pill"><span class="dot"></span> 99-language model family</span></div>
+        <section class="meeting-safe" aria-labelledby="meetingSafeTitle">
+          <div class="meeting-safe-copy"><div class="meeting-safe-eyebrow">SHARE-SAFE PRESENTATIONS</div><h2 id="meetingSafeTitle">Control what you present</h2><p>For authorized meetings, share a selected window or tab. Use privacy mode to stop recording and mask transcripts before sharing your whole screen. This is not invisibility or proctoring evasion.</p></div>
+          <div class="meeting-safe-actions"><label for="meetingPlatform">Meeting app</label><select id="meetingPlatform" class="select"><option value="meet">Google Meet</option><option value="teams">Microsoft Teams</option><option value="zoom">Zoom</option></select><button id="shareSafeButton" class="secondary-button" type="button">Stop capture &amp; mask transcript</button></div>
+          <p class="meeting-safe-help" id="meetingHelp" role="status">Select the platform to see sharing guidance.</p>
+        </section>
         <div id="setupAlert" class="setup-alert" role="status" aria-live="polite" hidden><div><strong>Local transcription engine setup required</strong><p id="setupMessage"></p></div><button id="recheckButton" class="small-button" type="button">Recheck</button></div>
         <div class="card model-manager" id="modelManager" style="margin-bottom:16px;padding:20px">
           <div class="settings-head">LOCAL MODEL MANAGER</div>
@@ -45,7 +50,7 @@
             <div id="recordPanel" class="source-panel">
             <label class="setting-label" for="sourceSelect">Recording source</label>
             <select class="select" id="sourceSelect"><option value="microphone">Microphone</option><option value="system">Mac system playback audio (consent required)</option></select>
-            <p class="microcopy">Only capture audio you have permission to record. System audio requires macOS 14.2+ and Screen &amp; System Audio Recording permission. GO1 does not save screen video.</p><div class="mic-circle" id="micCircle"><span class="mic-symbol">♩</span></div><div id="recordMessage" class="record-message">Ready to record</div><p class="microcopy">Your microphone is only active while recording.</p><label class="switch-line" for="liveToggle"><span><strong>Live captions</strong><small>Rolling offline recognition while you speak (experimental)</small></span><input type="checkbox" id="liveToggle" checked /></label><div id="recordTimer" class="record-timer">00:00</div><button class="primary-button" id="recordButton" type="button">Start recording</button></div>
+            <p class="microcopy">Only capture audio you have permission to record. System audio requires macOS 14.2+ and Screen &amp; System Audio Recording permission. GO1 does not save screen video.</p><div class="mic-circle" id="micCircle"><span class="mic-symbol">♩</span></div><div id="recordMessage" class="record-message">Ready to record</div><div class="meter" role="group" aria-label="Audio signal level"><div class="meter-track"><div id="audioMeterFill" class="meter-fill" style="width:0%"></div></div><span id="audioMeterLabel">Input inactive</span></div><p class="microcopy">Your microphone is only active while recording.</p><label class="switch-line" for="liveToggle"><span><strong>Live captions</strong><small>Rolling offline recognition while you speak (experimental)</small></span><input type="checkbox" id="liveToggle" checked /></label><div id="recordTimer" class="record-timer">00:00</div><button class="primary-button" id="recordButton" type="button">Start recording</button></div>
             <div id="uploadPanel" class="source-panel" hidden><div id="dropZone" class="dropzone" tabindex="0" role="button" aria-label="Choose or drop an audio file"><span class="upload-symbol">↥</span><strong>Drop your audio here</strong><p>or click to browse your files</p><span class="small-hint">MP3 · M4A · WAV · FLAC · OGG · WEBM · MP4</span></div><input type="file" id="fileInput" accept="audio/*,.mp3,.m4a,.wav,.flac,.ogg,.webm,.mp4,.aac,.opus" hidden /><div id="chosenFile" class="chosen-file" hidden></div><button class="primary-button" id="transcribeFileButton" type="button" disabled>Transcribe selected file</button></div>
             <div class="settings-divider"></div>
             <div class="settings-head">RECOGNITION SETTINGS</div>

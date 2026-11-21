@@ -13,3 +13,17 @@
 .privacy-curtain h1{font-size:28px;letter-spacing:-.6px}
 .privacy-curtain p{line-height:1.65;color:#bbc6e0;font-size:14px}
 .privacy-curtain .privacy-curtain-note{font-size:12px;color:#94a5c4;margin:22px auto 28px}
+
+/* Visible capture indicators and presentation guidance; never an anti-capture overlay. */
+.capture-indicator{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#20283b;border:1px solid #43506b;font-size:11px;letter-spacing:0;color:#c6d1eb;font-weight:650}
+.capture-indicator::before{content:"";width:8px;height:8px;background:#8090aa;border-radius:50%}
+.capture-indicator.recording{border-color:#9e5766;background:#3b1f32;color:#ffc1c8}.capture-indicator.recording::before{background:#ff708a;box-shadow:0 0 0 4px #ff708a22}
+.capture-indicator.pending{color:#ffdb9f;border-color:#68532f}.capture-indicator.pending::before{background:#ffca72}
+.capture-indicator.privacy{color:#a9e4c6;border-color:#285c53}.capture-indicator.privacy::before{background:#65d7a6}
+.meeting-safe{margin-bottom:20px;border:1px solid #3b4466;background:linear-gradient(125deg,#222844,#131d34);border-radius:16px;display:grid;grid-template-columns:minmax(220px,1fr) 260px;column-gap:24px;padding:20px 23px;align-items:center}
+.meeting-safe-eyebrow{font-size:9px;color:#b1aaff;letter-spacing:1.6px;font-weight:800}
+.meeting-safe h2{font-size:17px;margin:8px 0 6px;color:#eef1ff}.meeting-safe p{font-size:11px;line-height:1.6;color:#a3b1ce;margin:0}
+.meeting-safe-actions{display:flex;flex-direction:column;gap:8px}.meeting-safe-actions label{font-size:10px;color:#b9c6e3}.meeting-safe-actions .secondary-button{font-size:11px;padding:12px 8px;color:#dce4ff;border-color:#6a668e;background:#37365b;font-weight:700}
+.meeting-safe .meeting-safe-help{grid-column:1/-1;padding-top:12px;margin-top:14px;border-top:1px solid #343e59;font-size:10px;color:#c6d1e7}
+.meter{width:180px;margin:12px auto 8px;display:flex;flex-direction:column;gap:5px;align-items:center}.meter-track{height:6px;width:100%;background:#2b3551;border-radius:6px;overflow:hidden}.meter-fill{height:100%;background:linear-gradient(90deg,#746df2,#69e5bf);border-radius:6px;transition:width .1s ease}.meter span{font-size:10px;color:#93a7c7}
+@media(max-width:850px){.meeting-safe{grid-template-columns:1fr;gap:14px}.meeting-safe-help{margin-top:0!important}.capture-indicator{font-size:10px}}

@@ -102,3 +102,12 @@ The distribution currently depends on user-installed FFmpeg and whisper.cpp. A t
 ## Tests & manual verification
 
 Run `npm test`; then see [MACOS_QA.md](docs/MACOS_QA.md) for the physical-device acceptance matrix. The GitHub Actions macOS workflow builds a **non-notarized preview**. A successful CI build does not prove microphone permissions or actual audio capture. There is currently no hidden/silent recording or monitoring-feature implementation.
+
+
+### Sharing guide and recording visibility (v0.5.0)
+
+- Explicit **Capture off / Requesting audio permission / Recording microphone / Recording system audio** indicator.
+- Live recordings show an audio-level meter for verifying signal reception.
+- Meeting guide explains selected-window sharing in Meet, Teams, and Zoom and offers **Stop capture & mask transcript**.
+- No covert audio recording, proctoring evasion, process hiding, or claims that an overlay is invisible to screen sharing.
+- Test on a physical macOS device before public release.

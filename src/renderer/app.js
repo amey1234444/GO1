@@ -3,12 +3,34 @@
 const $ = id => document.getElementById(id);
 const MAX_BYTES = 80 * 1024 * 1024;
 const MAX_RECORD_MS = 30 * 60 * 1000;
-const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false };
+const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false, starting: false };
 const languageNames = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', zh: 'Chinese', ja: 'Japanese', ko: 'Korean' };
 
 function setStatus(message, kind = '') {
   $('statusText').textContent = message;
   $('statusLine').className = `status-line ${kind}`;
+}
+function renderCaptureState() {
+  const indicator = $('captureIndicator');
+  if (!indicator) return;
+  let label = 'Capture off';
+  let kind = 'idle';
+  if (state.privacyActive) { label = 'Privacy mode · stopped'; kind = 'privacy'; }
+  else if (state.starting) { label = 'Requesting audio permission'; kind = 'pending'; }
+  else if (state.recording) {
+    label = $('sourceSelect').value === 'system' ? 'Recording system audio' : 'Recording microphone';
+    kind = 'recording';
+  }
+  indicator.textContent = label;
+  indicator.className = 'capture-indicator ' + kind;
+}
+function renderAudioLevel(value = 0) {
+  const fill = $('audioMeterFill');
+  const label = $('audioMeterLabel');
+  if (!fill || !label) return;
+  const level = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+  fill.style.width = Math.round(Math.pow(level, 0.6) * 100) + '%';
+  label.textContent = !state.recording ? 'Input inactive' : level < 0.004 ? 'Quiet / silence' : level < 0.045 ? 'Low input level' : 'Receiving audio';
 }
 function showError(error) {
   if (state.privacyActive) return;
@@ -69,6 +91,7 @@ function setBusy(busy) {
   $('sourceSelect').disabled = busy || state.recording;
   $('translateToggle').disabled = busy;
   $('processingPane').hidden = !busy;
+  renderCaptureState();
   if (busy) { $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
 }
 function resetResults() { state.result = null; $('copyButton').disabled = true; $('exportButton').disabled = true; $('exportMenu').hidden = true; $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
@@ -135,6 +158,8 @@ async function startLive(stream) {
     state.workletSource = source;
     state.silenceGain = gain;
     processor.port.onmessage = event => {
+      if (state.privacyActive || id !== state.liveId) return;
+      if (event.data?.type === 'level') { renderAudioLevel(event.data.rms); return; }
       if (event.data?.type === 'pcm') window.go1.sendLiveChunk(id, event.data.bytes);
     };
     await context.resume();
@@ -173,10 +198,14 @@ async function cleanupLive() {
   if (state.audioContext) await state.audioContext.close().catch(() => {});
   state.audioContext = null;
   stopTracks();
+  renderAudioLevel();
 }
 
 async function startRecording() {
-  if (state.privacyActive) return;
+  if (state.privacyActive || state.starting || state.recording || state.stopping || state.busy) return;
+  state.starting = true;
+  $('recordButton').disabled = true;
+  renderCaptureState();
   hideError();
   if (!setup.ready || !setup.whisperServer) return showError('Install the local transcription engine and whisper-server first.');
   if (!window.MediaRecorder) return showError('This Electron version does not support MediaRecorder.');
@@ -212,6 +241,7 @@ async function startRecording() {
         return;
       }
       state.recording = true;
+      renderCaptureState();
       state.startTime = Date.now();
       $('micCircle').classList.add('recording');
       $('recordButton').classList.add('danger');
@@ -239,6 +269,7 @@ async function startRecording() {
     recorder.addEventListener('stop', async () => {
       if (recorder.go1Discard) return;
       stopClock(); stopTracks(); state.recording = false; $('sourceSelect').disabled = false;
+      renderCaptureState(); renderAudioLevel();
       $('micCircle').classList.remove('recording');
       $('recordButton').textContent = 'Start recording';
       $('recordButton').classList.remove('danger');
@@ -253,18 +284,25 @@ async function startRecording() {
     }, { once: true });
     recorder.start(1000);
     state.recording = true;
+    renderCaptureState();
     state.startTime = Date.now();
     $('micCircle').classList.add('recording');
     $('recordButton').classList.add('danger');
     $('recordButton').textContent = 'Stop & transcribe';
     $('recordMessage').textContent = system ? 'Recording system playback audio' : 'Recording your microphone';
-    setStatus('Recording microphone...', 'active');
+    setStatus(system ? 'Recording system playback...' : 'Recording microphone...', 'active');
     state.timer = setInterval(() => {
       const elapsed = Date.now() - state.startTime;
       $('recordTimer').textContent = formatClock(elapsed);
       if (elapsed >= MAX_RECORD_MS) stopRecording();
     }, 250);
   } catch (error) { await cleanupLive(); state.recording = false; showError(error); }
+  finally {
+    state.starting = false;
+    if (!state.recording && !state.privacyActive) $('recordButton').disabled = !setup.ready || !setup.whisperServer;
+    else if (state.recording) $('recordButton').disabled = false;
+    renderCaptureState();
+  }
 }
 async function stopRecording() {
   if (state.liveId) {
@@ -283,6 +321,7 @@ async function stopRecording() {
     } catch (error) { showError(error); }
     finally {
       state.liveId = null; state.stopping = false; state.recording = false;
+      renderCaptureState(); renderAudioLevel();
       $('micCircle').classList.remove('recording');
       $('recordButton').textContent = 'Start recording';
       $('recordButton').classList.remove('danger');
@@ -297,7 +336,7 @@ async function stopRecording() {
   }
   stopClock();
   if (state.recorder?.state === 'recording') state.recorder.stop();
-  else { stopTracks(); state.recording = false; }
+  else { stopTracks(); state.recording = false; renderCaptureState(); renderAudioLevel(); }
 }
 function getExportContent(format, result) {
   const f = ms => { const n = Math.max(0, Math.floor(ms)); const h = Math.floor(n / 3600000); const m = Math.floor(n % 3600000 / 60000); const s = Math.floor(n % 60000 / 1000); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(n % 1000).padStart(3,'0')}`; };
@@ -315,6 +354,7 @@ async function enablePresentationPrivacy() {
   if (state.privacyActive || state.privacyTransition) return;
   state.privacyActive = true; // synchronous guard against late microphone permissions and UI updates
   state.privacyTransition = true;
+  renderCaptureState(); renderAudioLevel();
   const button = $('privacyButton');
   button.disabled = true;
   $('privacyCurtain').hidden = false;
@@ -336,6 +376,7 @@ async function enablePresentationPrivacy() {
     }
     await window.go1.pauseForPresentation();
     state.recording = false;
+    renderCaptureState(); renderAudioLevel();
     state.stopping = false;
     state.recorder = null;
     state.chunks = [];
@@ -369,12 +410,23 @@ async function enablePresentationPrivacy() {
 function disablePresentationPrivacy() {
   if (state.privacyTransition || !state.privacyActive) return;
   state.privacyActive = false;
+  renderCaptureState(); renderAudioLevel();
   $('privacyCurtain').hidden = true;
   $('privacyButton').disabled = false;
   setStatus('Presentation privacy ended — recording remains off');
   $('emptyResult').hidden = false;
   checkSetup();
 }
+const platformHelp = Object.freeze({
+  meet: 'Google Meet: Present now → A tab or A window. Sharing your entire screen may expose any visible app, including GO1.',
+  teams: 'Microsoft Teams: Share → Window, or select a window in the macOS sharing picker. Entire-screen sharing may expose GO1.',
+  zoom: 'Zoom: Share → choose a specific application window. Entire-desktop sharing may expose any visible app, including GO1.'
+});
+function updatePlatformHelp() { $('meetingHelp').textContent = platformHelp[$('meetingPlatform').value] || platformHelp.meet; }
+$('meetingPlatform').addEventListener('change', updatePlatformHelp);
+$('shareSafeButton').addEventListener('click', enablePresentationPrivacy);
+updatePlatformHelp();
+renderCaptureState(); renderAudioLevel();
 $('privacyButton').addEventListener('click', enablePresentationPrivacy);
 $('exitPrivacyButton').addEventListener('click', disablePresentationPrivacy);
 
