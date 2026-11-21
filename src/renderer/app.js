@@ -185,6 +185,7 @@ async function startRecording() {
     let stream;
     if (system) {
       await window.go1.prepareSystemAudio();
+      if (state.privacyActive) return;
       stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
       const audioTrack = stream.getAudioTracks()[0];
       if (!audioTrack || audioTrack.readyState !== 'live') {
@@ -196,6 +197,7 @@ async function startRecording() {
       audioTrack.addEventListener('ended', () => { if (state.recording && !state.stopping) stopRecording(); }, { once: true });
     } else {
       if (!await window.go1.requestMicrophone()) throw new Error('Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone.');
+      if (state.privacyActive) return;
       stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }, video: false });
     }
     if (state.privacyActive) { stream.getTracks().forEach(track => track.stop()); return; }
