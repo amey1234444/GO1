@@ -16,7 +16,9 @@ install -m 755 "$FFPROBE" "$OUT/bin/ffprobe"
 REF="${GO1_WHISPER_REF:-v1.9.5}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
-git clone --depth 1 --branch "$REF" https://github.com/ggml-org/whisper.cpp.git "$WORK/whisper.cpp"
+curl --fail --location --retry 3 --silent --show-error "https://codeload.github.com/ggml-org/whisper.cpp/tar.gz/refs/tags/$REF" -o "$WORK/whisper.tar.gz"
+mkdir -p "$WORK/whisper.cpp"
+tar -xzf "$WORK/whisper.tar.gz" --strip-components=1 -C "$WORK/whisper.cpp"
 cmake -S "$WORK/whisper.cpp" -B "$WORK/whisper.cpp/build" \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_OSX_ARCHITECTURES=arm64 \
