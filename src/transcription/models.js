@@ -16,7 +16,18 @@ function modelState(dir, catalog = MODEL_CATALOG) {
   return Object.fromEntries(Object.entries(catalog).map(([id, meta]) => {
     const full = path.join(dir, meta.file);
     let installed = false;
-    try { const size = fs.statSync(full).size; installed = size >= meta.minBytes && size <= meta.maxBytes; } catch {}
+    try {
+      const size = fs.statSync(full).size;
+      installed = size >= meta.minBytes && size <= meta.maxBytes;
+      if (installed && id !== 'silero') {
+        const fd = fs.openSync(full, 'r');
+        try {
+          const header = Buffer.alloc(4);
+          fs.readSync(fd, header, 0, 4, 0);
+          installed = header.toString('ascii') === 'lmgg';
+        } finally { fs.closeSync(fd); }
+      }
+    } catch { installed = false; }
     return [id, { installed, filename: meta.file }];
   }));
 }

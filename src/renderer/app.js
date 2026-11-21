@@ -201,6 +201,7 @@ async function startRecording() {
       $('recordButton').textContent = 'Stop live recording';
       $('recordMessage').textContent = system ? 'Live system-audio transcription' : 'Live microphone transcription';
       $('liveToggle').disabled = true;
+      $('sourceSelect').disabled = true;
       $('languageSelect').disabled = true;
       $('translateToggle').disabled = true;
       setStatus('Listening for live speech...', 'active');
@@ -215,10 +216,11 @@ async function startRecording() {
     const mimeType = chooseMimeType();
     const recorder = mimeType ? new MediaRecorder(audioStream, { mimeType }) : new MediaRecorder(audioStream);
     state.recorder = recorder;
+    $('sourceSelect').disabled = true;
     recorder.addEventListener('dataavailable', event => { if (event.data.size) state.chunks.push(event.data); });
     recorder.addEventListener('error', event => { stopRecording(); showError(event.error || 'Recording failed.'); });
     recorder.addEventListener('stop', async () => {
-      stopClock(); stopTracks(); state.recording = false;
+      stopClock(); stopTracks(); state.recording = false; $('sourceSelect').disabled = false;
       $('micCircle').classList.remove('recording');
       $('recordButton').textContent = 'Start recording';
       $('recordButton').classList.remove('danger');
