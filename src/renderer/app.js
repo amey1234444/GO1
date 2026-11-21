@@ -3,6 +3,7 @@
 const $ = id => document.getElementById(id);
 const MAX_BYTES = 80 * 1024 * 1024;
 const MAX_RECORD_MS = 30 * 60 * 1000;
+let displayedLatency = null;
 const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false, starting: false };
 const languageNames = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', zh: 'Chinese', ja: 'Japanese', ko: 'Korean' };
 
@@ -22,15 +23,56 @@ function renderCaptureState() {
     kind = 'recording';
   }
   indicator.textContent = label;
-  indicator.className = 'capture-indicator ' + kind;
+  indicator.className = `capture-indicator ${kind}`;
 }
 function renderAudioLevel(value = 0) {
   const fill = $('audioMeterFill');
   const label = $('audioMeterLabel');
   if (!fill || !label) return;
   const level = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
-  fill.style.width = Math.round(Math.pow(level, 0.6) * 100) + '%';
+  fill.style.width = `${Math.round(Math.pow(level, 0.6) * 100)}%`;
   label.textContent = !state.recording ? 'Input inactive' : level < 0.004 ? 'Quiet / silence' : level < 0.045 ? 'Low input level' : 'Receiving audio';
+}
+function clearInsights() {
+  displayedLatency = null;
+  for (const id of ['latencyP50', 'latencyP95', 'practiceWords', 'practicePace', 'practiceFillers']) $(id).textContent = '—';
+  $('latencyCount').textContent = '0';
+  $('latencyChart').replaceChildren();
+  $('latencyChart').setAttribute('aria-label', 'No measured transcription latency samples yet');
+  $('latencyExplain').textContent = 'After a live utterance is recognized, measured queue + inference latency will appear. Silence holdback, capture and AI feedback are excluded.';
+  $('practiceObservation').textContent = 'Record a mock-interview answer or transcribe a practice file to review your delivery.';
+}
+function renderLatency(stats) {
+  if (!stats || state.privacyActive || !stats.count) return;
+  displayedLatency = stats;
+  const fmt = value => Number.isFinite(value) ? `${Math.round(value)} ms` : '—';
+  $('latencyP50').textContent = fmt(stats.postVad?.p50Ms);
+  $('latencyP95').textContent = fmt(stats.postVad?.p95Ms);
+  $('latencyCount').textContent = String(stats.count);
+  const chart = $('latencyChart');
+  chart.replaceChildren();
+  const samples = stats.samples || [];
+  const ceiling = Math.max(100, ...samples.map(x => x.postVadMs));
+  for (const sample of samples) {
+    const bar = document.createElement('div');
+    bar.className = 'latency-bar';
+    bar.style.height = `${Math.max(3, Math.round(sample.postVadMs / ceiling * 94))}px`;
+    bar.title = `${sample.postVadMs} ms after voice activity detection`;
+    chart.appendChild(bar);
+  }
+  chart.setAttribute('aria-label', `${samples.length} real post-VAD latency samples, median ${fmt(stats.postVad?.p50Ms)}`);
+  $('latencyExplain').textContent = `${stats.count} real utterance${stats.count === 1 ? '' : 's'} · p50 inference ${fmt(stats.inference?.p50Ms)} · p50 queue ${fmt(stats.queue?.p50Ms)}. Excludes silence detection (${ $('latencyMode').value === 'fast' ? '260' : '550'} ms), capture and AI feedback.`;
+}
+async function reviewPractice(result) {
+  if (state.privacyActive) return;
+  try {
+    const observation = await window.go1.reviewPractice({ text: result.text, durationMs: result.durationMs });
+    if (state.privacyActive || state.result !== result) return;
+    $('practiceWords').textContent = String(observation.wordCount ?? 0);
+    $('practicePace').textContent = Number.isFinite(observation.wordsPerMinute) ? String(observation.wordsPerMinute) : '—';
+    $('practiceFillers').textContent = String(observation.fillerCount ?? 0);
+    $('practiceObservation').textContent = observation.feedback;
+  } catch (error) { if (!state.privacyActive) $('practiceObservation').textContent = 'Practice statistics unavailable: ' + String(error.message || error); }
 }
 function showError(error) {
   if (state.privacyActive) return;
@@ -88,6 +130,7 @@ function setBusy(busy) {
   $('uploadTab').disabled = busy;
   $('languageSelect').disabled = busy;
   $('liveToggle').disabled = busy || state.recording;
+  $('latencyMode').disabled = busy || state.recording;
   $('sourceSelect').disabled = busy || state.recording;
   $('translateToggle').disabled = busy;
   $('processingPane').hidden = !busy;
@@ -115,10 +158,12 @@ function renderResult(result, live = false) {
   $('copyButton').disabled = !result.text;
   $('exportButton').disabled = live;
   setStatus(live ? 'Recording • live captions may lag behind speech' : result.text ? 'Transcription completed' : 'No speech detected', live ? 'active' : 'success');
+  if (result.latency?.count) renderLatency(result.latency);
+  if (!live) void reviewPractice(result);
 }
 async function processBytes(bytes) {
   if (state.privacyActive || !setup.ready || state.busy) return;
-  hideError(); resetResults(); setBusy(true); setStatus('Processing locally...', 'active');
+  hideError(); clearInsights(); resetResults(); setBusy(true); setStatus('Processing locally...', 'active');
   $('processingMessage').textContent = 'Preparing transcription...';
   try {
     const result = await window.go1.transcribe({
@@ -139,7 +184,8 @@ function chooseMimeType() {
 async function startLive(stream) {
   if (state.privacyActive) throw new Error('Exit presentation privacy mode before recording.');
   if (!window.AudioWorkletNode) throw new Error('AudioWorklet is not available; turn off Live captions to record first.');
-  const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked });
+  clearInsights();
+  const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked, latencyMode: $('latencyMode').value });
   if (state.privacyActive) {
     await window.go1.cancelLive(id).catch(() => {});
     throw new Error('Presentation privacy mode is active; recording is disabled.');
@@ -207,8 +253,12 @@ async function startRecording() {
   $('recordButton').disabled = true;
   renderCaptureState();
   hideError();
-  if (!setup.ready || !setup.whisperServer) return showError('Install the local transcription engine and whisper-server first.');
-  if (!window.MediaRecorder) return showError('This Electron version does not support MediaRecorder.');
+  if (!setup.ready || !setup.whisperServer || !window.MediaRecorder) {
+    state.starting = false;
+    $('recordButton').disabled = false;
+    renderCaptureState();
+    return showError(!setup.ready || !setup.whisperServer ? 'Install the local transcription engine and whisper-server first.' : 'This Electron version does not support MediaRecorder.');
+  }
   try {
     const system = $('sourceSelect').value === 'system';
     let stream;
@@ -248,6 +298,7 @@ async function startRecording() {
       $('recordButton').textContent = 'Stop live recording';
       $('recordMessage').textContent = system ? 'Live system-audio transcription' : 'Live microphone transcription';
       $('liveToggle').disabled = true;
+      $('latencyMode').disabled = true;
       $('sourceSelect').disabled = true;
       $('languageSelect').disabled = true;
       $('translateToggle').disabled = true;
@@ -329,6 +380,7 @@ async function stopRecording() {
       $('recordMessage').textContent = 'Ready to record';
       $('sourceSelect').disabled = false;
       $('liveToggle').disabled = false;
+      $('latencyMode').disabled = false;
       $('languageSelect').disabled = false;
       $('translateToggle').disabled = false;
     }
@@ -390,9 +442,11 @@ async function enablePresentationPrivacy() {
     $('recordMessage').textContent = 'Ready to record';
     $('sourceSelect').disabled = false;
     $('liveToggle').disabled = false;
+    $('latencyMode').disabled = false;
     $('languageSelect').disabled = false;
     $('translateToggle').disabled = false;
     resetResults();
+    clearInsights();
     $('transcriptBody').textContent = '';
     $('segmentList').replaceChildren();
     $('errorBox').hidden = true;
@@ -460,8 +514,10 @@ window.go1.onLiveStatus(({ id, status }) => {
   if (state.privacyActive) return;
   if (id !== state.liveId) return;
   if (status.type === 'error') { showError(status.message); stopRecording(); return; }
-  if (status.type === 'transcribing') setStatus(`Live recognition • processed through ${formatClock(status.throughMs)} • backlog ${formatClock(status.behindMs)}`, 'active');
+  if (status.type === 'transcribing') setStatus(`Live recognition • processed through ${formatClock(status.throughMs)} • queue ${status.backlog || 1}`, 'active');
+  if (status.type === 'latency') renderLatency(status.stats);
 });
+clearInsights();
 checkSetup();
 
 // Model installation is a user-driven action; never download anything on launch.

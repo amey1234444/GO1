@@ -9,6 +9,7 @@ const { VadLiveSession } = require('./transcription/vad-live');
 const { createWorker } = require('./transcription/worker');
 const { ModelManager, MODEL_CATALOG, modelState } = require('./transcription/models');
 const { cancelPrivateProcessing } = require('./privacy/presentation');
+const { analysePractice } = require('./practice/feedback');
 
 app.setName('GO1');
 let mainWindow;
@@ -148,6 +149,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   onlyApp(event);
   if (liveSession || activeController) throw new Error('Finish the current session first.');
   const language = String(options.language || 'auto').toLowerCase();
+  const latencyMode = options.latencyMode === 'fast' ? 'fast' : 'balanced';
   if (!/^(auto|[a-z]{2,3})$/.test(language)) throw new Error('Invalid language code.');
   if (!setup().modelFound || !setup().whisperServer) throw new Error('Install whisper-server and the selected multilingual model first.');
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:stage', 'Loading Whisper model in persistent worker...');
@@ -156,6 +158,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   liveId = randomUUID();
   liveSession = new VadLiveSession({
     language,
+    latencyMode,
     translate: options.translate === true,
     signal: liveController.signal,
     transcribeWindow: (pcm, opts) => getWorker().infer(pcm, opts),
@@ -235,4 +238,11 @@ ipcMain.handle('go1:privacy-pause', event => {
   liveController = null;
   liveId = null;
   return true;
+});
+
+// Local-only deterministic practice statistics; no model provider or external service.
+ipcMain.handle('go1:practice-review', (event, result) => {
+  onlyApp(event);
+  if (!result || typeof result !== 'object' || typeof result.text !== 'string' || result.text.length > 250000) throw new Error('Invalid practice transcript.');
+  return analysePractice({ text: result.text, durationMs: result.durationMs });
 });

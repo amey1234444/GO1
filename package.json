@@ -1,13 +1,13 @@
 {
   "name": "go1-multilingual-transcription",
-  "version": "0.5.0",
-  "description": "Offline multilingual transcription with visible capture indicators and share-safe presentation controls",
+  "version": "0.6.0",
+  "description": "Offline multilingual transcription with measured latency and consent-based mock interview review",
   "main": "src/main.js",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/transcription/vad.js && node --check src/transcription/vad-live.js && node --check src/transcription/worker.js && node --check src/transcription/models.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js && node --check forge.config.js && node --check src/privacy/presentation.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/transcription/vad.js && node --check src/transcription/vad-live.js && node --check src/transcription/worker.js && node --check src/transcription/models.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js && node --check forge.config.js && node --check src/privacy/presentation.js && node --check src/transcription/latency.js && node --check src/practice/feedback.js",
     "make": "electron-forge make",
     "package": "electron-forge package"
   },

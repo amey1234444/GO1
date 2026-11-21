@@ -1,4 +1,4 @@
-# GO1 0.4.0 — Private multilingual transcription for macOS
+# GO1 0.6.0 — Private multilingual transcription and measured latency for macOS
 
 GO1 is a **local-first Electron application for consent-based recording and transcription**. It has two recording sources—microphone and macOS system playback audio—plus file import and exports. No model API key, cloud account, or subscription is required for local speech recognition.
 
@@ -106,8 +106,16 @@ Run `npm test`; then see [MACOS_QA.md](docs/MACOS_QA.md) for the physical-device
 
 ### Sharing guide and recording visibility (v0.5.0)
 
-- Explicit **Capture off / Requesting audio permission / Recording microphone / Recording system audio** indicator.
-- Live recordings show an audio-level meter for verifying signal reception.
-- Meeting guide explains selected-window sharing in Meet, Teams, and Zoom and offers **Stop capture & mask transcript**.
-- No covert audio recording, proctoring evasion, process hiding, or claims that an overlay is invisible to screen sharing.
-- Test on a physical macOS device before public release.
+- GO1 shows an explicit **Capture off / Requesting audio permission / Recording microphone / Recording system audio** indicator.
+- Live microphone recordings expose an in-app audio level meter so you can tell whether audio is actually being received.
+- The meeting guide explains selected-window sharing in Meet, Teams, and Zoom and includes **Stop capture & mask transcript**.
+- No covert audio recording, proctoring evasion, process hiding, or guarantees that an overlay is invisible to screen sharing are provided.
+- Test live input and screen-sharing from a second participant on macOS before release.
+
+## GO1 v0.6.0 — measured latency and local mock-interview review
+
+- **Fast captions:** Choose Fast (260 ms silence holdback) or Balanced (550 ms). Faster chunk dispatch trades away sentence continuity; no device-specific speed guarantee.
+- **Latency Lab:** Displays measured post-VAD queue + Whisper inference p50/p95 and the last 20 completed real utterance samples. The chart is empty until live speech has actually been recognized. This is NOT a <500 ms AI-answer benchmark.
+- **Practice Review:** At the end of a consented recording or imported practice audio file, the app reports local word count, overall pace and a conservative list of possible filler expressions. These heuristic observations are not AI grading and do not establish answer quality.
+- **Real benchmarking:** `node scripts/benchmark-whisper.js /path/to/consented-speech.wav 8`, for repeatable, local, real-model inference numbers. Details and limitations: [docs/LATENCY_RESEARCH_AND_TESTING.md](docs/LATENCY_RESEARCH_AND_TESTING.md).
+- For an intended end-to-end sub-500 ms first-caption target, a *genuine streaming ASR provider* requires future integration and physical Mac measurements. The current persistent Whisper worker is utterance-based.

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'" />
-  <title>GO1 — Local Multilingual Transcription</title>
+  <title>GO1 — Live Speech &amp; Practice Studio</title>
   <link rel="stylesheet" href="./styles.css" />
   <script src="./app.js" defer></script>
 </head>
@@ -18,7 +18,7 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.5.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.6.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
@@ -50,7 +50,7 @@
             <div id="recordPanel" class="source-panel">
             <label class="setting-label" for="sourceSelect">Recording source</label>
             <select class="select" id="sourceSelect"><option value="microphone">Microphone</option><option value="system">Mac system playback audio (consent required)</option></select>
-            <p class="microcopy">Only capture audio you have permission to record. System audio requires macOS 14.2+ and Screen &amp; System Audio Recording permission. GO1 does not save screen video.</p><div class="mic-circle" id="micCircle"><span class="mic-symbol">♩</span></div><div id="recordMessage" class="record-message">Ready to record</div><div class="meter" role="group" aria-label="Audio signal level"><div class="meter-track"><div id="audioMeterFill" class="meter-fill" style="width:0%"></div></div><span id="audioMeterLabel">Input inactive</span></div><p class="microcopy">Your microphone is only active while recording.</p><label class="switch-line" for="liveToggle"><span><strong>Live captions</strong><small>Rolling offline recognition while you speak (experimental)</small></span><input type="checkbox" id="liveToggle" checked /></label><div id="recordTimer" class="record-timer">00:00</div><button class="primary-button" id="recordButton" type="button">Start recording</button></div>
+            <p class="microcopy">Only capture audio you have permission to record. System audio requires macOS 14.2+ and Screen &amp; System Audio Recording permission. GO1 does not save screen video.</p><div class="mic-circle" id="micCircle"><span class="mic-symbol">♩</span></div><div id="recordMessage" class="record-message">Ready to record</div><div class="meter" role="group" aria-label="Audio signal level"><div class="meter-track"><div id="audioMeterFill" class="meter-fill" style="width:0%"></div></div><span id="audioMeterLabel">Input inactive</span></div><p class="microcopy">Your microphone is only active while recording.</p><label class="switch-line" for="liveToggle"><span><strong>Live captions</strong><small>Rolling offline recognition while you speak (experimental)</small></span><input type="checkbox" id="liveToggle" checked /></label><label class="setting-label" for="latencyMode" style="width:100%;margin-top:8px">Live-caption responsiveness <span>Fast ends speech after a shorter pause and may split sentences.</span></label><select class="select" id="latencyMode"><option value="fast">Fast · 260 ms silence holdback</option><option value="balanced" selected>Balanced · 550 ms silence holdback</option></select><div id="recordTimer" class="record-timer">00:00</div><button class="primary-button" id="recordButton" type="button">Start recording</button></div>
             <div id="uploadPanel" class="source-panel" hidden><div id="dropZone" class="dropzone" tabindex="0" role="button" aria-label="Choose or drop an audio file"><span class="upload-symbol">↥</span><strong>Drop your audio here</strong><p>or click to browse your files</p><span class="small-hint">MP3 · M4A · WAV · FLAC · OGG · WEBM · MP4</span></div><input type="file" id="fileInput" accept="audio/*,.mp3,.m4a,.wav,.flac,.ogg,.webm,.mp4,.aac,.opus" hidden /><div id="chosenFile" class="chosen-file" hidden></div><button class="primary-button" id="transcribeFileButton" type="button" disabled>Transcribe selected file</button></div>
             <div class="settings-divider"></div>
             <div class="settings-head">RECOGNITION SETTINGS</div>
@@ -67,6 +67,31 @@
             <div id="processingPane" class="processing-pane" hidden><div class="spinner"></div><h3>Turning speech into text</h3><p id="processingMessage">Preparing local model...</p><button type="button" id="cancelButton" class="secondary-button">Cancel transcription</button></div>
             <div id="errorBox" class="error-box" role="alert" hidden></div>
             <div id="exportMenu" class="export-menu" hidden><button data-format="txt" type="button">Plain text <span>.txt</span></button><button data-format="srt" type="button">Subtitles <span>.srt</span></button><button data-format="vtt" type="button">Web subtitles <span>.vtt</span></button><button data-format="json" type="button">Segments + metadata <span>.json</span></button></div>
+          </section>
+        </div>
+        <div class="insights-grid" aria-label="Transcription performance and practice feedback">
+          <section class="card performance-card" aria-labelledby="performanceTitle">
+            <span class="card-overline">03 / MEASURED PERFORMANCE</span>
+            <h2 id="performanceTitle">Latency lab <span class="lab-icon" aria-hidden="true">↗</span></h2>
+            <p class="insight-description">Actual completed utterances only. Values measure from VAD segment dispatch to local transcript availability, not the full speech-to-AI-answer latency.</p>
+            <div class="metric-row">
+              <div class="metric"><span>Median post-VAD</span><strong id="latencyP50">—</strong><small>p50 · milliseconds</small></div>
+              <div class="metric"><span>95th percentile</span><strong id="latencyP95">—</strong><small>p95 · milliseconds</small></div>
+              <div class="metric"><span>Samples</span><strong id="latencyCount">0</strong><small>Completed utterances</small></div>
+            </div>
+            <div id="latencyChart" class="latency-chart" role="img" aria-label="No measured transcription latency samples yet"></div>
+            <p class="measurement-note" id="latencyExplain">Speak or import audio to begin. Live measurements exclude the 260–550 ms silence holdback, audio capture and AI feedback. Measured post-VAD latency is not the total response latency.</p>
+          </section>
+          <section class="card feedback-card" aria-labelledby="feedbackTitle">
+            <span class="card-overline">04 / PRACTICE REVIEW</span>
+            <h2 id="feedbackTitle">Feedback while practice is fresh</h2>
+            <p class="insight-description">Private, deterministic delivery feedback from your spoken practice. Generative AI scoring is not yet connected.</p>
+            <div class="metric-row">
+              <div class="metric"><span>Words</span><strong id="practiceWords">—</strong></div>
+              <div class="metric"><span>Overall pace</span><strong id="practicePace">—</strong><small>words / min</small></div>
+              <div class="metric"><span>Fillers</span><strong id="practiceFillers">—</strong></div>
+            </div>
+            <p class="feedback-observation" id="practiceObservation">Record your own mock-interview answer or transcribe a practice file to review pace and potential filler words.</p>
           </section>
         </div>
         <footer class="footer"><span>Designed for private, consent-based recording and transcription.</span><span>No API key required</span></footer>

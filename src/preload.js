@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('go1', Object.freeze({
   transcribe: payload => ipcRenderer.invoke('go1:transcribe', payload),
   cancel: () => ipcRenderer.invoke('go1:cancel'),
   startLive: options => ipcRenderer.invoke('go1:live-start', options),
+  reviewPractice: result => ipcRenderer.invoke('go1:practice-review', result),
   sendLiveChunk: (id, pcm) => ipcRenderer.send('go1:live-frame', { id, pcm }),
   stopLive: id => ipcRenderer.invoke('go1:live-stop', id),
   cancelLive: id => ipcRenderer.invoke('go1:live-cancel', id),
