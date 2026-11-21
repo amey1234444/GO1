@@ -2,6 +2,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('go1', Object.freeze({
+  installModel: id => ipcRenderer.invoke('go1:model-install', id),
+  cancelModelDownload: () => ipcRenderer.invoke('go1:model-cancel'),
+  selectModel: id => ipcRenderer.invoke('go1:model-select', id),
+  prepareSystemAudio: () => ipcRenderer.invoke('go1:prepare-system-audio'),
+  onModelProgress: callback => { const cb = (_event, data) => callback(data); ipcRenderer.on('go1:model-progress', cb); return () => ipcRenderer.removeListener('go1:model-progress', cb); },
   checkSetup: () => ipcRenderer.invoke('go1:setup'),
   requestMicrophone: () => ipcRenderer.invoke('go1:microphone'),
   transcribe: payload => ipcRenderer.invoke('go1:transcribe', payload),

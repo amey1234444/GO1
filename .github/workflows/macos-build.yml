@@ -1,0 +1,25 @@
+name: macOS compile and smoke test
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  unsigned-preview:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run check && npm test
+      - name: Build unsigned preview artifact
+        run: npm run make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: go1-macos-unsigned-preview
+          path: out/make/**
+          if-no-files-found: error
+          retention-days: 7

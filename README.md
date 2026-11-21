@@ -1,135 +1,100 @@
-# GO1 — Offline multilingual audio transcription
+# GO1 0.3.0 — Private multilingual transcription for macOS
 
-A privacy-first **macOS desktop application** for recording your own microphone or importing an audio recording, identifying its spoken language, and generating searchable, timestamped transcripts. Built with Electron, Node.js and [whisper.cpp](https://github.com/ggml-org/whisper.cpp). No cloud API key or subscription is required for transcription.
+GO1 is a **local-first Electron application for consent-based recording and transcription**. It has two recording sources—microphone and macOS system playback audio—plus file import and exports. No model API key, cloud account, or subscription is required for local speech recognition.
 
-> **Milestones 1–2 (implemented):** record → stop → transcribe, file upload → transcribe, auto language detection, manual language override, optional speech translation into English, timestamped segment display, TXT/SRT/VTT/JSON exports, cancellation, and input limits. The app also offers **experimental rolling live captions** during microphone recording, using 6-second overlapping windows. It is near-real-time chunked inference, **not token-by-token speech streaming**; latency depends on model size and hardware. It doesn't capture other applications' audio, monitor meetings, or attempt to evade screen sharing.
+> **Status:** This repository has automated JavaScript tests and a macOS build workflow. Recording permissions, real multilingual accuracy, model downloads, the signed app, and hardware performance still require real-device testing. No Mac device test or notarized build is claimed here.
 
-## 1. Install on Apple Silicon macOS
+## Implemented
 
-Prerequisites: macOS 14+, [Node.js 22 or newer](https://nodejs.org/), and [Homebrew](https://brew.sh/). The first model download requires Internet access; subsequent inference is on-device.
+- Microphone recording, imported audio decoding with FFmpeg, and on-demand speech-to-text (Whisper CLI).
+- Near-real-time captions using **energy-based speech activity detection** to batch utterances and a **persistent `whisper-server` subprocess**; no repeated model load between utterances.
+- Optional Silero VAD model invoked by `whisper-server`, if downloaded; energy VAD still gates recording locally to avoid sending silence windows.
+- Transcription for languages supported by multilingual Whisper models with automatic detection, optional English translation and selected language override.
+- Voice timestamps, transcript exports to TXT / SRT / VTT / JSON.
+- Explicit user-selected system playback capture on macOS 14.2+ via Electron's `desktopCapturer` CoreAudio tap loopback path. System video frames are not saved or sent to the speech engine.
+- In-app model manager for base, small, medium, large-v3-turbo and optional Silero VAD, with progress, cancellation, downloaded file-size/magic verification, atomic files and validated presets.
+- Electron security: context isolation, sandbox, limited IPC, CSP, local-only model server bound to `127.0.0.1`.
+- macOS unsigned build workflow and **optional** code signing/notarization configuration.
+
+## Quick start (Apple Silicon Mac)
+
+Prerequisites: macOS 14.2+ for the system playback capture feature, Node.js 22, npm, Homebrew, free space for a downloaded model. The microphone and imported file functions may work on older macOS versions, subject to Electron compatibility.
 
 ```bash
-# Clone or unzip GO1, then enter the folder:
-cd GO1
+brew install ffmpeg whisper.cpp
+# Confirm both binaries (Homebrew's current formula provides them):
+command -v ffmpeg
+command -v whisper-cli
+command -v whisper-server
 
-# Install ffmpeg + whisper.cpp and download the multilingual "small" model:
-bash scripts/setup-macos.sh small
-
-# Install desktop dependencies and start:
 npm install
 npm start
 ```
 
-The setup script installs Homebrew's `whisper.cpp` (providing `whisper-cli`), `ffmpeg` and `ffprobe`, and downloads `ggml-small.bin` into `~/Library/Application Support/GO1/models/`.
+In the UI, choose **Small** and click **Install / select**. You can switch to Base on slower machines or Medium on capable machines. Use **Install Silero VAD (optional)** for additional speech/silence processing by whisper.cpp. Local model downloads can be hundreds of MB or several GB and require an internet connection initially.
 
-**If you want greater accuracy** and have enough RAM/storage, choose `medium` or `large-v3-turbo` in the setup script. The default app looks for the small model unless you set `GO1_WHISPER_MODEL` to the alternative path.
+Alternatively run the existing setup script `bash scripts/setup-macos.sh small` to install tools and download the default small model from Hugging Face. After that, all transcription requests run locally.
 
-```bash
-bash scripts/setup-macos.sh medium
-GO1_WHISPER_MODEL="$HOME/Library/Application Support/GO1/models/ggml-medium.bin" npm start
-```
-
-Or explicitly set the program paths if you installed them somewhere different:
+If you have an alternate `whisper-server` executable:
 
 ```bash
-GO1_WHISPER_PATH=/path/to/whisper-cli \
-GO1_FFMPEG_PATH=/path/to/ffmpeg \
-GO1_FFPROBE_PATH=/path/to/ffprobe \
-GO1_WHISPER_MODEL=/path/to/ggml-medium.bin npm start
+GO1_WHISPER_SERVER_PATH="/absolute/path/to/whisper-server" npm start
 ```
 
-### Grant microphone permission
+## System audio permission and privacy
 
-On first recording macOS prompts for microphone permission. If you denied it, open **System Settings → Privacy & Security → Microphone** and allow GO1 (or Electron during development), then restart the app. Recording starts **only** when you press Start recording and stops when you press Stop & transcribe.
+1. Tell the other meeting participants before recording. Obtain legally required consent; some meeting hosts or jurisdictions prohibit recording.
+2. Select **Mac system playback audio** under Recording source, then start recording.
+3. macOS may request **System Audio Recording** and/or **Screen & System Audio Recording** access. Grant access to the signed GO1 app (when running from Terminal, the responsible process can be Terminal/IDE). Restart the app if macOS requires it.
+4. If the selected system-audio track is `ended` or missing, GO1 displays a permission-related error instead of silently creating an empty transcript.
+5. In live mode only the audio track enters the AudioWorklet; any accompanying display-video track is disabled and never written to a recording file.
 
-### Usage
+Electron uses CoreAudio Tap for system audio on macOS 14.2+, with `NSAudioCaptureUsageDescription` in Info.plist. This requires a recent Electron runtime. System capture has **not yet been verified on a physical Mac**, and behaves differently across OS versions and privacy setups.
 
-Choose **Live captions** before recording to show updates while speaking. Disable it for the original record-then-transcribe workflow. Live transcription uses a local 16 kHz PCM AudioWorklet, overlapping whisper.cpp inference windows, tentative captions at boundaries, and reconciliation before exports. Both modes require explicit microphone permission.
+## How live transcription works
 
-1. Choose **Record microphone** or **Upload file**.
-2. Select **Auto detect** (recommended) or a language from the dropdown.
-3. Optionally enable **Translate to English**. Otherwise GO1 transcribes into the *spoken language*.
-4. Press **Stop & transcribe** or **Transcribe selected file**. Wait for the local model.
-5. Copy text or export TXT, JSON, SRT or VTT, including segment timestamps.
+`AudioWorklet` produces 16 kHz PCM chunks. `SpeechSegmenter` examines 20 ms audio frames, keeps 250 ms of pre-roll, requires roughly 180 ms of activity, and closes an utterance after 550 ms of silence or 11 seconds of continuous speech. `VadLiveSession` enqueues a bounded number of utterances (maximum 3 pending), sends them sequentially to a private `whisper-server` (launched only as needed), maps relative segment timestamps back to recording time, and updates the UI. The worker is reused for subsequent utterances and stopped when GO1 quits or the model changes.
 
-## 2. Languages and models
+The energy detector is intentionally lightweight but not perfect: wind, background noise, quiet whispering, music, and different microphone gain may cause false triggers or lost words. The optional Silero VAD model improves the Whisper inference stage, but latency and accuracy depend on hardware/model/audio and should be benchmarked.
 
-Whisper multilingual models are trained for approximately **99 languages**. Supported examples include English, Hindi, Marathi, Gujarati, Bengali, Tamil, Telugu, Kannada, Malayalam, Punjabi, Urdu, Nepali, Chinese, Japanese, Korean, Arabic, French, German, Spanish, Russian, Portuguese, and many more. This does **not** mean every language worldwide is supported. Very low-resource languages, code-switching, overlapping speakers, loud background noise and short clips can be less accurate.
+**Not sample-by-sample realtime:** captions appear after phrase segmentation plus model inference. Expect variable delay, especially with larger models. `whisper-server` currently accepts utterance audio as HTTP multipart WAV; it is not a raw streaming-WebSocket STT model.
 
-**Important:** Use `ggml-small.bin` or another *multilingual* model, **not** `ggml-small.en.bin` (English only). The UI's language picker includes common options; "Auto detect" supports all languages recognized by the underlying multilingual model.
+## Model sources and limitations
 
-Whisper's default detection is based on an early audio segment, so a long recording that changes language midstream may not be accurately labeled. For higher-quality multilingual transcription, compare `small`, `medium` and `large-v3` using audio samples in your target languages. The `large-v3-turbo` model is efficient for transcription but is not the recommended model for multilingual *speech translation*.
+Whisper model source: `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-<MODEL>.bin`.
 
-### Library comparison (why whisper.cpp)
+Silero VAD source: `https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v6.2.0.bin`.
 
-| Engine | Advantages | Trade-offs |
-| --- | --- | --- |
-| `whisper.cpp` **chosen** | Local, free API usage, Apple Silicon Metal acceleration, multilingual models, JSON output | Needs native binary + downloaded model; batch inference in this milestone |
-| `faster-whisper` | Python integration, CTranslate2, built-in VAD, segment timestamps | Requires a Python runtime/backend; macOS Apple GPU acceleration differs |
-| Hosted speech API | Simple setup, scalable server-side inference | Usage costs, privacy considerations, account/credential management |
+The app validates allowlisted names, HTTPS URL presets, expected file sizes and Whisper file magic, but **full cryptographic SHA-256 verification is not yet included**. Production software should pin an audited manifest of checksums for each selected model version. Model support does not guarantee identical accuracy in all languages; mixed-language code-switching can still make language detection difficult.
 
-Sources: [whisper.cpp CLI](https://github.com/ggml-org/whisper.cpp/tree/master/examples/cli), [Whisper models](https://github.com/openai/whisper), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [Electron security](https://www.electronjs.org/docs/latest/tutorial/security).
-
-## 3. Technical pipeline
-
-```text
-User consent → Electron MediaRecorder (or file picker)
-    → IPC transport (preload bridge, typed byte array)
-    → main process validates size/language; creates private temporary directory
-    → ffprobe enforces maximum duration (30 min when metadata is available)
-    → ffmpeg resamples audio to 16 kHz / 1 channel / 16-bit PCM WAV
-    → whisper-cli with multilingual model, -l auto, JSON output
-    → JSON parser: language, segments, timestamps, full Unicode text
-    → Renderer: transcript and optional subtitle exports
-    → finally: temporary audio and model-output files deleted
-```
-
-**No upload service exists in this project.** Local model file download from Hugging Face occurs in `scripts/setup-macos.sh`. The app does not transmit audio to an AI provider. Users should still obtain consent from everyone recorded and comply with privacy and interview policies.
-
-### Project structure
-
-```text
-src/main.js                    Electron application, sandboxed window, IPC handlers
-src/preload.js                 Narrow and explicit renderer-to-main bridge
-src/transcription/engine.js   Binary discovery, size limits, conversion, inference, cancellation
-src/transcription/live.js     Rolling-window live session, overlap reconciliation
-src/renderer/pcm-worklet.js  16 kHz PCM resampler and half-second chunks
-src/transcription/formats.js  Whisper JSON parser and subtitle/text formats
-src/renderer/index.html       Desktop interface
-src/renderer/styles.css       Interface styling
-src/renderer/app.js           Recording, file uploads, progress, transcript display
-scripts/setup-macos.sh        Homebrew and model bootstrap
-forge.config.js               Packaging configuration
-.github/workflows/checks.yml  JS syntax validation and unit/integration tests
-```
-
-## 4. Run tests and build a DMG
+## Commands
 
 ```bash
-npm run check
-npm test
-npm run make
+npm run check    # Syntax checks
+npm test         # Unit and orchestrator tests, no actual model needed
+npm run make     # macOS zip + unsigned DMG in out/make/
 ```
 
-`npm run make` requires macOS to make a macOS DMG; packaging is not the same as signing/notarization. For commercial distribution, set up Apple code signing, notarization, update signing and automated compatibility testing. Homebrew executables and models are currently **external dependencies** and are **not embedded** in the packaged `.app`. A customer must install them separately, or a future production installer must bundle appropriately licensed artifacts.
+### Signing and notarization
 
-## 5. Production TODO / limitations
+On a properly configured Mac, install your Apple-issued Developer ID Application certificate in the login keychain and provide these environment variables outside Git:
 
-- **Live mode is experimental:** it decodes rolling 6-second windows in serial. Each window invokes `whisper-cli` and reloads the model; substantial latency/backlog is possible on slower Macs. A persistent model worker and VAD-based segment scheduling are future optimizations.
-- **No separate system audio capture:** only user-granted microphone audio or explicitly selected local files.
-- **No language-perfect guarantee:** evaluate word error rate with multiple speakers, accents, scripts, and code switching.
-- Model downloads are HTTPS but are not currently verified against a pinned checksum. Add checksums/signatures and software bill of materials for production.
-- Concurrency is one transcription job at a time. The app cancels its active job, removes temporary recordings and shows a useful error if CLI tools are missing.
-- Electron/Whisper must be installed before audio behavior can be tested on actual macOS hardware; CI mocks the native CLI pipeline, it does not validate speech accuracy.
-- Improve packaging and onboarding (model downloading UI, progress and disk space checks) before commercial distribution.
-- Upgrade to persistent whisper.cpp inference and silence/VAD-aware chunking for much lower latency.
-- Add user-controlled system audio capture where macOS permits it and explicit recording consent exists.
-- Test the new AudioWorklet PCM flow on real macOS devices and benchmark recognition/latency.
+```bash
+export APPLE_ID='your-apple-developer-id'
+export APPLE_APP_SPECIFIC_PASSWORD='your-notarytool-app-password'
+export APPLE_TEAM_ID='your-apple-team-id'
+bash scripts/release-macos.sh
+```
 
-## 6. Testing with real languages
+`GO1_SIGNED_RELEASE=1` enables Electron Forge's `osxSign` and `osxNotarize`. **Never commit signing credentials.** Successful signed/notarized output requires a paid Apple Developer membership, matching certificate, valid Apple credentials, and a macOS build environment; nothing in the repository alone performs Apple's service on your behalf. Verify with:
 
-For an initial evaluation, record at least 20–30 short clips per target language at varying noise levels and accents. Create manually verified reference transcripts. Measure word error rate (WER) for space-separated languages and character error rate (CER) for languages where word boundaries differ. Include Marathi/Hindi/English code-switching, silence, background audio, and interruptions. Avoid asserting "100% accurate" recognition.
+```bash
+codesign --verify --deep --strict --verbose=2 'out/GO1-darwin-arm64/GO1.app'
+spctl --assess --type execute --verbose 'out/GO1-darwin-arm64/GO1.app'
+```
 
-## License
+The distribution currently depends on user-installed FFmpeg and whisper.cpp. A truly turnkey commercial DMG must bundle, sign, and test compatible binaries for all supported macOS CPU architectures and verify third-party license notices.
 
-The independently developed GO1 example code is MIT licensed (see `LICENSE`). Check upstream `whisper.cpp`, Whisper model, Electron and FFmpeg license notices for any bundled commercial release. This repository does not contain commercial third-party source code, model weights, or keys.
+## Tests & manual verification
+
+Run `npm test`; then see [MACOS_QA.md](docs/MACOS_QA.md) for the physical-device acceptance matrix. The GitHub Actions macOS workflow builds a **non-notarized preview**. A successful CI build does not prove microphone permissions or actual audio capture. There is currently no hidden/silent recording or monitoring-feature implementation.

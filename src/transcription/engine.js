@@ -27,11 +27,11 @@ function resolveExecutable(name, override) {
   return null;
 }
 
-function getSetup({ modelDirectory }) {
+function getSetup({ modelDirectory, selectedModel = 'small' }) {
   const ffmpeg = resolveExecutable('ffmpeg', process.env.GO1_FFMPEG_PATH);
   const ffprobe = resolveExecutable('ffprobe', process.env.GO1_FFPROBE_PATH);
   const whisper = resolveExecutable('whisper-cli', process.env.GO1_WHISPER_PATH);
-  const model = process.env.GO1_WHISPER_MODEL || path.join(modelDirectory, 'ggml-small.bin');
+  const model = process.env.GO1_WHISPER_MODEL || path.join(modelDirectory, `ggml-${selectedModel}.bin`);
   const modelFound = fs.existsSync(model) && fs.statSync(model).size > 1024 * 1024;
   return { ffmpeg, ffprobe, whisper, model, modelFound, ready: Boolean(ffmpeg && ffprobe && whisper && modelFound) };
 }
@@ -83,9 +83,9 @@ function validatePayload(payload) {
   return { bytes, language, translate: payload.translate === true };
 }
 
-async function transcribe(payload, { modelDirectory, signal, onStage, binaries = {} } = {}) {
+async function transcribe(payload, { modelDirectory, selectedModel = 'small', signal, onStage, binaries = {} } = {}) {
   const { bytes, language, translate } = validatePayload(payload);
-  const setup = { ...getSetup({ modelDirectory }), ...binaries };
+  const setup = { ...getSetup({ modelDirectory, selectedModel }), ...binaries };
   if (!setup.ready && !binaries.ready) throw new Error('Setup incomplete: install ffmpeg, ffprobe, whisper-cli and a multilingual model. See README.');
   if (/\.en(\.|$)/.test(path.basename(setup.model)) && language !== 'en') {
     throw new Error('An English-only model cannot auto-detect or transcribe other languages. Install ggml-small.bin or another multilingual model.');

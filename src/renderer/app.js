@@ -17,12 +17,15 @@ function showError(error) {
 }
 function hideError() { $('errorBox').hidden = true; }
 function renderSetup(status) {
-  $('setupAlert').hidden = status.ready;
+  $('setupAlert').hidden = status.ready && Boolean(status.whisperServer);
+  $('modelSelect').value = status.selectedModel || 'small';
+  const installed = status.models?.[status.selectedModel]?.installed;
+  if (!state.modelDownloading) $('modelProgress').textContent = installed ? `Selected model: ${status.selectedModel} (installed).` : `Selected model: ${status.selectedModel} (download required).`;
   if (!status.ready) {
-    const missing = [!status.ffmpeg && 'FFmpeg', !status.ffprobe && 'FFprobe', !status.whisper && 'whisper-cli', !status.modelFound && 'multilingual Whisper model'].filter(Boolean).join(', ');
+    const missing = [!status.ffmpeg && 'FFmpeg', !status.ffprobe && 'FFprobe', !status.whisper && 'whisper-cli', !status.whisperServer && 'whisper-server', !status.modelFound && 'multilingual Whisper model'].filter(Boolean).join(', ');
     $('setupMessage').textContent = `Missing: ${missing}. Run bash scripts/setup-macos.sh small in Terminal, then press Recheck. Model location: ${status.model}`;
   }
-  $('recordButton').disabled = !status.ready || state.busy;
+  $('recordButton').disabled = !status.ready || !status.whisperServer || state.busy;
   $('transcribeFileButton').disabled = !status.ready || !state.file || state.busy;
 }
 let setup = { ready: false };
@@ -56,12 +59,13 @@ function stopTracks() { state.stream?.getTracks().forEach(track => track.stop())
 function stopClock() { clearInterval(state.timer); state.timer = null; }
 function setBusy(busy) {
   state.busy = busy;
-  $('recordButton').disabled = busy || !setup.ready;
+  $('recordButton').disabled = busy || !setup.ready || !setup.whisperServer;
   $('transcribeFileButton').disabled = busy || !setup.ready || !state.file;
   $('recordTab').disabled = busy;
   $('uploadTab').disabled = busy;
   $('languageSelect').disabled = busy;
   $('liveToggle').disabled = busy || state.recording;
+  $('sourceSelect').disabled = busy || state.recording;
   $('translateToggle').disabled = busy;
   $('processingPane').hidden = !busy;
   if (busy) { $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
@@ -166,20 +170,36 @@ async function cleanupLive() {
 
 async function startRecording() {
   hideError();
-  if (!setup.ready) return showError('Install the local transcription engine first.');
+  if (!setup.ready || !setup.whisperServer) return showError('Install the local transcription engine and whisper-server first.');
   if (!window.MediaRecorder) return showError('This Electron version does not support MediaRecorder.');
   try {
-    if (!await window.go1.requestMicrophone()) throw new Error('Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone.');
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }, video: false });
+    const system = $('sourceSelect').value === 'system';
+    let stream;
+    if (system) {
+      await window.go1.prepareSystemAudio();
+      stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
+      const audioTrack = stream.getAudioTracks()[0];
+      if (!audioTrack || audioTrack.readyState !== 'live') {
+        stream.getTracks().forEach(t => t.stop());
+        throw new Error('System audio unavailable. Grant System Audio Recording permission in macOS Privacy & Security, then restart GO1.');
+      }
+      // Display video is not used, rendered or saved; disable frames immediately.
+      stream.getVideoTracks().forEach(t => { t.enabled = false; });
+      audioTrack.addEventListener('ended', () => { if (state.recording && !state.stopping) stopRecording(); }, { once: true });
+    } else {
+      if (!await window.go1.requestMicrophone()) throw new Error('Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone.');
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }, video: false });
+    }
+    const audioStream = new MediaStream(stream.getAudioTracks());
     state.stream = stream;
     if ($('liveToggle').checked) {
-      await startLive(stream);
+      await startLive(audioStream);
       state.recording = true;
       state.startTime = Date.now();
       $('micCircle').classList.add('recording');
       $('recordButton').classList.add('danger');
       $('recordButton').textContent = 'Stop live recording';
-      $('recordMessage').textContent = 'Live microphone transcription';
+      $('recordMessage').textContent = system ? 'Live system-audio transcription' : 'Live microphone transcription';
       $('liveToggle').disabled = true;
       $('languageSelect').disabled = true;
       $('translateToggle').disabled = true;
@@ -193,7 +213,7 @@ async function startRecording() {
     }
     state.chunks = [];
     const mimeType = chooseMimeType();
-    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    const recorder = mimeType ? new MediaRecorder(audioStream, { mimeType }) : new MediaRecorder(audioStream);
     state.recorder = recorder;
     recorder.addEventListener('dataavailable', event => { if (event.data.size) state.chunks.push(event.data); });
     recorder.addEventListener('error', event => { stopRecording(); showError(event.error || 'Recording failed.'); });
@@ -217,7 +237,7 @@ async function startRecording() {
     $('micCircle').classList.add('recording');
     $('recordButton').classList.add('danger');
     $('recordButton').textContent = 'Stop & transcribe';
-    $('recordMessage').textContent = 'Recording your microphone';
+    $('recordMessage').textContent = system ? 'Recording system playback audio' : 'Recording your microphone';
     setStatus('Recording microphone...', 'active');
     state.timer = setInterval(() => {
       const elapsed = Date.now() - state.startTime;
@@ -248,6 +268,7 @@ async function stopRecording() {
       $('recordButton').classList.remove('danger');
       $('recordButton').disabled = !setup.ready;
       $('recordMessage').textContent = 'Ready to record';
+      $('sourceSelect').disabled = false;
       $('liveToggle').disabled = false;
       $('languageSelect').disabled = false;
       $('translateToggle').disabled = false;
@@ -299,3 +320,41 @@ window.go1.onLiveStatus(({ id, status }) => {
   if (status.type === 'transcribing') setStatus(`Live recognition • processed through ${formatClock(status.throughMs)} • backlog ${formatClock(status.behindMs)}`, 'active');
 });
 checkSetup();
+
+// Model installation is a user-driven action; never download anything on launch.
+$('installModelButton').addEventListener('click', async () => {
+  const id = $('modelSelect').value;
+  try {
+    state.modelDownloading = true;
+    $('installModelButton').disabled = true;
+    $('cancelModelButton').hidden = false;
+    $('modelProgress').textContent = `Preparing ${id} download...`;
+    await window.go1.installModel(id);
+    // After installation, switch only if the model is present.
+    const result = await window.go1.selectModel(id);
+    setup = result;
+    renderSetup(setup);
+    $('modelProgress').textContent = `${id} installed and selected.`;
+  } catch (error) { showError(error); }
+  finally {
+    state.modelDownloading = false;
+    $('installModelButton').disabled = false;
+    $('cancelModelButton').hidden = true;
+    await checkSetup();
+  }
+});
+$('cancelModelButton').addEventListener('click', () => window.go1.cancelModelDownload());
+window.go1.onModelProgress(data => {
+  const percent = data.total ? `${Math.round(100 * data.written / data.total)}%` : `${(data.written / 1024 / 1024).toFixed(1)} MB`;
+  $('modelProgress').textContent = `Downloading ${data.id} • ${percent}`;
+});
+
+$('installVadButton').addEventListener('click', async () => {
+  try {
+    $('installVadButton').disabled = true;
+    $('modelProgress').textContent = 'Installing optional Silero VAD model...';
+    await window.go1.installModel('silero');
+    $('modelProgress').textContent = 'Silero installed. Restart GO1 to enable VAD in the local Whisper worker.';
+  } catch (error) { showError(error); }
+  finally { $('installVadButton').disabled = false; }
+});

@@ -52,3 +52,24 @@ function exportTranscript(result, format) {
 }
 
 module.exports = { normalizeWhisperJson, exportTranscript, formatTimestamp };
+
+// whisper-server may emit upstream whisper.cpp JSON or OpenAI-style verbose JSON.
+function normalizeServerResponse(payload) {
+  if (Array.isArray(payload?.transcription)) return normalizeWhisperJson(payload);
+  if (!payload || typeof payload !== 'object') throw new Error('Invalid Whisper server result.');
+  const entries = Array.isArray(payload.segments) ? payload.segments : [];
+  const segments = entries.map(s => {
+    const from = Number(s.start ?? s.start_ms / 1000);
+    const to = Number(s.end ?? s.end_ms / 1000);
+    if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) return null;
+    return { startMs: Math.round(from * 1000), endMs: Math.round(to * 1000), text: String(s.text || '').trim() };
+  }).filter(s => s && s.text);
+  return {
+    language: String(payload.language || payload.result?.language || 'unknown'),
+    text: String(payload.text ?? segments.map(s => s.text).join(' ')).trim(),
+    segments,
+    durationMs: segments.length ? Math.max(...segments.map(s => s.endMs)) : Math.max(0, Math.round((Number(payload.duration) || 0) * 1000)),
+    timestampQuality: segments.length ? 'segment' : 'unavailable'
+  };
+}
+module.exports.normalizeServerResponse = normalizeServerResponse;

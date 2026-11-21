@@ -18,18 +18,34 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <div class="version">GO1 • version 0.2.0</div>
+      <div class="version">GO1 • version 0.3.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span class="top-right">Speech recognition · Offline</span></header>
       <div class="content">
         <div class="heading-line"><div><div class="eyebrow">SPEECH INTELLIGENCE</div><h1>Audio to text<span class="gradient-dot">.</span></h1><p class="subtitle">Accurate multilingual transcription, completely on your Mac.</p></div><span class="feature-pill"><span class="dot"></span> 99-language model family</span></div>
         <div id="setupAlert" class="setup-alert" role="status" aria-live="polite" hidden><div><strong>Local transcription engine setup required</strong><p id="setupMessage"></p></div><button id="recheckButton" class="small-button" type="button">Recheck</button></div>
+        <div class="card model-manager" id="modelManager" style="margin-bottom:16px;padding:20px">
+          <div class="settings-head">LOCAL MODEL MANAGER</div>
+          <p class="microcopy">Download multilingual speech models directly to your Mac. A model is never uploaded to our servers.</p>
+          <label class="setting-label" for="modelSelect">Speech recognition model</label>
+          <div class="model-control"><select id="modelSelect" class="select">
+            <option value="base">Base — fastest, lower accuracy</option>
+            <option value="small" selected>Small — balanced</option>
+            <option value="medium">Medium — higher accuracy</option>
+            <option value="large-v3-turbo">Large v3 Turbo — capable Macs</option>
+          </select><button type="button" id="installModelButton" class="small-button">Install / select</button><button type="button" id="cancelModelButton" class="small-button" hidden>Cancel</button></div>
+          <button type="button" id="installVadButton" class="small-button">Install Silero VAD (optional)</button>
+          <div id="modelProgress" role="status" aria-live="polite" class="microcopy">Model status will appear here.</div>
+        </div>
         <div class="workspace-grid">
           <section class="card input-card" aria-labelledby="sourceTitle">
             <div class="card-heading"><div><span class="card-overline">01 / INPUT</span><h2 id="sourceTitle">Choose your audio</h2></div><span class="round-icon">♫</span></div>
             <div class="mode-tabs" role="tablist" aria-label="Audio source"><button class="mode-tab active" id="recordTab" type="button" role="tab" aria-selected="true">● Record microphone</button><button class="mode-tab" id="uploadTab" type="button" role="tab" aria-selected="false">↥ Upload file</button></div>
-            <div id="recordPanel" class="source-panel"><div class="mic-circle" id="micCircle"><span class="mic-symbol">♩</span></div><div id="recordMessage" class="record-message">Ready to record</div><p class="microcopy">Your microphone is only active while recording.</p><label class="switch-line" for="liveToggle"><span><strong>Live captions</strong><small>Rolling offline recognition while you speak (experimental)</small></span><input type="checkbox" id="liveToggle" checked /></label><div id="recordTimer" class="record-timer">00:00</div><button class="primary-button" id="recordButton" type="button">Start recording</button></div>
+            <div id="recordPanel" class="source-panel">
+            <label class="setting-label" for="sourceSelect">Recording source</label>
+            <select class="select" id="sourceSelect"><option value="microphone">Microphone</option><option value="system">Mac system playback audio (consent required)</option></select>
+            <p class="microcopy">Only capture audio you have permission to record. System audio requires macOS 14.2+ and Screen &amp; System Audio Recording permission. GO1 does not save screen video.</p><div class="mic-circle" id="micCircle"><span class="mic-symbol">♩</span></div><div id="recordMessage" class="record-message">Ready to record</div><p class="microcopy">Your microphone is only active while recording.</p><label class="switch-line" for="liveToggle"><span><strong>Live captions</strong><small>Rolling offline recognition while you speak (experimental)</small></span><input type="checkbox" id="liveToggle" checked /></label><div id="recordTimer" class="record-timer">00:00</div><button class="primary-button" id="recordButton" type="button">Start recording</button></div>
             <div id="uploadPanel" class="source-panel" hidden><div id="dropZone" class="dropzone" tabindex="0" role="button" aria-label="Choose or drop an audio file"><span class="upload-symbol">↥</span><strong>Drop your audio here</strong><p>or click to browse your files</p><span class="small-hint">MP3 · M4A · WAV · FLAC · OGG · WEBM · MP4</span></div><input type="file" id="fileInput" accept="audio/*,.mp3,.m4a,.wav,.flac,.ogg,.webm,.mp4,.aac,.opus" hidden /><div id="chosenFile" class="chosen-file" hidden></div><button class="primary-button" id="transcribeFileButton" type="button" disabled>Transcribe selected file</button></div>
             <div class="settings-divider"></div>
             <div class="settings-head">RECOGNITION SETTINGS</div>
