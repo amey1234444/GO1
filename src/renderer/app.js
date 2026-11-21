@@ -3,7 +3,7 @@
 const $ = id => document.getElementById(id);
 const MAX_BYTES = 80 * 1024 * 1024;
 const MAX_RECORD_MS = 30 * 60 * 1000;
-const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false };
+const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false };
 const languageNames = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', zh: 'Chinese', ja: 'Japanese', ko: 'Korean' };
 
 function setStatus(message, kind = '') {
@@ -11,6 +11,7 @@ function setStatus(message, kind = '') {
   $('statusLine').className = `status-line ${kind}`;
 }
 function showError(error) {
+  if (state.privacyActive) return;
   $('errorBox').hidden = false;
   $('errorBox').textContent = error instanceof Error ? error.message : String(error);
   setStatus('Something went wrong');
@@ -72,6 +73,7 @@ function setBusy(busy) {
 }
 function resetResults() { state.result = null; $('copyButton').disabled = true; $('exportButton').disabled = true; $('exportMenu').hidden = true; $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
 function renderResult(result, live = false) {
+  if (state.privacyActive) return;
   state.result = result;
   $('emptyResult').hidden = true;
   $('transcriptContent').hidden = false;
@@ -92,7 +94,7 @@ function renderResult(result, live = false) {
   setStatus(live ? 'Recording • live captions may lag behind speech' : result.text ? 'Transcription completed' : 'No speech detected', live ? 'active' : 'success');
 }
 async function processBytes(bytes) {
-  if (!setup.ready || state.busy) return;
+  if (state.privacyActive || !setup.ready || state.busy) return;
   hideError(); resetResults(); setBusy(true); setStatus('Processing locally...', 'active');
   $('processingMessage').textContent = 'Preparing transcription...';
   try {
@@ -112,8 +114,13 @@ function chooseMimeType() {
   return options.find(type => window.MediaRecorder?.isTypeSupported(type)) || '';
 }
 async function startLive(stream) {
+  if (state.privacyActive) throw new Error('Exit presentation privacy mode before recording.');
   if (!window.AudioWorkletNode) throw new Error('AudioWorklet is not available; turn off Live captions to record first.');
   const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked });
+  if (state.privacyActive) {
+    await window.go1.cancelLive(id).catch(() => {});
+    throw new Error('Presentation privacy mode is active; recording is disabled.');
+  }
   state.liveId = id;
   try {
     const context = new AudioContext();
@@ -169,6 +176,7 @@ async function cleanupLive() {
 }
 
 async function startRecording() {
+  if (state.privacyActive) return;
   hideError();
   if (!setup.ready || !setup.whisperServer) return showError('Install the local transcription engine and whisper-server first.');
   if (!window.MediaRecorder) return showError('This Electron version does not support MediaRecorder.');
@@ -190,10 +198,17 @@ async function startRecording() {
       if (!await window.go1.requestMicrophone()) throw new Error('Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone.');
       stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }, video: false });
     }
+    if (state.privacyActive) { stream.getTracks().forEach(track => track.stop()); return; }
     const audioStream = new MediaStream(stream.getAudioTracks());
     state.stream = stream;
     if ($('liveToggle').checked) {
       await startLive(audioStream);
+      if (state.privacyActive) {
+        await cleanupLive();
+        if (state.liveId) await window.go1.cancelLive(state.liveId).catch(() => {});
+        state.liveId = null;
+        return;
+      }
       state.recording = true;
       state.startTime = Date.now();
       $('micCircle').classList.add('recording');
@@ -220,6 +235,7 @@ async function startRecording() {
     recorder.addEventListener('dataavailable', event => { if (event.data.size) state.chunks.push(event.data); });
     recorder.addEventListener('error', event => { stopRecording(); showError(event.error || 'Recording failed.'); });
     recorder.addEventListener('stop', async () => {
+      if (recorder.go1Discard) return;
       stopClock(); stopTracks(); state.recording = false; $('sourceSelect').disabled = false;
       $('micCircle').classList.remove('recording');
       $('recordButton').textContent = 'Start recording';
@@ -290,6 +306,76 @@ function getExportContent(format, result) {
   throw new Error('Unsupported format');
 }
 
+
+// Presentation privacy is a visible, user-controlled redaction and recording stop.
+// The app does not continue recording, transcribing, or answering while protected.
+async function enablePresentationPrivacy() {
+  if (state.privacyActive || state.privacyTransition) return;
+  state.privacyActive = true; // synchronous guard against late microphone permissions and UI updates
+  state.privacyTransition = true;
+  const button = $('privacyButton');
+  button.disabled = true;
+  $('privacyCurtain').hidden = false;
+  $('privacyCurtainStatus').textContent = 'Stopping capture and clearing private content...';
+  try {
+    stopClock();
+    state.stopping = true;
+    if (state.recorder) {
+      state.recorder.go1Discard = true;
+      if (state.recorder.state !== 'inactive') state.recorder.stop();
+    }
+    // Stop input tracks immediately, even if the ASR worker is still busy.
+    stopTracks();
+    if (state.liveId) {
+      const id = state.liveId;
+      state.liveId = null;
+      await cleanupLive();
+      await window.go1.cancelLive(id).catch(() => {});
+    }
+    await window.go1.pauseForPresentation();
+    state.recording = false;
+    state.stopping = false;
+    state.recorder = null;
+    state.chunks = [];
+    state.file = null;
+    $('chosenFile').hidden = true;
+    $('chosenFile').textContent = '';
+    $('fileInput').value = '';
+    $('micCircle').classList.remove('recording');
+    $('recordButton').textContent = 'Start recording';
+    $('recordButton').classList.remove('danger');
+    $('recordMessage').textContent = 'Ready to record';
+    $('sourceSelect').disabled = false;
+    $('liveToggle').disabled = false;
+    $('languageSelect').disabled = false;
+    $('translateToggle').disabled = false;
+    resetResults();
+    $('transcriptBody').textContent = '';
+    $('segmentList').replaceChildren();
+    $('errorBox').hidden = true;
+    $('processingPane').hidden = true;
+    $('exportMenu').hidden = true;
+    $('privacyCurtainStatus').textContent = 'Microphone and playback capture stopped. Private transcripts cleared.';
+  } catch (error) {
+    $('privacyCurtainStatus').textContent = 'Capture was stopped locally. An additional background task may require attention: ' + String(error.message || error);
+  } finally {
+    state.privacyTransition = false;
+    button.disabled = false;
+    $('exitPrivacyButton').focus();
+  }
+}
+function disablePresentationPrivacy() {
+  if (state.privacyTransition || !state.privacyActive) return;
+  state.privacyActive = false;
+  $('privacyCurtain').hidden = true;
+  $('privacyButton').disabled = false;
+  setStatus('Presentation privacy ended — recording remains off');
+  $('emptyResult').hidden = false;
+  checkSetup();
+}
+$('privacyButton').addEventListener('click', enablePresentationPrivacy);
+$('exitPrivacyButton').addEventListener('click', disablePresentationPrivacy);
+
 $('recordTab').addEventListener('click', () => chooseMode('record'));
 $('uploadTab').addEventListener('click', () => chooseMode('upload'));
 $('recordButton').addEventListener('click', () => state.recording ? stopRecording() : startRecording());
@@ -314,9 +400,10 @@ $('exportMenu').addEventListener('click', async event => {
   try { await window.go1.save(format, getExportContent(format, state.result)); }
   catch (error) { showError(error); }
 });
-window.go1.onStage(message => { $('processingMessage').textContent = message; setStatus(message, 'active'); });
-window.go1.onLiveUpdate(({ id, result }) => { if (id === state.liveId) renderResult(result, result.isLive); });
+window.go1.onStage(message => { if (state.privacyActive) return; $('processingMessage').textContent = message; setStatus(message, 'active'); });
+window.go1.onLiveUpdate(({ id, result }) => { if (!state.privacyActive && id === state.liveId) renderResult(result, result.isLive); });
 window.go1.onLiveStatus(({ id, status }) => {
+  if (state.privacyActive) return;
   if (id !== state.liveId) return;
   if (status.type === 'error') { showError(status.message); stopRecording(); return; }
   if (status.type === 'transcribing') setStatus(`Live recognition • processed through ${formatClock(status.throughMs)} • backlog ${formatClock(status.behindMs)}`, 'active');

@@ -1,13 +1,13 @@
 {
   "name": "go1-multilingual-transcription",
-  "version": "0.3.0",
-  "description": "Offline-first multilingual transcription with persistent whisper.cpp, VAD, and consent-based Mac system audio capture",
+  "version": "0.4.0",
+  "description": "Offline multilingual transcription with presentation privacy redaction and recording stop",
   "main": "src/main.js",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/transcription/vad.js && node --check src/transcription/vad-live.js && node --check src/transcription/worker.js && node --check src/transcription/models.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js && node --check forge.config.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/transcription/vad.js && node --check src/transcription/vad-live.js && node --check src/transcription/worker.js && node --check src/transcription/models.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js && node --check forge.config.js && node --check src/privacy/presentation.js",
     "make": "electron-forge make",
     "package": "electron-forge package"
   },

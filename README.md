@@ -1,8 +1,12 @@
-# GO1 0.3.0 — Private multilingual transcription for macOS
+# GO1 0.4.0 — Private multilingual transcription for macOS
 
 GO1 is a **local-first Electron application for consent-based recording and transcription**. It has two recording sources—microphone and macOS system playback audio—plus file import and exports. No model API key, cloud account, or subscription is required for local speech recognition.
 
 > **Status:** This repository has automated JavaScript tests and a macOS build workflow. Recording permissions, real multilingual accuracy, model downloads, the signed app, and hardware performance still require real-device testing. No Mac device test or notarized build is claimed here.
+
+## Presentation privacy (new in 0.4.0)
+
+The **Enable presentation privacy** button immediately stops active local microphone/system-audio capture, cancels transcription, clears the workspace transcript and displays a full-window privacy screen. **Return to workspace** does not restart recording. This is for authorized presentation hygiene, not stealth or invisibility. Platform share modes vary; see `docs/MEETING_PRESENTATION_PRIVACY.md`. Previously exported files remain unchanged.
 
 ## Implemented
 

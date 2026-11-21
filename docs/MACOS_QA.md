@@ -38,3 +38,11 @@ Record date, model/CPU, macOS version, Electron version, whether running from Te
 
 ## Release gate
 Do not claim a signed, notarized, standalone, production-ready app until all blocking tests pass on representative hardware. `spctl`, `codesign`, `stapler`, certificate validity, and macOS Gatekeeper behavior need real testing.
+
+## Presentation privacy mode
+- [ ] Enable privacy during a microphone recording; verify audio tracks stop.
+- [ ] Enable privacy during system playback capture; verify no further audio is captured.
+- [ ] Enable privacy during transcription; confirm pending results cannot reappear.
+- [ ] Test delayed microphone permission prompt while privacy becomes active.
+- [ ] Preview selected-window and entire-screen shares in Meet, Teams, Zoom.
+- [ ] Confirm recording never automatically restarts after exiting privacy.

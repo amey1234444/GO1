@@ -18,7 +18,7 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <div class="version">GO1 • version 0.3.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.4.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span class="top-right">Speech recognition · Offline</span></header>
@@ -68,5 +68,14 @@
       </div>
     </main>
   </div>
+  <section id="privacyCurtain" class="privacy-curtain" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" hidden>
+    <div class="privacy-curtain-panel">
+      <div class="privacy-curtain-icon" aria-hidden="true">◈</div>
+      <h1 id="privacyTitle">Presentation privacy mode</h1>
+      <p id="privacyCurtainStatus" role="status" aria-live="polite">Stopping capture and clearing private content...</p>
+      <p class="privacy-curtain-note">GO1 isn't recording or transcribing while this mode is active. This does not make the application invisible to meeting platforms. Share a specific window or tab, not your entire desktop, to control what you present.</p>
+      <button id="exitPrivacyButton" type="button" class="primary-button">Return to workspace</button>
+    </div>
+  </section>
 </body>
 </html>

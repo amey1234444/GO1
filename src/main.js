@@ -8,6 +8,7 @@ const { getSetup, transcribe } = require('./transcription/engine');
 const { VadLiveSession } = require('./transcription/vad-live');
 const { createWorker } = require('./transcription/worker');
 const { ModelManager, MODEL_CATALOG, modelState } = require('./transcription/models');
+const { cancelPrivateProcessing } = require('./privacy/presentation');
 
 app.setName('GO1');
 let mainWindow;
@@ -221,5 +222,17 @@ ipcMain.handle('go1:prepare-system-audio', event => {
   onlyApp(event);
   if (process.platform !== 'darwin') throw new Error('System audio capture is only supported on macOS in GO1.');
   displayPermissionUntil = Date.now() + 15000;
+  return true;
+});
+
+// Presentation privacy does not attempt to bypass screen sharing or meeting monitoring.
+// A renderer action cancels background inference before sensitive UI is masked.
+ipcMain.handle('go1:privacy-pause', event => {
+  onlyApp(event);
+  displayPermissionUntil = 0;
+  cancelPrivateProcessing({ activeController, liveController, liveSession });
+  liveSession = null;
+  liveController = null;
+  liveId = null;
   return true;
 });

@@ -3,3 +3,13 @@
 #recordPanel .switch-line{margin:16px 10px;text-align:left;padding:10px 12px;background:#172238;border:1px solid #303d58;border-radius:9px}#recordPanel .switch-line small{display:block;color:#95a5c0;font-size:11px;margin-top:3px}.segment.provisional{opacity:.62;font-style:italic}.record-message{overflow-wrap:anywhere}
 
 .model-control{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.model-control .select{flex:1;min-width:210px}.model-manager{max-width:100%;}
+
+/* Share-safe presentation privacy: explicit redaction, no hidden assistance. */
+.privacy-action{display:block;width:100%;margin:0 0 18px;border:1px solid #938bea;border-radius:10px;padding:12px 9px;background:#292a4b;color:#e9e6ff;font-weight:700;font-size:12px}
+.privacy-action:hover{background:#383c69}
+.privacy-curtain{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#0b1020;color:#eef0ff;padding:24px}
+.privacy-curtain-panel{text-align:center;max-width:580px;padding:44px 32px;border:1px solid #394363;background:#171e34;border-radius:20px}
+.privacy-curtain-icon{font-size:42px;color:#b4a8ff}
+.privacy-curtain h1{font-size:28px;letter-spacing:-.6px}
+.privacy-curtain p{line-height:1.65;color:#bbc6e0;font-size:14px}
+.privacy-curtain .privacy-curtain-note{font-size:12px;color:#94a5c4;margin:22px auto 28px}
