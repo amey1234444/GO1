@@ -117,7 +117,7 @@ async function main() {
   report.macOS = (await run('sw_vers', ['-productVersion'])).stdout.trim();
   await run('hdiutil', ['attach', '-readonly', '-nobrowse', '-mountpoint', mount, dmg], { timeout: 120000 }); mounted = true;
   const appName = (await fs.readdir(mount)).find(name => name.endsWith('.app')); assert.ok(appName);
-  const bundle = path.join(mount, appName), native = path.join(bundle, 'Contents/Resources/native/bin');
+  const bundle = path.join(mount, appName), native = await fs.realpath(path.join(bundle, 'Contents/Resources/native/bin'));
   report.appVersion = (await run('plutil', ['-extract', 'CFBundleShortVersionString', 'raw', path.join(bundle, 'Contents/Info.plist')])).stdout.trim();
   const ollama = await launch('ollama', ['serve'], 'ollama', { ...process.env, OLLAMA_HOST: '127.0.0.1:11434', OLLAMA_MODELS: path.join(temp, 'ollama-models') });
   await record('Local AI runtime and model', async () => {
@@ -151,7 +151,11 @@ async function main() {
   const api = expression => workspace.evaluate(expression);
   await record('Packaged launch and bundled executable resolution', async () => {
     const setup = await api('window.go1.checkSetup()');
-    for (const key of ['ffmpeg', 'ffprobe', 'whisper', 'whisperServer']) assert.ok(setup[key]?.startsWith(native + '/'), `${key} did not resolve from DMG`);
+    report.detectedSetup = setup;
+    for (const [key, filename] of [['ffmpeg','ffmpeg'], ['ffprobe','ffprobe'], ['whisper','whisper-cli'], ['whisperServer','whisper-server']]) {
+      assert.ok(setup[key], `${key} unavailable`);
+      assert.equal(await fs.realpath(setup[key]), path.join(native, filename), `${key} must resolve to the actual DMG executable: ${setup[key]}`);
+    }
     return setup;
   });
   await record('First-run speech model installation and selection', async () => {
@@ -200,6 +204,8 @@ async function main() {
     const transcript = await panel.evaluate("document.getElementById('transcript').textContent"); checkWords(transcript);
     const protection = await api('window.go1.captureProtectionInfo()'); assert.equal(protection.allApplied, true);
     report.guidance = answer.guidance;
+    const screenshot = await panel.call('Page.captureScreenshot', { format: 'png' });
+    await fs.writeFile(path.join(output, 'packaged-companion-real-inference.png'), Buffer.from(screenshot.data, 'base64'));
     return { answer, chunks: chunks.length, displayed, protection };
   });
   await record('Compact, translucency and close/reopen retain live text', async () => {
@@ -207,6 +213,8 @@ async function main() {
     assert.equal(await panel.evaluate('window.go1Companion.setOpacity(.7)'), .7);
     const style = await panel.evaluate("({compact:document.getElementById('companionApp').classList.contains('compact'),alpha:getComputedStyle(document.documentElement).getPropertyValue('--surface-opacity').trim()})");
     assert.equal(style.compact, true); assert.equal(style.alpha, '0.7');
+    const screenshot = await panel.call('Page.captureScreenshot', { format: 'png' });
+    await fs.writeFile(path.join(output, 'packaged-companion-compact.png'), Buffer.from(screenshot.data, 'base64'));
     await panel.evaluate('window.go1Companion.close()').catch(error => { if (!/closed|context/i.test(error.message)) throw error; });
     panel.close();
     await api('window.go1.showCompanion()');
@@ -255,7 +263,7 @@ main().catch(error => { report.status = 'failed'; report.error = error.stack; pr
     await child.saveLog();
   }
   await delay(1000);
-  if (mounted) { try { await run('hdiutil', ['detach', mount, '-force'], { timeout: 30000 }); } catch (error) { report.cleanupError = error.message; process.exitCode = 1; } }
+  if (mounted) { try { await run('hdiutil', ['detach', mount, '-force'], { timeout: 30000 }); } catch (error) { report.cleanupError = error.message; report.status = 'failed'; process.exitCode = 1; } }
   report.finishedAt = new Date().toISOString();
   await fs.mkdir(output, { recursive: true });
   await fs.writeFile(path.join(output, 'packaged-smoke.json'), JSON.stringify(report, null, 2));

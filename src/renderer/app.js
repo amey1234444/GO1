@@ -146,9 +146,11 @@ function renderSetup(status) {
   $('modelSelect').value = status.selectedModel || 'small';
   const installed = status.models?.[status.selectedModel]?.installed;
   if (!state.modelDownloading) $('modelProgress').textContent = installed ? `Selected model: ${status.selectedModel} (installed).` : `Selected model: ${status.selectedModel} (download required).`;
-  if (!status.ready) {
-    const missing = [!status.ffmpeg && 'FFmpeg', !status.ffprobe && 'FFprobe', !status.whisper && 'whisper-cli', !status.whisperServer && 'whisper-server', !status.modelFound && 'multilingual Whisper model'].filter(Boolean).join(', ');
-    $('setupMessage').textContent = `Missing: ${missing}. ${status.platform === 'win32' ? 'Run PowerShell scripts/setup-windows.ps1 and follow its dependency instructions' : 'Run bash scripts/setup-macos.sh small in Terminal'}, then press Recheck. Model location: ${status.model}`;
+  if (!status.ready || !status.whisperServer) {
+    const missingTools = [!status.ffmpeg && 'FFmpeg', !status.ffprobe && 'FFprobe', !status.whisper && 'whisper-cli', !status.whisperServer && 'whisper-server'].filter(Boolean);
+    $('setupMessage').textContent = missingTools.length
+      ? `Missing tools: ${missingTools.join(', ')}. ${status.platform === 'win32' ? 'Run PowerShell scripts/setup-windows.ps1 and follow its dependency instructions' : 'Reinstall the latest bundled Mac DMG, or run scripts/setup-macos.sh for a source checkout'}, then press Recheck.`
+      : 'One-time setup: choose a speech model below and click Install / select. Base is a smaller download; Small is the default. The recording tools are already included.';
   }
   $('recordButton').disabled = !status.ready || !status.whisperServer || state.busy;
   $('transcribeFileButton').disabled = !status.ready || !state.file || state.busy;
