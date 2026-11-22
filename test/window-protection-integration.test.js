@@ -25,6 +25,8 @@ async function boot(preferences = {}, overrides = {}) {
     isContentProtected() { return this.protected; }
     show() { this.events.push(['show']); this.emit('show'); }
     focus() {}
+    getBounds() { return { x: this.options.x || 0, y: this.options.y || 0, width: this.options.width, height: this.options.height }; }
+    setBounds(bounds) { Object.assign(this.options, bounds); }
     showInactive() { this.show(); }
     setAlwaysOnTop() {}
     setVisibleOnAllWorkspaces() {}
@@ -34,7 +36,8 @@ async function boot(preferences = {}, overrides = {}) {
   const app = new EventEmitter();
   Object.assign(app, { setName() {}, getPath: () => '/test-user-data', whenReady: () => ({ then: fn => { ready = fn; } }), quit() {} });
   const fakeSession = { setDisplayMediaRequestHandler() {}, setPermissionRequestHandler() {}, setPermissionCheckHandler() {} };
-  const electron = { app, BrowserWindow: Window, ipcMain: { handle: (name, fn) => handlers.set(name, fn), on: (name, fn) => listeners.set(name, fn) }, session: { defaultSession: fakeSession }, globalShortcut: { register: () => true }, systemPreferences: {}, clipboard: {}, desktopCapturer: {}, dialog: {} };
+  const area = { x: 0, y: 0, width: 1440, height: 900 };
+  const electron = { screen: { getPrimaryDisplay: () => ({ workArea: area }), getDisplayMatching: () => ({ workArea: area }) }, app, BrowserWindow: Window, ipcMain: { handle: (name, fn) => handlers.set(name, fn), on: (name, fn) => listeners.set(name, fn) }, session: { defaultSession: fakeSession }, globalShortcut: { register: () => true }, systemPreferences: {}, clipboard: {}, desktopCapturer: {}, dialog: {} };
   const nodeRequire = createRequire(mainPath);
   const requireMock = name => {
     if (Object.hasOwn(overrides, name)) return overrides[name];
@@ -45,7 +48,7 @@ async function boot(preferences = {}, overrides = {}) {
     };
     if (name === './transcription/engine') return { getSetup: () => ({ ready: true, modelFound: true }), resolveExecutable: () => '/fake/whisper-server' };
     if (name === './transcription/worker') return { createWorker: () => ({ ensureReady: async () => {}, close() {} }) };
-    if (name === './transcription/vad-live') return { VadLiveSession: class { cancel() {} } };
+    if (name === './transcription/vad-live') return { VadLiveSession: class { cancel() {} snapshot() { return { text: '' }; } } };
     if (name === './transcription/models') return { MODEL_CATALOG: { small: {}, silero: { file: 'silero.bin' } }, modelState: () => ({}), ModelManager: class {} };
     return nodeRequire(name);
   };
@@ -90,6 +93,29 @@ function deferred() {
   let resolve; const promise = new Promise(done => { resolve = done; });
   return { promise, resolve };
 }
+test('companion collapses without ending the session and reopens with its session state', async () => {
+  const { windows, invoke, sent } = await boot();
+  await invoke('go1:live-start', { audioSource: 'microphone', assistancePermitted: true });
+  const panel = windows[1];
+  assert.equal(panel.options.opacity, 1);
+  invoke('go1:companion-question', 'Keep this question after reopening');
+  assert.equal(invoke('go1:companion-compact', true, panel.webContents), true);
+  assert.equal(panel.getBounds().height, 76);
+  assert.equal(invoke('go1:content-protection-info').activity.liveSession, true);
+  assert.equal(invoke('go1:companion-opacity', .7, panel.webContents), .7);
+  assert.equal(panel.options.opacity, 1); // Text never becomes transparent with the surface.
+  assert.throws(() => invoke('go1:companion-compact', true, windows[0].webContents), /Unrecognized/);
+  assert.throws(() => invoke('go1:companion-assist', 'Hello?', windows[0].webContents), /Unrecognized/);
+  invoke('go1:companion-close', null, panel.webContents);
+  await invoke('go1:companion-open');
+  const snapshot = sent.filter(s => s.channel === 'go1:companion-snapshot').at(-1).data;
+  assert.equal(snapshot.question, 'Keep this question after reopening');
+  assert.equal(snapshot.compact, true);
+  assert.equal(snapshot.surfaceOpacity, .7);
+  invoke('go1:privacy-pause');
+  assert.equal(windows[2].dead, true);
+  assert.equal(invoke('go1:content-protection-info').activity.liveSession, false);
+});
 for (const audioSource of ['microphone', 'system']) {
   test(`live ${audioSource} PCM and AI streams continue across protection changes`, async () => {
     const inferenceStarted = deferred(), releaseInference = deferred(), aiStarted = deferred();
@@ -121,7 +147,9 @@ for (const audioSource of ['microphone', 'system']) {
     const pcm = new Int16Array(16000); pcm.fill(6000, 0, 6400);
     send('go1:live-frame', { id, pcm });
     await inferenceStarted.promise;
-    const ai = invoke('go1:assist-generate', { question: 'How should we deploy?', context: 'A deployment discussion.' });
+    const ai = audioSource === 'system'
+      ? invoke('go1:companion-assist', 'How should we deploy?', windows[1].webContents)
+      : invoke('go1:assist-generate', { question: 'How should we deploy?', context: 'A deployment discussion.' });
     await aiStarted.promise;
     for (const enabled of [true, false, true]) {
       const info = await invoke('go1:content-protection-set', enabled);

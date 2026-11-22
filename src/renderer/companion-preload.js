@@ -9,5 +9,7 @@ contextBridge.exposeInMainWorld('go1Companion', Object.freeze({
   close: () => ipcRenderer.invoke('go1:companion-close'),
   focusWorkspace: () => ipcRenderer.invoke('go1:companion-focus-main'),
   stopAndMask: () => ipcRenderer.invoke('go1:companion-privacy'),
-  setOpacity: value => ipcRenderer.invoke('go1:companion-opacity', value)
+  setOpacity: value => ipcRenderer.invoke('go1:companion-opacity', value),
+  setCompact: value => ipcRenderer.invoke('go1:companion-compact', value),
+  ask: question => ipcRenderer.invoke('go1:companion-assist', question)
 }));

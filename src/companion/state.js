@@ -1,7 +1,7 @@
 'use strict';
 
 // Only bounded, plain-text data is sent to the independent companion window.
-// This is a normal, screen-share-visible app window, not an anti-capture surface.
+// Capture exclusion is owned separately by the window protection controller.
 const MAX_TRANSCRIPT = 1800;
 const MAX_GUIDANCE = 16000;
 function cleanText(value, max) {
@@ -11,7 +11,7 @@ function cleanText(value, max) {
 function opacityFromInput(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) throw new Error('Invalid window opacity.');
-  return Math.round(Math.max(0.82, Math.min(1, numeric)) * 100) / 100;
+  return Math.round(Math.max(0.58, Math.min(1, numeric)) * 100) / 100;
 }
 function freshCompanionState({ role = '', language = 'auto', sessionId = '', assistancePermitted = false } = {}) {
   return {

@@ -19,7 +19,7 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Stop &amp; mask</button><div class="version">GO1 • version 0.17.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Stop &amp; mask</button><div class="version">GO1 • version 0.18.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
@@ -41,7 +41,7 @@
                 <label class="wide-field">Role description <textarea class="studio-input" id="studioRoleDescription" name="roleDescription" maxlength="1600" rows="2" placeholder="What will you be responsible for in this role?"></textarea></label>
                 <label class="wide-field">Job description <textarea class="studio-input" id="studioJobDescription" name="jobDescription" maxlength="10000" rows="4" placeholder="Paste the job requirements, technologies and responsibilities here..."></textarea></label>
               </div>
-              <div class="studio-actions"><button id="launchPracticeButton" type="submit" class="studio-launch">Launch consented live session <span aria-hidden="true">↗</span></button><button id="savePracticeButton" type="button" class="studio-save">Save context</button><span id="studioStatus" role="status" aria-live="polite">Ready to configure</span></div>
+              <div class="studio-actions"><button id="launchPracticeButton" type="submit" class="studio-launch">Launch live companion <span aria-hidden="true">↗</span></button><button id="savePracticeButton" type="button" class="studio-save">Save context</button><span id="studioStatus" role="status" aria-live="polite">Ready to configure</span></div>
             </form>
             <div class="studio-info"><div class="studio-info-head">02 / SESSION FLOW</div><div class="studio-flow-row"><span>01</span><div><strong>Configure</strong><p>Role, context, language and focus</p></div></div><div class="studio-flow-row"><span>02</span><div><strong>Capture a permitted session</strong><p>Local Whisper captions while you speak</p></div></div><div class="studio-flow-row"><span>03</span><div><strong>Review and improve</strong><p>Use local Ollama for optional guidance and post-session review</p></div></div><div class="studio-divider"></div><div class="studio-ai-status" id="studioAiStatus">AI coach: not checked</div><button id="checkCoachButton" type="button" class="studio-save">Check local AI</button><div class="studio-small">Live capture protection keeps transcription and enabled AI running. Stop &amp; mask is a separate emergency action.</div></div>
           </div>

@@ -7,7 +7,9 @@ test('Mac companion uses a frameless nonactivating panel', () => {
   const options = companionWindowOptions('darwin');
   assert.equal(options.type, 'panel'); assert.equal(options.frame, false);
   assert.equal(options.transparent, true); assert.equal(options.hasShadow, false);
-  assert.deepEqual(companionWindowOptions('win32'), {});
+  assert.equal(companionWindowOptions('win32').transparent, true);
+  assert.equal(companionWindowOptions('win32').type, undefined);
+  assert.deepEqual(companionWindowOptions('linux'), {});
 });
 test('Mac companion keeps its fullscreen/Spaces policy across restore without modifying capture state', () => {
   const w = new EventEmitter(), calls = [];

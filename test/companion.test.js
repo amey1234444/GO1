@@ -7,7 +7,7 @@ const { opacityFromInput, cleanText, freshCompanionState, updateQuestion, update
 
 test('opacity is clamped to a readable range', () => {
   assert.equal(opacityFromInput(0.94), 0.94);
-  assert.equal(opacityFromInput(0), 0.82);
+  assert.equal(opacityFromInput(0), 0.58);
   assert.equal(opacityFromInput(8), 1);
   assert.throws(() => opacityFromInput('NaN'));
 });

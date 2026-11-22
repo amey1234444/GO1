@@ -31,7 +31,7 @@ jobs:
         run: bash scripts/verify-dmg.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: GO1-macOS-arm64-v0.17.0-live-protection-unsigned-DMG
+          name: GO1-macOS-arm64-v0.18.0-glass-companion-unsigned-DMG
           path: out/make/**/*.dmg
           if-no-files-found: error
           retention-days: 14

@@ -1,5 +1,9 @@
 # GO1
 
+## v0.18 — floating translucent companion
+
+Launch a frameless companion with readable opaque text, adjustable translucent surfaces, transcript and AI notes side by side, a compact toolbar and direct local AI questions. [Design, GO Client findings and verification](docs/FLOATING_COMPANION.md). Capture protection remains independent from appearance and from Stop & mask.
+
 ## v0.17 — live protection keeps processing active
 
 **Live capture protection (stealth)** leaves transcription and enabled AI running. **Stop & mask** deliberately stops both. Workspace and companion windows disable background throttling, and the UI reports live session/AI status separately from capture protection. [Live mode behavior and Google Meet verification](docs/LIVE_PROTECTION_AND_MEET.md).

@@ -7,13 +7,44 @@
 <link rel="stylesheet" href="./companion.css"><script src="./companion.js" defer></script>
 </head>
 <body>
-<div class="app">
- <header class="top"><div class="brand"><div class="brandmark">G<span>1</span></div><div><small>GO1 / LIVE COMPANION</small><strong>Session notes</strong></div></div><div id="liveDot" class="live-pill"><span></span> LIVE</div></header>
- <div class="share-note" role="note">Capture protection is best effort; this panel may still appear in screen shares. Use only where recording and AI assistance are permitted.</div>
- <p id="protectionState" class="share-note" role="status">Checking capture protection...</p>
- <section class="context"><div class="overline">SESSION CONTEXT</div><div class="role" id="role">Your role</div><div id="language" class="language">Language: Auto</div></section>
- <section class="panel"><div class="panel-title"><span>01</span><h2>Latest transcript</h2></div><p id="transcript" class="transcript" aria-live="polite">Waiting for speech...</p></section>
- <section class="panel guidance"><div class="panel-title"><span>02</span><h2>Suggested talking points</h2></div><p class="guidance-status" id="guidanceStatus" aria-live="polite">Request guidance from the GO1 workspace.</p><div class="question" id="question" hidden></div><div class="answer" id="guidance" role="status" aria-live="polite">No suggestions yet. Open the main GO1 window to review a question and request guidance.</div></section>
- <footer><div class="opacity"><label for="opacity">Window opacity</label><input id="opacity" type="range" min="82" max="100" value="94" step="1"><output id="opacityValue">94%</output></div><div class="actions"><button id="focusMain" class="light" type="button">Open GO1</button><button id="close" class="light" type="button">Close panel</button><button id="privacy" class="danger" type="button">Stop &amp; mask</button></div></footer>
+<div class="app" id="companionApp">
+ <header class="toolbar">
+  <div class="brand" title="Drag to move"><span class="brandmark">g<span>1</span></span><strong>GO1</strong><span class="brand-divider"></span><span class="session-label">Live companion</span></div>
+  <span id="liveDot" class="live-pill"><i></i> Listening</span>
+  <div class="toolbar-actions">
+   <button id="focusMain" class="toolbar-button" title="Open workspace" aria-label="Open GO1 workspace">↗</button>
+   <button id="compact" class="toolbar-button" title="Collapse to toolbar" aria-label="Collapse to toolbar" aria-expanded="true">−</button>
+   <button id="close" class="toolbar-button" title="Close panel; session keeps running" aria-label="Close panel; keep session running">×</button>
+  </div>
+ </header>
+ <main class="workspace">
+  <div class="context"><div><span class="eyebrow">IN CONVERSATION</span><strong id="role">Your session</strong></div><span id="language" class="language">Auto</span></div>
+  <div class="panes">
+   <section class="transcript-pane" aria-labelledby="transcriptTitle">
+    <div class="section-heading"><h2 id="transcriptTitle">Live transcript</h2><span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
+    <p class="section-hint">The latest from your conversation</p>
+    <div class="transcript" id="transcript" aria-live="polite">Listening for your first words…</div>
+    <div class="local-note"><span></span> Processed on your device</div>
+   </section>
+   <section class="guidance-pane" aria-labelledby="guidanceTitle">
+    <div class="section-heading"><h2 id="guidanceTitle"><span class="spark" aria-hidden="true">✦</span> AI notes</h2><span class="model-chip">LOCAL AI</span></div>
+    <p id="guidanceStatus" class="section-hint" role="status">Ask a question when you need a hand.</p>
+    <div class="question" id="question" hidden></div>
+    <div class="answer" id="guidance" role="status" aria-live="polite">A little clarity, right when you need it.\nAsk about your conversation below.</div>
+    <form id="askForm" class="composer">
+     <label class="sr-only" for="questionInput">Question for local AI</label>
+     <textarea id="questionInput" rows="2" maxlength="2000" placeholder="Ask about this conversation…"></textarea>
+     <div class="composer-actions"><span id="askHint">⌘ / Ctrl + Enter to ask</span><button id="ask" class="ask-button" type="submit" disabled>Ask AI <span aria-hidden="true">↗</span></button></div>
+    </form>
+   </section>
+  </div>
+  <footer class="controls">
+   <details class="protection-details"><summary id="protectionState">Checking protection…</summary><div class="protection-popover">Capture exclusion depends on the sharing method. Check the receiving device. Transcription and enabled AI keep running. Stop &amp; mask ends processing.</div></details>
+   <div class="opacity"><label for="opacity">Surface</label><input id="opacity" type="range" min="58" max="100" value="86" step="1" aria-label="Panel surface opacity"><output id="opacityValue">86%</output></div>
+   <button id="privacy" class="stop-button" type="button">Stop &amp; mask</button>
+  </footer>
+ </main>
+ <div class="bottom-bar"><span>YOUR CONVERSATION, WITH ROOM TO THINK.</span><span>Drag the toolbar to move</span></div>
 </div>
-</body></html>
+</body>
+</html>
