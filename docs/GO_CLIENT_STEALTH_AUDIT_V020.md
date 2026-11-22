@@ -39,10 +39,63 @@ Dock hiding changes local app presentation. It does **not** prevent a meeting ap
 
 [Electron documents](https://www.electronjs.org/docs/latest/api/browser-window#winsetcontentprotectionenable-macos-windows) that ScreenCaptureKit-based applications can capture a window despite content protection. [Apple documents NSWindowSharingNone](https://developer.apple.com/documentation/appkit/nswindow/sharingtype-swift.enum/none?language=objc) as legacy and advises against relying on it to omit captured content. [An Apple Developer Forums report](https://developer.apple.com/forums/thread/808016) describes capture differences after filter changes; Apple's response requests a reproducible bug report. That is a reason to test multiple capture states, not evidence of guaranteed exclusion.
 
-The current implementation can match the observed API configuration. Only testing the exact OS, meeting client and share mode on a second receiving device can establish the result for that setup. The supplied GO Client itself has not been run in such a meeting during this task.
+The current implementation can match the observed API configuration. Only testing the exact OS, meeting client and share mode on a second receiving device can establish the result for that setup. The supplied GO Client itself has not been run in such a meeting during this task. Mac results do not establish Windows behavior; the platforms use different native protection mechanisms.
 
 ## Validation and download
 
-Execution pending for this v0.20 change. Results and the installer link are filled in only after retrieving the native workflow outcomes. Earlier verified v0.19 evidence remains in [the packaged-app report](PACKAGED_APP_VALIDATION.md).
+**Passed on 22 November 2026.** Built source: [b010dc9](https://github.com/amey1234444/GO1/commit/b010dc9146f93785860f8952fd794c2ba4fe3f4d). [Successful Mac workflow](https://github.com/amey1234444/GO1/actions/runs/45053065905).
+
+**[Download v0.20.0 for Apple Silicon](https://github.com/amey1234444/GO1/actions/runs/45053065905/artifacts/14765379908).** Sign in to GitHub, download the artifact ZIP, extract it and open **GO1-0.20.0-arm64.dmg** inside. Copy GO1.app to Applications. The installer is unsigned/not notarized; the artifact expires on 6 December 2026. See [installation and first-session setup](INSTALL_MAC.md).
+
+| Validation | Observed result |
+|---|---|
+| Source checks and regression suite | 111 tests passed |
+| DMG build, mount and bundled tools | Passed; all four embedded ARM64 speech tools verified |
+| Actual packaged app | All 13 validation stages passed on macOS 15.8.2 |
+| Live Dock mode | Native Dock hide/show, workspace recovery and restoration after stop passed without stopping the live session |
+| Transcription with protection enabled | Actual bundled Whisper Base recognized the generated speech fixture |
+| AI with protection enabled and Dock hidden | Actual local Ollama/Qwen2.5 0.5B output reached the companion in 34 streamed chunks |
+| Independent native capture | Protected marker absent in tested screenshot/initial stream/refreshed stream paths on macOS 15.8.2 and 26.7.2; unprotected controls visible |
+| Hardware microphone/system playback and remote meeting participants | Not tested by these jobs |
+
+The [framework comparison](evidence/live-presentation-v020/framework-comparison.json) found exact matches for all three selected sections: executable code (`__text`), C strings (`__cstring`) and Objective-C method names (`__objc_methname`). The complete framework file hashes differ. This establishes identity of those selected sections, not every byte or every runtime behavior. It provides no evidence of a modified capture-protection implementation in those code sections.
+
+The [packaged report](evidence/live-presentation-v020/packaged-smoke.json) records real Whisper recognition of: “Hello, this is a test of the local speech recognition system. The release is ready for deployment.” The single generated utterance took 7,926 ms of inference; the complete AI check took 16,902 ms. These are CI observations, not MacBook speed/accuracy guarantees. The CI model is smaller than the app's default Qwen3 4B. Audio enters at the existing PCM IPC boundary, so this test does not cover microphone permissions, physical devices or system-audio capture.
+
+The [provenance manifest](evidence/live-presentation-v020/manifest.json) records source commits, workflow/artifact IDs, ZIP digests and preserved-file hashes. Both capture ZIPs, the packaged-evidence ZIP and the installer ZIP were downloaded and their digests checked. The extracted DMG hash matches the packaged execution report. This is a reproducible execution record, not independent certification or Apple notarization.
+
+DMG SHA-256:
+
+    5822b8ce14081fea0c3eb2ef419c0ea2c5cdf94cf4eca4abde4acabb4f7d5a0c
 
 The build gate exercises real Whisper recognition and local AI streaming through the packaged app. It now also checks Dock hide/show, workspace recovery, continued live processing and restoration after stop. Separate capture experiments run on macOS 15 and 26 with unprotected controls, screenshots, initial streams and refreshed filters. No screenshot is labelled as a Google Meet receiver view without an actual Google Meet receiving-device test.
+
+## Installation and build failure diagnosis
+
+[Mac installation guide](INSTALL_MAC.md) explains extracting the GitHub artifact ZIP, opening the DMG, copying GO1 to Applications, first-launch approval, speech-model setup and optional AI setup.
+
+The first v0.20 build attempted to inspect the framework immediately after npm installation. Electron 43's [runtime resolver](https://github.com/electron/electron/blob/v43.3.0/npm/index.js) downloads its executable on first use, so `node_modules/electron/dist` did not yet exist. Searching a different framework path alone did not solve this. The workflow now explicitly resolves `require('electron')` before inspection and discovers the framework binary under the installed distribution. The failed runs remain available; no required app validation was bypassed.
+
+## Actual capture evidence
+
+**Sender-side packaged app: real transcription of generated speech and real local AI output.** This image is captured from the app renderer, not a remote meeting participant or hardware microphone recording.
+
+![Packaged companion with real speech and AI output](evidence/live-presentation-v020/packaged-companion-real-inference.png)
+
+**Compact sender toolbar in the same live session:**
+
+![Compact packaged companion](evidence/live-presentation-v020/packaged-companion-compact.png)
+
+[Capture run 45048567161](https://github.com/amey1234444/GO1/actions/runs/45048567161) used source f6d44b6a6d0a16921ddf295c2f397a6f097f1293 and Electron 43.3.0. Both macOS 15.8.2 and 26.7.2 reported **excluded-in-tested-paths**. The ordinary protected window, GO1 panel, accessory-policy panel and selected-other-window case all omitted the marker in screenshots and sampled initial/refreshed stream frames. Both unprotected synthetic controls were visible in all three phases. Later commits correct only framework inspection/build setup; capture code and app code are unchanged.
+
+Raw reports: [macOS 15](evidence/live-presentation-v020/capture-macos-15.json), [macOS 26](evidence/live-presentation-v020/capture-macos-26.json).
+
+These images are from the independent ScreenCaptureKit observer on macOS 26, using the actual companion renderer with labelled fixture text. They show refreshed stream frames. The observer itself supplies no excluded application/window list. They are **not remote Google Meet screenshots** and do not establish microphone or AI inference performance. The report also preserves initial frames: the unprotected companion's first screenshot omitted it before later frames exposed it, illustrating why one screenshot alone is insufficient.
+
+**Unprotected control: companion visible in the captured display region.**
+
+![Unprotected companion in ScreenCaptureKit stream](evidence/live-presentation-v020/unprotected-capture-control-macos-26.png)
+
+**Protection enabled: companion absent in this capture path; underlying presentation remains.**
+
+![Protected companion omitted from ScreenCaptureKit stream](evidence/live-presentation-v020/protected-capture-control-macos-26.png)

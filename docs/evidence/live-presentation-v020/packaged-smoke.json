@@ -1,0 +1,711 @@
+{
+  "schema": 1,
+  "startedAt": "2026-11-22T18:08:23.828Z",
+  "sourceCommit": "b010dc9146f93785860f8952fd794c2ba4fe3f4d",
+  "status": "passed",
+  "hardwareAudioTested": false,
+  "meetingReceiverVerified": false,
+  "scope": "Packaged app, real preload IPC, bundled Whisper/FFmpeg, generated PCM speech and real local Ollama inference.",
+  "steps": [
+    {
+      "name": "Local AI runtime and model",
+      "status": "passed",
+      "elapsedMs": 29631,
+      "result": {
+        "version": {
+          "version": "0.40.16"
+        },
+        "model": {
+          "name": "qwen2.5:0.5b",
+          "model": "qwen2.5:0.5b",
+          "modified_at": "2026-11-22T18:08:51.628582516Z",
+          "size": 397821319,
+          "digest": "a8b0c51577010a279d933d14c2a8ab4b268079d44c5c8830c0a93900f1827c67",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "494.03M",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 896,
+            "runner": "ggml"
+          },
+          "capabilities": [
+            "completion",
+            "tools"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Packaged launch and bundled executable resolution",
+      "status": "passed",
+      "elapsedMs": 278,
+      "result": {
+        "ffmpeg": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/ffmpeg",
+        "ffprobe": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/ffprobe",
+        "whisper": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/whisper-cli",
+        "model": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/profile/models/ggml-small.bin",
+        "modelFound": false,
+        "ready": false,
+        "models": {
+          "base": {
+            "installed": false,
+            "filename": "ggml-base.bin"
+          },
+          "small": {
+            "installed": false,
+            "filename": "ggml-small.bin"
+          },
+          "medium": {
+            "installed": false,
+            "filename": "ggml-medium.bin"
+          },
+          "large-v3-turbo": {
+            "installed": false,
+            "filename": "ggml-large-v3-turbo.bin"
+          },
+          "silero": {
+            "installed": false,
+            "filename": "ggml-silero-v6.2.0.bin"
+          }
+        },
+        "selectedModel": "small",
+        "platform": "darwin",
+        "systemAudioSupported": true,
+        "whisperServer": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/whisper-server"
+      }
+    },
+    {
+      "name": "First-run speech model installation and selection",
+      "status": "passed",
+      "elapsedMs": 4552,
+      "result": {
+        "installed": {
+          "id": "base",
+          "installed": true,
+          "cached": false
+        },
+        "setup": {
+          "ffmpeg": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/ffmpeg",
+          "ffprobe": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/ffprobe",
+          "whisper": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/whisper-cli",
+          "model": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/profile/models/ggml-base.bin",
+          "modelFound": true,
+          "ready": true,
+          "models": {
+            "base": {
+              "installed": true,
+              "filename": "ggml-base.bin"
+            },
+            "small": {
+              "installed": false,
+              "filename": "ggml-small.bin"
+            },
+            "medium": {
+              "installed": false,
+              "filename": "ggml-medium.bin"
+            },
+            "large-v3-turbo": {
+              "installed": false,
+              "filename": "ggml-large-v3-turbo.bin"
+            },
+            "silero": {
+              "installed": false,
+              "filename": "ggml-silero-v6.2.0.bin"
+            }
+          },
+          "selectedModel": "base",
+          "platform": "darwin",
+          "systemAudioSupported": true,
+          "whisperServer": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/whisper-server"
+        },
+        "status": {
+          "online": true,
+          "models": [
+            "qwen2.5:0.5b"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Live session opens a protected companion",
+      "status": "passed",
+      "elapsedMs": 23378,
+      "result": "652309a8-f85b-41b3-805d-733844c1a205"
+    },
+    {
+      "name": "Live Dock mode hides and restores navigation without stopping processing",
+      "status": "passed",
+      "elapsedMs": 1106,
+      "result": {
+        "hidden": {
+          "enabled": true,
+          "supported": true,
+          "platform": "darwin",
+          "allApplied": true,
+          "receiverVerified": false,
+          "guaranteedCaptureExclusion": false,
+          "windows": [
+            {
+              "role": "workspace",
+              "applied": true,
+              "error": null
+            },
+            {
+              "role": "companion",
+              "applied": true,
+              "error": null
+            }
+          ],
+          "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device.",
+          "presentation": {
+            "supported": true,
+            "enabled": true,
+            "companionOpen": true,
+            "requestedHidden": true,
+            "dockVisible": false,
+            "error": null,
+            "captureExclusionProof": false
+          },
+          "activity": {
+            "liveSession": true,
+            "aiEnabled": true,
+            "aiRunning": false,
+            "paused": false
+          }
+        },
+        "visible": {
+          "enabled": true,
+          "supported": true,
+          "platform": "darwin",
+          "allApplied": true,
+          "receiverVerified": false,
+          "guaranteedCaptureExclusion": false,
+          "windows": [
+            {
+              "role": "workspace",
+              "applied": true,
+              "error": null
+            },
+            {
+              "role": "companion",
+              "applied": true,
+              "error": null
+            }
+          ],
+          "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device.",
+          "presentation": {
+            "supported": true,
+            "enabled": false,
+            "companionOpen": true,
+            "requestedHidden": false,
+            "dockVisible": true,
+            "error": null,
+            "captureExclusionProof": false
+          },
+          "activity": {
+            "liveSession": true,
+            "aiEnabled": true,
+            "aiRunning": false,
+            "paused": false
+          }
+        },
+        "restored": {
+          "enabled": true,
+          "supported": true,
+          "platform": "darwin",
+          "allApplied": true,
+          "receiverVerified": false,
+          "guaranteedCaptureExclusion": false,
+          "windows": [
+            {
+              "role": "workspace",
+              "applied": true,
+              "error": null
+            },
+            {
+              "role": "companion",
+              "applied": true,
+              "error": null
+            }
+          ],
+          "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device.",
+          "presentation": {
+            "supported": true,
+            "enabled": true,
+            "companionOpen": true,
+            "requestedHidden": true,
+            "dockVisible": false,
+            "error": null,
+            "captureExclusionProof": false
+          },
+          "activity": {
+            "liveSession": true,
+            "aiEnabled": true,
+            "aiRunning": false,
+            "paused": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Protection toggles preserve the active session",
+      "status": "passed",
+      "elapsedMs": 17,
+      "result": [
+        {
+          "enabled": false,
+          "supported": true,
+          "platform": "darwin",
+          "allApplied": false,
+          "receiverVerified": false,
+          "guaranteedCaptureExclusion": false,
+          "windows": [
+            {
+              "role": "workspace",
+              "applied": false,
+              "error": null
+            },
+            {
+              "role": "companion",
+              "applied": false,
+              "error": null
+            }
+          ],
+          "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device.",
+          "presentation": {
+            "supported": true,
+            "enabled": true,
+            "companionOpen": true,
+            "requestedHidden": true,
+            "dockVisible": false,
+            "error": null,
+            "captureExclusionProof": false
+          },
+          "activity": {
+            "liveSession": true,
+            "aiEnabled": true,
+            "aiRunning": false,
+            "paused": false
+          }
+        },
+        {
+          "enabled": true,
+          "supported": true,
+          "platform": "darwin",
+          "allApplied": true,
+          "receiverVerified": false,
+          "guaranteedCaptureExclusion": false,
+          "windows": [
+            {
+              "role": "workspace",
+              "applied": true,
+              "error": null
+            },
+            {
+              "role": "companion",
+              "applied": true,
+              "error": null
+            }
+          ],
+          "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device.",
+          "presentation": {
+            "supported": true,
+            "enabled": true,
+            "companionOpen": true,
+            "requestedHidden": true,
+            "dockVisible": false,
+            "error": null,
+            "captureExclusionProof": false
+          },
+          "activity": {
+            "liveSession": true,
+            "aiEnabled": true,
+            "aiRunning": false,
+            "paused": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "Real streaming speech recognition while protected",
+      "status": "passed",
+      "elapsedMs": 8163,
+      "result": {
+        "text": "Hello, this is a test of the local speech recognition system. The release is ready for deployment.",
+        "segments": [
+          {
+            "startMs": 0,
+            "endMs": 3700,
+            "text": "Hello, this is a test of the local speech recognition"
+          },
+          {
+            "startMs": 3700,
+            "endMs": 4320,
+            "text": "system."
+          },
+          {
+            "startMs": 4320,
+            "endMs": 6320,
+            "text": "The release is ready for deployment."
+          }
+        ],
+        "language": "english",
+        "durationMs": 7280,
+        "translatedToEnglish": false,
+        "latency": {
+          "count": 1,
+          "postVad": {
+            "p50Ms": 7927,
+            "p95Ms": 7927
+          },
+          "inference": {
+            "p50Ms": 7926,
+            "p95Ms": 7926
+          },
+          "queue": {
+            "p50Ms": 0,
+            "p95Ms": 0
+          },
+          "samples": [
+            {
+              "queueMs": 0,
+              "inferenceMs": 7926,
+              "postVadMs": 7927,
+              "vadHoldbackMs": 550
+            }
+          ]
+        },
+        "isLive": true
+      }
+    },
+    {
+      "name": "Real local AI stream reaches protected companion",
+      "status": "passed",
+      "elapsedMs": 16902,
+      "result": {
+        "answer": {
+          "id": "da80f161-db54-4e58-b7df-b5dd2fff6dad",
+          "guidance": "The benefit of gradual software deployment is that it allows for a more controlled and predictable process, reducing the risk of sudden changes that could disrupt the system's stability and quality."
+        },
+        "chunks": 34,
+        "displayed": "The benefit of gradual software deployment is that it allows for a more controlled and predictable process, reducing the risk of sudden changes that could disrupt the system's stability and quality.",
+        "protection": {
+          "enabled": true,
+          "supported": true,
+          "platform": "darwin",
+          "allApplied": true,
+          "receiverVerified": false,
+          "guaranteedCaptureExclusion": false,
+          "windows": [
+            {
+              "role": "workspace",
+              "applied": true,
+              "error": null
+            },
+            {
+              "role": "companion",
+              "applied": true,
+              "error": null
+            }
+          ],
+          "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device.",
+          "presentation": {
+            "supported": true,
+            "enabled": true,
+            "companionOpen": true,
+            "requestedHidden": true,
+            "dockVisible": false,
+            "error": null,
+            "captureExclusionProof": false
+          },
+          "activity": {
+            "liveSession": true,
+            "aiEnabled": true,
+            "aiRunning": false,
+            "paused": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Compact, translucency and close/reopen retain live text",
+      "status": "passed",
+      "elapsedMs": 633,
+      "result": {
+        "transcript": "Hello, this is a test of the local speech recognition system. The release is ready for deployment.",
+        "guidance": "The benefit of gradual software deployment is that it allows for a more controlled and predictable process, reducing the risk of sudden changes that could disrupt the system's stability and quality."
+      }
+    },
+    {
+      "name": "Stop flushes transcript and removes companion",
+      "status": "passed",
+      "elapsedMs": 182,
+      "result": {
+        "text": "Hello, this is a test of the local speech recognition system. The release is ready for deployment.",
+        "segments": [
+          {
+            "startMs": 0,
+            "endMs": 3700,
+            "text": "Hello, this is a test of the local speech recognition"
+          },
+          {
+            "startMs": 3700,
+            "endMs": 4320,
+            "text": "system."
+          },
+          {
+            "startMs": 4320,
+            "endMs": 6320,
+            "text": "The release is ready for deployment."
+          }
+        ],
+        "language": "english",
+        "durationMs": 7280,
+        "translatedToEnglish": false,
+        "latency": {
+          "count": 1,
+          "postVad": {
+            "p50Ms": 7927,
+            "p95Ms": 7927
+          },
+          "inference": {
+            "p50Ms": 7926,
+            "p95Ms": 7926
+          },
+          "queue": {
+            "p50Ms": 0,
+            "p95Ms": 0
+          },
+          "samples": [
+            {
+              "queueMs": 0,
+              "inferenceMs": 7926,
+              "postVadMs": 7927,
+              "vadHoldbackMs": 550
+            }
+          ]
+        },
+        "isLive": false
+      }
+    },
+    {
+      "name": "Imported audio runs bundled FFprobe, FFmpeg and Whisper CLI",
+      "status": "passed",
+      "elapsedMs": 26705,
+      "result": {
+        "language": "en",
+        "text": "Hello, this is a test of the local speech recognition system, the release is ready for deployment.",
+        "segments": [
+          {
+            "startMs": 0,
+            "endMs": 6240,
+            "text": "Hello, this is a test of the local speech recognition system, the release is ready for deployment."
+          }
+        ],
+        "durationMs": 6240,
+        "translatedToEnglish": false
+      }
+    },
+    {
+      "name": "Completed review is protected and Stop & mask clears it",
+      "status": "passed",
+      "elapsedMs": 685,
+      "result": {
+        "protectedReview": {
+          "enabled": true,
+          "supported": true,
+          "platform": "darwin",
+          "allApplied": true,
+          "receiverVerified": false,
+          "guaranteedCaptureExclusion": false,
+          "windows": [
+            {
+              "role": "workspace",
+              "applied": true,
+              "error": null
+            },
+            {
+              "role": "review",
+              "applied": true,
+              "error": null
+            }
+          ],
+          "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device.",
+          "presentation": {
+            "supported": true,
+            "enabled": true,
+            "companionOpen": false,
+            "requestedHidden": false,
+            "dockVisible": true,
+            "error": null,
+            "captureExclusionProof": false
+          },
+          "activity": {
+            "liveSession": false,
+            "aiEnabled": false,
+            "aiRunning": false,
+            "paused": false
+          }
+        },
+        "paused": {
+          "paused": true,
+          "epoch": 1
+        },
+        "resumed": {
+          "enabled": true,
+          "supported": true,
+          "platform": "darwin",
+          "allApplied": true,
+          "receiverVerified": false,
+          "guaranteedCaptureExclusion": false,
+          "windows": [
+            {
+              "role": "workspace",
+              "applied": true,
+              "error": null
+            }
+          ],
+          "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device.",
+          "presentation": {
+            "supported": true,
+            "enabled": true,
+            "companionOpen": false,
+            "requestedHidden": false,
+            "dockVisible": true,
+            "error": null,
+            "captureExclusionProof": false
+          },
+          "activity": {
+            "liveSession": false,
+            "aiEnabled": false,
+            "aiRunning": false,
+            "paused": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Workspace close terminates the persistent speech worker",
+      "status": "passed",
+      "elapsedMs": 845,
+      "result": {
+        "nativeWorkerStopped": true
+      }
+    }
+  ],
+  "speechModel": "base",
+  "aiModel": "qwen2.5:0.5b",
+  "spokenText": "Hello. This is a test of the local speech recognition system. The release is ready for deployment.",
+  "dmg": {
+    "filename": "GO1-0.20.0-arm64.dmg",
+    "sha256": "5822b8ce14081fea0c3eb2ef419c0ea2c5cdf94cf4eca4abde4acabb4f7d5a0c"
+  },
+  "macOS": "15.8.2",
+  "appVersion": "0.20.0",
+  "audioFixture": {
+    "kind": "macOS generated speech; injected at PCM IPC boundary",
+    "sha256": "0c654ddedb97dccee9aa0fde83a92d43740a93d6dd23975afac0097e6cb5f90b"
+  },
+  "detectedSetup": {
+    "ffmpeg": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/ffmpeg",
+    "ffprobe": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/ffprobe",
+    "whisper": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/whisper-cli",
+    "model": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/profile/models/ggml-small.bin",
+    "modelFound": false,
+    "ready": false,
+    "models": {
+      "base": {
+        "installed": false,
+        "filename": "ggml-base.bin"
+      },
+      "small": {
+        "installed": false,
+        "filename": "ggml-small.bin"
+      },
+      "medium": {
+        "installed": false,
+        "filename": "ggml-medium.bin"
+      },
+      "large-v3-turbo": {
+        "installed": false,
+        "filename": "ggml-large-v3-turbo.bin"
+      },
+      "silero": {
+        "installed": false,
+        "filename": "ggml-silero-v6.2.0.bin"
+      }
+    },
+    "selectedModel": "small",
+    "platform": "darwin",
+    "systemAudioSupported": true,
+    "whisperServer": "/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-packaged-clVSBG/mount/GO1.app/Contents/Resources/native/bin/whisper-server"
+  },
+  "liveTranscript": {
+    "text": "Hello, this is a test of the local speech recognition system. The release is ready for deployment.",
+    "segments": [
+      {
+        "startMs": 0,
+        "endMs": 3700,
+        "text": "Hello, this is a test of the local speech recognition"
+      },
+      {
+        "startMs": 3700,
+        "endMs": 4320,
+        "text": "system."
+      },
+      {
+        "startMs": 4320,
+        "endMs": 6320,
+        "text": "The release is ready for deployment."
+      }
+    ],
+    "language": "english",
+    "durationMs": 7280,
+    "translatedToEnglish": false,
+    "latency": {
+      "count": 1,
+      "postVad": {
+        "p50Ms": 7927,
+        "p95Ms": 7927
+      },
+      "inference": {
+        "p50Ms": 7926,
+        "p95Ms": 7926
+      },
+      "queue": {
+        "p50Ms": 0,
+        "p95Ms": 0
+      },
+      "samples": [
+        {
+          "queueMs": 0,
+          "inferenceMs": 7926,
+          "postVadMs": 7927,
+          "vadHoldbackMs": 550
+        }
+      ]
+    },
+    "isLive": true
+  },
+  "guidance": "The benefit of gradual software deployment is that it allows for a more controlled and predictable process, reducing the risk of sudden changes that could disrupt the system's stability and quality.",
+  "batchTranscript": {
+    "language": "en",
+    "text": "Hello, this is a test of the local speech recognition system, the release is ready for deployment.",
+    "segments": [
+      {
+        "startMs": 0,
+        "endMs": 6240,
+        "text": "Hello, this is a test of the local speech recognition system, the release is ready for deployment."
+      }
+    ],
+    "durationMs": 6240,
+    "translatedToEnglish": false
+  },
+  "finishedAt": "2026-11-22T18:10:30.671Z"
+}

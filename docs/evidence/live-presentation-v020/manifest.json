@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "recordedDate": "2026-11-22",
+  "release": "0.20.0",
+  "builtSourceCommit": "b010dc9146f93785860f8952fd794c2ba4fe3f4d",
+  "captureSourceCommit": "f6d44b6a6d0a16921ddf295c2f397a6f097f1293",
+  "captureSourceNote": "Subsequent two commits only correct framework inspection and Electron runtime installation; application and capture code unchanged.",
+  "checksRun": 45053066033,
+  "packagedRun": 45053065905,
+  "captureRun": 45048567161,
+  "artifacts": [
+    {
+      "id": 14766063032,
+      "name": "GO1-packaged-app-evidence-arm64-v0.20.0",
+      "run": 45053065905,
+      "zipSHA256": "6ed8fe9c6ae7bec7bf0cd2d730572293967650161b1a2c637d875d92af8a3630",
+      "downloadVerified": true
+    },
+    {
+      "id": 14765379908,
+      "name": "GO1-macOS-arm64-v0.20.0-live-presentation-unsigned-DMG",
+      "run": 45053065905,
+      "zipSHA256": "d410168203954737860433421320acc6a568d3b66f414d510257b86db6409ca4",
+      "downloadVerified": true
+    },
+    {
+      "id": 14764383762,
+      "name": "GO1-capture-evidence-macos-15",
+      "run": 45048567161,
+      "zipSHA256": "67a386907f0756d8488a14ea4879b1e806900526bd7238ab220b1081028dbbc9",
+      "downloadVerified": true
+    },
+    {
+      "id": 14764344041,
+      "name": "GO1-capture-evidence-macos-26",
+      "run": 45048567161,
+      "zipSHA256": "1e1a6899aa5fde3137f2628a12c8d79869d65ab06130bcd8b51b5a10b1f095ff",
+      "downloadVerified": true
+    }
+  ],
+  "dmg": {
+    "filename": "GO1-0.20.0-arm64.dmg",
+    "sha256": "5822b8ce14081fea0c3eb2ef419c0ea2c5cdf94cf4eca4abde4acabb4f7d5a0c",
+    "downloadVerified": true,
+    "appleNotarized": false
+  },
+  "regressionTestsPassed": 111,
+  "packagedStagesPassed": 13,
+  "hardwareAudioTested": false,
+  "meetingReceiverVerified": false,
+  "universalCaptureExclusion": false,
+  "independentCertification": false,
+  "preservedFiles": {
+    "capture-macos-15.json": {
+      "bytes": 56760,
+      "sha256": "af1601d5f25cb2e84962e417fe38d777b764bd08d47eba449760fff010c3ecfb"
+    },
+    "capture-macos-26.json": {
+      "bytes": 50852,
+      "sha256": "1824688104dc52c3c11e305b569860a5fda91b658a837ec6042c11ac26f2a412"
+    },
+    "framework-comparison.json": {
+      "bytes": 1940,
+      "sha256": "1f7089c3ce5d11a67bf71a5263243560c439d8e80f5db0a9be63b31d98b37f34"
+    },
+    "packaged-companion-compact.png": {
+      "bytes": 7550,
+      "sha256": "d5436d64bb61b68add670013099dd6104404b5c95418a4ab6aa91f8624e532eb"
+    },
+    "packaged-companion-real-inference.png": {
+      "bytes": 76623,
+      "sha256": "bd3e0ab96a5284c88ec70ee1975347361f47fa5bcd6ac293b1f50993755d158e"
+    },
+    "packaged-smoke.json": {
+      "bytes": 22585,
+      "sha256": "7c57af2980a83a46cdb392d38f1c263a9e6280cc62f65c139986c2ac8e51b56d"
+    },
+    "protected-capture-control-macos-26.png": {
+      "bytes": 15969,
+      "sha256": "48ccd9246ad20a364b8b038bc312c7e501988719ba6a2ec49e339595a9ae04c7"
+    },
+    "unprotected-capture-control-macos-26.png": {
+      "bytes": 59008,
+      "sha256": "f1c32627d83d0135695c905ee48a627673fdc030409dcdc063a84d8d9f4ac769"
+    }
+  }
+}
