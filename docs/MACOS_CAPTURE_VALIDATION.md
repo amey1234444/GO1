@@ -6,6 +6,46 @@ This change focuses on the Mac presentation behavior requested by the user. Wind
 
 The earlier real Electron smoke test proved that `isContentProtected()` returned true. It did **not** prove that protected pixels were absent from a capture. This experiment tests pixels through an independent ScreenCaptureKit observer.
 
+## Recorded results: 22 November 2026
+
+Tested source: [`cda3e00eb1dac348a211051181da18eaf257d722`](https://github.com/amey1234444/GO1/commit/cda3e00eb1dac348a211051181da18eaf257d722). Both hosted Mac runners compiled the independent Swift observer and completed all six scenarios. Electron was **39.8.10**. The display filter had **no excluded windows or applications**.
+
+| Runner OS | Protected GO1 panel screenshot marker pixels | Initial / refreshed stream frames | Maximum marker pixels in either stream | Verdict |
+| --- | ---: | ---: | ---: | --- |
+| macOS 15.8.2, build 24H232 | 0 | 21 / 22 | 0 | Excluded in tested paths |
+| macOS 26.7.2, build 25G332 | 0 | 20 / 21 | 0 | Excluded in tested paths |
+
+In both runs, native metadata reported the marker onscreen, at window layer 1000. The cyan background remained visible, so these were not blank captures. Unprotected ordinary windows and unprotected panels were visible in every phase, with more than 53,000 marker pixels. Protected ordinary windows, protected panels, the accessory-policy variant and selected-other-window capture all excluded the marker in the tested paths.
+
+This supports the content-protection request as the observed difference in this experiment. The screen-saver window level alone did **not** prevent capture. Hiding the Dock was not necessary for the successful results here.
+
+Preserved original reports, including every sampled frame count:
+
+- [macOS 15 report](evidence/macos-capture/macos-15/report.json)
+- [macOS 26 report](evidence/macos-capture/macos-26/report.json)
+- [Evidence provenance and SHA-256 manifest](evidence/macos-capture/manifest.json)
+- [Capture experiment run and complete artifact ZIPs](https://github.com/amey1234444/GO1/actions/runs/44979825998)
+
+Representative **actual captured images**, macOS 26 (synthetic fixture):
+
+Unprotected control — magenta window appears:
+
+![Unprotected magenta control appears over cyan presentation](evidence/macos-capture/macos-26/unprotected-control/screenshot.png)
+
+Protected GO1 panel policy — cyan presentation remains, magenta window is absent:
+
+![Protected panel is absent from the captured cyan presentation](evidence/macos-capture/macos-26/go1-mac-panel/screenshot.png)
+
+The protected initial/refreshed stream PNGs are preserved beside each report. These are unmodified files extracted from the workflow artifacts; both downloaded ZIP SHA-256 hashes matched GitHub's reported digests. The manifest is an evidence record, **not** an independent certification or signed GitHub artifact attestation.
+
+**Scope:** the fixture imports GO1's production panel configuration and content-protection controller. It does not exercise a real live session or the packaged application's complete UI. No Zoom, Google Meet or Teams receiver was connected; no fullscreen/Spaces transition or secondary display was tested. These results do not establish complete invisibility, non-detectability, the original GO Client's runtime behavior, or Windows capture behavior.
+
+### Mac build and checks
+
+[Mac build run](https://github.com/amey1234444/GO1/actions/runs/44979826090): **94 tests passed, zero failed**; source checks and native Electron protection-flag tests passed. The generated DMG passed `hdiutil verify`, mounted read-only, and contained the app plus four ARM64 transcription tools. Those checks validate packaging and API state, not receiver-side exclusion.
+
+[Download GO1 0.16.0 Apple Silicon DMG artifact](https://github.com/amey1234444/GO1/actions/runs/44979826090/artifacts/14737715553). It is **unsigned** and the GitHub artifact expires on 6 December 2026. The artifact ZIP digest is recorded in the manifest; it is not the hash of the DMG contained inside it.
+
 ## What was found in GO Client 2.0.11
 
 The attached DMG's verified hash and original bundle offsets remain in [the static evidence index](evidence/go-client-2.0.11-static.json). In `out/main/index.js`:

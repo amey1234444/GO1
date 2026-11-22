@@ -1,10 +1,12 @@
-## GO1 v0.14 — Audio transport health from GO Client architecture study
+# GO1
 
 ## v0.16 — macOS panel and pixel capture validation
 
 The Mac companion now uses a frameless nonactivating panel, the screen-saver window level, all Spaces/fullscreen visibility and inactive initial display. Capture protection remains a separate best-effort request.
 
 The [macOS validation guide](docs/MACOS_CAPTURE_VALIDATION.md) explains the ScreenCaptureKit pixel experiment. It tests an ordinary window, the actual GO1 panel policy, an accessory-app variant and selected-window capture, including a running stream after its filter is refreshed. Reports include captured PNGs, pixel counts and explicit blocked/exposed/inconclusive results. This does not certify any meeting application's receiver output.
+
+**Measured on 22 November 2026:** the protected panel had zero detected marker pixels in a screenshot and all sampled initial/refreshed stream frames on macOS 15.8.2 and 26.7.2 with Electron 39.8.10. Both unprotected controls remained visible. [Read the results and inspect the preserved images](docs/MACOS_CAPTURE_VALIDATION.md#recorded-results-22-november-2026). [Download the unsigned Apple Silicon v0.16.0 DMG](https://github.com/amey1234444/GO1/actions/runs/44979826090/artifacts/14737715553) (GitHub artifact expires 6 December 2026).
 
 
 ## v0.15 — best-effort screen-capture protection
@@ -15,6 +17,8 @@ GO1 now requests OS capture protection for the workspace, live companion and rev
 
 See the [DMG/repository study, implementation and receiver test plan](docs/CAPTURE_PROTECTION_STUDY.md), [static evidence](docs/evidence/go-client-2.0.11-static.json) and [validation record](docs/evidence/validation.json). Older release notes below describe their original behavior; v0.15 supersedes statements that capture exclusion is absent.
 
+
+## v0.14 — Audio transport health (historical)
 
 This version repairs a live PCM16 sample/byte mismatch between AudioWorklet and VAD; adds source-labelled audio diagnostics (RMS, clipping, received duration, possible arrival stalls); retains emergency privacy shutdown; and adds independent comparison documentation at `docs/GO_CLIENT_AUDIO_COMPARISON_V014.md`. It does **not** copy the proprietary GO Client native module or add covert capture evasion. The diagnostics panel is in the normal workspace's Latency Lab. Real Apple Silicon microphone/system-audio validation is still required.
 

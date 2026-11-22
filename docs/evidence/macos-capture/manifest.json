@@ -1,0 +1,123 @@
+{
+  "testedCommit": "cda3e00eb1dac348a211051181da18eaf257d722",
+  "capturedAt": "2026-11-22",
+  "captureRun": 44979825998,
+  "buildRun": 44979826090,
+  "captureArtifacts": [
+    {
+      "id": 14737531462,
+      "name": "GO1-capture-evidence-macos-15",
+      "size_in_bytes": 239593,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14737531462",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14737531462/zip",
+      "expired": false,
+      "created_at": "2026-11-22T03:17:21Z",
+      "expires_at": "2026-12-06T03:17:20Z",
+      "updated_at": "2026-11-22T03:17:21Z",
+      "digest": "sha256:15aee9b339957f29ccd229076b3a7d5196b8d151c36fec1a160630c403271477",
+      "workflow_run": {
+        "id": 44979825998,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "cda3e00eb1dac348a211051181da18eaf257d722"
+      }
+    },
+    {
+      "id": 14736754843,
+      "name": "GO1-capture-evidence-macos-26",
+      "size_in_bytes": 226710,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14736754843",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14736754843/zip",
+      "expired": false,
+      "created_at": "2026-11-22T03:17:42Z",
+      "expires_at": "2026-12-06T03:17:39Z",
+      "updated_at": "2026-11-22T03:17:42Z",
+      "digest": "sha256:7718f066f1172ca9cd369bf5efb3390a9272ec54ee53a73f64a1b2a7d65a789a",
+      "workflow_run": {
+        "id": 44979825998,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "cda3e00eb1dac348a211051181da18eaf257d722"
+      }
+    }
+  ],
+  "buildArtifacts": [
+    {
+      "id": 14737715553,
+      "name": "GO1-macOS-arm64-v0.16.0-macos-panel-unsigned-DMG",
+      "size_in_bytes": 166691745,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14737715553",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14737715553/zip",
+      "expired": false,
+      "created_at": "2026-11-22T03:18:42Z",
+      "expires_at": "2026-12-06T03:18:35Z",
+      "updated_at": "2026-11-22T03:18:42Z",
+      "digest": "sha256:6dcf00485fe98e39add55d07a3f645bf330d48d166c3685eb36d528d46c8ddc0",
+      "workflow_run": {
+        "id": 44979826090,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "cda3e00eb1dac348a211051181da18eaf257d722"
+      }
+    }
+  ],
+  "receiverVerified": false,
+  "originalAppExecuted": false,
+  "windowsPixelsTested": false,
+  "statement": "Unsigned evidence record. Hashes establish file identity and archive integrity, not independent certification. CI results cover synthetic ScreenCaptureKit fixtures using production GO1 window policy and controller.",
+  "files": [
+    {
+      "path": "macos-15/go1-mac-panel/screenshot.png",
+      "bytes": 16182,
+      "sha256": "2c4bfbeff6054cdd487b781eba43b79a679c42aec810dca5ab38beda239949c2"
+    },
+    {
+      "path": "macos-15/go1-mac-panel/streamInitial.png",
+      "bytes": 16184,
+      "sha256": "ce6864f1eabb02708ea52e4894ecdf5988f992bac3e8924b93ab498ee3ac43d0"
+    },
+    {
+      "path": "macos-15/go1-mac-panel/streamRefreshed.png",
+      "bytes": 16205,
+      "sha256": "792a73b0dc85ae1a35d1a484c9c2b7450dd6e7dcaa2818d4137ef9e17e0b963d"
+    },
+    {
+      "path": "macos-15/report.json",
+      "bytes": 45765,
+      "sha256": "a3204d2c19ddb85973221aaccf66ae9ce491d28a824e1f591fbe5374a8217ae1"
+    },
+    {
+      "path": "macos-15/unprotected-control/screenshot.png",
+      "bytes": 41182,
+      "sha256": "da07ac91aec822afecf90d3e911075fd806f5ee002ace8cd9d4a3c7d0813b52e"
+    },
+    {
+      "path": "macos-26/go1-mac-panel/screenshot.png",
+      "bytes": 18164,
+      "sha256": "d747610ff781d381aa2eb4ba8a1136139d999f37f6ac87115a393a1c5fbf4f22"
+    },
+    {
+      "path": "macos-26/go1-mac-panel/streamInitial.png",
+      "bytes": 15310,
+      "sha256": "a17a9ff06c7e4407838decc1d479b947673e65fca07e958763274b708fad0a0c"
+    },
+    {
+      "path": "macos-26/go1-mac-panel/streamRefreshed.png",
+      "bytes": 15939,
+      "sha256": "146f1de584246a7d01a4202656379ef188085f6a60918bcdd727591c0101d400"
+    },
+    {
+      "path": "macos-26/report.json",
+      "bytes": 44593,
+      "sha256": "5a973af179024bdfdd8774aa2f9821d261f8542dd66ea098d4f0aaefe464d33f"
+    },
+    {
+      "path": "macos-26/unprotected-control/screenshot.png",
+      "bytes": 24940,
+      "sha256": "34b0ca086d05145c88f8894a4d5d82b2a47ec4d4c17c63fb11ad53b70c4f3adc"
+    }
+  ]
+}
