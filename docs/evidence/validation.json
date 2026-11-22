@@ -95,7 +95,7 @@
     "test/window-protection-integration.test.js": "ecca257b57f9726ffa9ba3c51ff1b280f5231ded20a0c13f1af2f1b4e42d9cb3",
     "src/transcription/engine.js": "1e096b211e8d8372f71be81f59ce8468aa9cdc9f0ee67568e2c6be849837f511",
     "test/pipeline.test.js": "f5362fe94d6fbfc3e278229124acbec164473f9977330fa4dd5f07f7fc5b85ed",
-    "scripts/verify-msi.ps1": "5807da23c75a38be9fc93325a380fd6d188f380014a89569633c8e032ea2b7d8",
+    "scripts/verify-msi.ps1": "826e9ab5f85f4545e2438cddc7a6d9bf7078f505e66d9a49f3b108eb80c65f66",
     "docs/evidence/github-ci.json": "8bb2faf2c619aa2791ff1ad14cbdadd3a67afa2718a94f748113f6a2bfd9556b"
   }
 }

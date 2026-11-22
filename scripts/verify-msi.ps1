@@ -17,7 +17,9 @@ function Get-MsiProperty([string]$key) {
 # The visible app/shortcut name is still GO1. Accept only these known exact names.
 $productName = Get-MsiProperty 'ProductName'
 if ($productName -notin @('GO1', 'GO1 (Machine - MSI)')) { throw "Unexpected MSI ProductName: $productName" }
-$expectedVersion = (Get-Content 'package.json' -Raw | ConvertFrom-Json).version
+# Use the same SemVer-to-four-part conversion as electron-wix-msi.
+$expectedVersion = & node -e "process.stdout.write(require('electron-wix-msi/lib/utils/version-util').getWindowsCompliantVersion(require('./package.json').version))"
+if ($LASTEXITCODE -ne 0) { throw 'Could not calculate the expected MSI version.' }
 $productVersion = Get-MsiProperty 'ProductVersion'
 if ($productVersion -ne $expectedVersion) { throw "MSI version $productVersion does not match $expectedVersion" }
 $upgradeCode = Get-MsiProperty 'UpgradeCode'
