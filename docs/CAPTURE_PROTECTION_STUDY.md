@@ -4,7 +4,7 @@ Study date: 22 November 2026. Baseline: `472d45e78587bce24458c61cf1ec6c08190171f
 
 ## Result and its limits
 
-GO1 now requests OS screen-capture exclusion for its workspace, live companion and completed-practice review. The request defaults to on, is applied before content loads/first display, is reapplied on show/restore, can be changed in the presentation controls, and is saved across restarts. This is an independent implementation of the Electron capture-protection mechanism found in GO Client 2.0.11.
+GO1 now requests OS screen-capture exclusion for its workspace, live companion and completed-practice review. The request defaults to on, is requested before content loads/first display, is reapplied on show/restore, can be changed in the presentation controls, and is saved across restarts. This is an independent implementation of the Electron capture-protection mechanism found in GO Client 2.0.11.
 
 **It is not a guarantee that GO1 stays visible locally but invisible in every Zoom, Google Meet or Microsoft Teams share.** Electron documents that macOS ScreenCaptureKit can capture protected windows. Apple calls `NSWindow.SharingType.none` a legacy constant that macOS no longer uses. Setting and reading an OS flag cannot establish what a remote participant receives.
 
@@ -116,6 +116,8 @@ The feature does not identify Zoom/Meet/Teams or detect that a presentation star
 ## CI follow-up
 
 The first Windows CI run on implementation commit `bd3a1f4d1856dbc0b8b4f3f4aa3b9b44b7721737` exposed an existing portability bug in the transcription integration fixture: Windows cannot directly spawn Unix shebang scripts. The test now invokes its synthetic executables through Node using an injected command runner; production execution still defaults to the existing shell-free `execute` function. The test continues to use real subprocesses and does not skip Windows. On that same commit, the macOS native capture API smoke step passed. These are API/test results, not receiver capture results.
+
+The next Windows run passed all 86 automated tests but exposed a smoke-fixture lifecycle mistake: the fixture never displayed its windows. In [Chromium 142's Windows implementation](https://github.com/chromium/chromium/blob/142.0.7444.265/ui/views/widget/desktop_aura/desktop_window_tree_host_win.cc), setting protection while hidden stores the request and defers native display affinity until Show; readback queries the native flag. The smoke fixture now shows its synthetic windows, exercising the same show lifecycle as GO1. A regression checks that hidden/deferred state is not falsely certified and that first show refreshes the result. This also reinforces why “requested before show” cannot guarantee exclusion of every composed frame. The updated suite contains 87 tests.
 
 ## Receiver acceptance procedure
 

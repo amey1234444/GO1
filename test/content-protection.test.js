@@ -76,3 +76,14 @@ test('invalid IPC preference is rejected without changing the policy', () => {
 test('macOS limitation explicitly identifies ScreenCaptureKit', () => {
   assert.match(new ContentProtection({ platform: 'darwin' }).snapshot().limitation, /ScreenCaptureKit/);
 });
+
+test('deferred Windows affinity is refreshed on first show, not falsely certified while hidden', () => {
+  const p = new ContentProtection({ platform: 'win32' }), w = new Window();
+  w.visible = false;
+  w.setContentProtection = function(value) { this.pending = value; if (this.visible) this.applied = value; };
+  p.register(w, 'workspace');
+  assert.equal(p.snapshot().allApplied, false);
+  w.visible = true; w.applied = w.pending; w.emit('show');
+  assert.equal(p.snapshot().allApplied, true);
+  assert.equal(p.snapshot().windows[0].error, null);
+});

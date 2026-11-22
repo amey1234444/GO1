@@ -6,14 +6,17 @@ const { app, BrowserWindow } = require('electron');
 const { ContentProtection } = require('../src/privacy/content-protection');
 app.whenReady().then(async () => {
   const windows = [];
+  const controller = new ContentProtection();
   try {
     assert.ok(['darwin', 'win32'].includes(process.platform), 'Run this smoke test on macOS or Windows.');
-    const controller = new ContentProtection();
     for (const role of ['workspace', 'companion', 'review']) {
       const window = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false } });
       windows.push(window);
       controller.register(window, role);
       await window.loadURL('data:text/html,<title>GO1 capture API smoke</title>Test fixture');
+      // Chromium 142 defers Windows display affinity until Show(). Exercise
+      // the actual app lifecycle instead of asserting on never-shown windows.
+      window.showInactive();
     }
     const enabled = controller.snapshot();
     assert.equal(enabled.allApplied, true);
@@ -30,7 +33,7 @@ app.whenReady().then(async () => {
     }));
     app.exit(0);
   } catch (error) {
-    console.error('GO1_CAPTURE_API_SMOKE ' + JSON.stringify({ result: 'fail', error: error.message, receiverTests: 'not_run' }));
+    console.error('GO1_CAPTURE_API_SMOKE ' + JSON.stringify({ result: 'fail', error: error.message, state: controller.snapshot(), electron: process.versions.electron, platform: process.platform, receiverTests: 'not_run' }));
     for (const window of windows) if (!window.isDestroyed()) window.destroy();
     app.exit(1);
   }
