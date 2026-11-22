@@ -1,0 +1,125 @@
+{
+  "release": "0.19.0",
+  "sourceCommit": "c768a4678c5762cf2853ccf170fe45d36d15270b",
+  "macBuildRun": 44992473171,
+  "captureRun": 44992473183,
+  "unsignedEvidenceRecord": true,
+  "meetingReceiverVerified": false,
+  "hardwareAudioTested": false,
+  "artifacts": [
+    {
+      "id": 14742860543,
+      "name": "GO1-macOS-arm64-v0.19.0-validated-runtime-unsigned-DMG",
+      "size_in_bytes": 167939694,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14742860543",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14742860543/zip",
+      "expired": false,
+      "created_at": "2026-11-22T06:15:12Z",
+      "expires_at": "2026-12-06T06:15:05Z",
+      "updated_at": "2026-11-22T06:15:12Z",
+      "digest": "sha256:7485177d9d5dd4d3906018ca612958ec1e2f101f184ef79cfc7148e5c14972c9",
+      "workflow_run": {
+        "id": 44992473171,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "c768a4678c5762cf2853ccf170fe45d36d15270b"
+      }
+    },
+    {
+      "id": 14742139462,
+      "name": "GO1-packaged-app-evidence-arm64-v0.19.0",
+      "size_in_bytes": 96843,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14742139462",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14742139462/zip",
+      "expired": false,
+      "created_at": "2026-11-22T06:15:05Z",
+      "expires_at": "2026-12-06T06:15:04Z",
+      "updated_at": "2026-11-22T06:15:05Z",
+      "digest": "sha256:c48ceeca63476cf872a4a96c1aa12c21e9e60b88be6d4ada48fb1a4f60d7058c",
+      "workflow_run": {
+        "id": 44992473171,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "c768a4678c5762cf2853ccf170fe45d36d15270b"
+      }
+    },
+    {
+      "id": 14742243398,
+      "name": "GO1-capture-evidence-macos-15",
+      "size_in_bytes": 543726,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14742243398",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14742243398/zip",
+      "expired": false,
+      "created_at": "2026-11-22T06:11:01Z",
+      "expires_at": "2026-12-06T06:10:59Z",
+      "updated_at": "2026-11-22T06:11:01Z",
+      "digest": "sha256:64af0efa904f0595be76150fc1c2538a48183229283ce122a989aff3d402943b",
+      "workflow_run": {
+        "id": 44992473183,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "c768a4678c5762cf2853ccf170fe45d36d15270b"
+      }
+    },
+    {
+      "id": 14742213462,
+      "name": "GO1-capture-evidence-macos-26",
+      "size_in_bytes": 541543,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14742213462",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14742213462/zip",
+      "expired": false,
+      "created_at": "2026-11-22T06:11:08Z",
+      "expires_at": "2026-12-06T06:11:06Z",
+      "updated_at": "2026-11-22T06:11:08Z",
+      "digest": "sha256:7ff6418d3e2ef8ca75e68491ae5d580eed06a33fc83cc0f571775adef738ed78",
+      "workflow_run": {
+        "id": 44992473183,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "c768a4678c5762cf2853ccf170fe45d36d15270b"
+      }
+    }
+  ],
+  "dmgSHA256": "5480ff206015f2360c3142eeef9ab65069e1c5cd8225dd9ffd5a9326be4e2760",
+  "files": [
+    {
+      "path": "capture-macos-15.json",
+      "bytes": 57101,
+      "sha256": "d425b3b71ddd464109f5c0661d6953eec484829772bb384aa1277ddfa8bcb5ff"
+    },
+    {
+      "path": "capture-macos-26.json",
+      "bytes": 56726,
+      "sha256": "3107b59538b925b9ffa7fe878ed0ad922fc3f331e616792601105395079039ba"
+    },
+    {
+      "path": "packaged-companion-compact.png",
+      "bytes": 7550,
+      "sha256": "d5436d64bb61b68add670013099dd6104404b5c95418a4ab6aa91f8624e532eb"
+    },
+    {
+      "path": "packaged-companion-real-inference.png",
+      "bytes": 80556,
+      "sha256": "1af98cbae95a9aa30ef46ae8bf9710bd6379326f4ca07c6a852a0c4cfb4ec403"
+    },
+    {
+      "path": "packaged-smoke.json",
+      "bytes": 17949,
+      "sha256": "7a298e14e428a5b6a3d2b2eb3154445596c2f2d25ee15fb417f63f1ff28c0d6c"
+    },
+    {
+      "path": "protected-capture-control-macos-26.png",
+      "bytes": 15801,
+      "sha256": "68ae79c0dd06cb1f6936743ca209790f6e86821da8980cb904d9047bbdda9758"
+    },
+    {
+      "path": "unprotected-capture-control-macos-26.png",
+      "bytes": 59022,
+      "sha256": "cf21b3f3b60a6e890932ee843150a05c83798d9990891bf6c34f50d6f58887b2"
+    }
+  ]
+}

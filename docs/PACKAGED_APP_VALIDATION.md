@@ -48,7 +48,48 @@ The CI AI model is `qwen2.5:0.5b` to keep the test modest in memory and time. Us
 
 ## Recorded execution
 
-Pending the new v0.19 workflow execution. This section is updated only after actual results are retrieved; configuring the workflow alone is not a successful native validation.
+**Passed on 22 November 2026.** Built source: [c768a46](https://github.com/amey1234444/GO1/commit/c768a4678c5762cf2853ccf170fe45d36d15270b).
+
+[Download the unsigned Apple Silicon DMG](https://github.com/amey1234444/GO1/actions/runs/44992473171/artifacts/14742860543). The GitHub artifact expires on 6 December 2026. Unzip the artifact to get GO1-0.19.0-arm64.dmg.
+
+| Evidence | Observed result |
+|---|---|
+| Source checks and regression tests | 106 passed |
+| [Mac build and packaged-app run](https://github.com/amey1234444/GO1/actions/runs/44992473171) | All 12 packaged validation stages passed on macOS 15.8.2 |
+| Real speech recognition | Bundled Whisper Base recognized: “Hello, this is a test of the local speech recognition system. The release is ready for deployment.” |
+| Real local AI | Ollama 0.40.16, Qwen2.5 0.5B; 40 streamed chunks reached the actual protected companion |
+| [Capture experiments](https://github.com/amey1234444/GO1/actions/runs/44992473183) | Both macOS 15.8.2 and 26.7.2 reported excluded-in-tested-paths, Electron 39.8.10 |
+| Microphone/system audio hardware and actual remote meeting view | Not tested by these CI jobs |
+
+The single CI utterance took 8,656 ms of inference after VAD; the complete AI validation stage took 11,857 ms. These are recorded CI observations, not a laptop latency benchmark or a promise of instant answers. Model startup, utterance detection and hardware affect performance.
+
+Raw reports: [packaged app](evidence/packaged-v019/packaged-smoke.json), [macOS 15 capture](evidence/packaged-v019/capture-macos-15.json), [macOS 26 capture](evidence/packaged-v019/capture-macos-26.json). The [provenance manifest](evidence/packaged-v019/manifest.json) records source commit, workflow and artifact IDs, ZIP digests and hashes of the preserved files. All four downloaded artifact ZIP digests were checked, and the DMG hash matched the packaged run's report. This is an unsigned execution record, not independent certification or Apple notarization.
+
+DMG SHA-256:
+
+    5480ff206015f2360c3142eeef9ab65069e1c5cd8225dd9ffd5a9326be4e2760
+
+## Actual screenshots
+
+**Sender-side packaged application:** real Whisper recognition of generated speech and real local AI output, captured from the app's renderer. This is not a microphone recording or a remote participant screenshot.
+
+![Packaged companion with real transcription and AI output](evidence/packaged-v019/packaged-companion-real-inference.png)
+
+**Compact sender toolbar:** the same live session, with surface opacity set to 70%.
+
+![Compact packaged companion](evidence/packaged-v019/packaged-companion-compact.png)
+
+The following pair is from the separate controlled ScreenCaptureKit experiment on macOS 26, using the actual companion renderer with labelled fixture text. The independent observer applies no application exclusions itself. Both images come from streams after refreshing their capture filter. They are **not Google Meet receiver images**.
+
+**Unprotected control — panel visible in capture:**
+
+![Unprotected control captured by ScreenCaptureKit](evidence/packaged-v019/unprotected-capture-control-macos-26.png)
+
+**Protected control — panel omitted in this tested path, presentation fixture retained:**
+
+![Protected control captured by ScreenCaptureKit](evidence/packaged-v019/protected-capture-control-macos-26.png)
+
+Complete frame samples and controls are retained in the linked reports/artifacts. The original failed build run 44992184461 is also retained in Actions: its path assertion compared the /var and /private/var spellings. The successful run compares resolved paths and verifies that every executable is inside the mounted DMG; no inference checks were removed.
 
 ## Primary references
 

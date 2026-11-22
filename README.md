@@ -6,6 +6,8 @@ Live capture protection keeps transcription and enabled AI running; Stop & mask 
 
 The macOS workflow now launches the actual app from the built DMG and requires real bundled Whisper speech recognition and real local Ollama AI streaming to pass before uploading the installer. [Validation scope, installation and evidence](docs/PACKAGED_APP_VALIDATION.md). Native capture experiments remain separate; no Zoom, Google Meet or Teams receiver certification is claimed. Earlier version sections below are historical release records.
 
+[Download unsigned Apple Silicon v0.19.0 DMG](https://github.com/amey1234444/GO1/actions/runs/44992473171/artifacts/14742860543) · [Actual screenshots and verification reports](docs/PACKAGED_APP_VALIDATION.md#actual-screenshots). 106 regression tests, all 12 packaged-app stages and both native capture experiments passed. Speech-model download and optional Ollama setup are still required after installation.
+
 ## v0.18 — floating translucent companion
 
 Launch a frameless companion with readable opaque text, adjustable translucent surfaces, transcript and AI notes side by side, a compact toolbar and direct local AI questions. [Design, GO Client findings and verification](docs/FLOATING_COMPANION.md). Capture protection remains independent from appearance and from Stop & mask.
