@@ -18,7 +18,7 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.9.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.10.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
@@ -60,7 +60,7 @@
             <div class="footnote">Powered by the multilingual Whisper model. Recognition accuracy depends on audio quality, language and model size.</div>
           </section>
           <section class="card results-card" aria-labelledby="resultsTitle">
-            <div class="card-heading"><div><span class="card-overline">02 / OUTPUT</span><h2 id="resultsTitle">Your transcript</h2></div><div class="action-group"><button class="icon-button" id="copyButton" title="Copy transcript" aria-label="Copy transcript" disabled>⧉</button><button class="icon-button" id="exportButton" title="Export transcript" aria-label="Export transcript" disabled>⇩</button></div></div>
+            <div class="card-heading"><div><span class="card-overline">02 / OUTPUT</span><h2 id="resultsTitle">Your transcript</h2></div><div class="action-group"><button class="small-button" id="openReviewButton" type="button" disabled title="Open completed practice review">Practice review</button><button class="icon-button" id="copyButton" title="Copy transcript" aria-label="Copy transcript" disabled>⧉</button><button class="icon-button" id="exportButton" title="Export transcript" aria-label="Export transcript" disabled>⇩</button></div></div>
             <div id="statusLine" class="status-line" role="status" aria-live="polite"><span class="pulse-dot"></span><span id="statusText">Waiting for audio</span></div>
             <div id="emptyResult" class="empty-result"><div class="document-image">≡<span>···</span></div><h3>Words will appear here</h3><p>Record your voice with optional rolling live captions, or upload audio for a timestamped transcript.</p></div>
             <div id="transcriptContent" hidden><div class="result-meta"><span id="resultLanguage" class="meta-chip">Language: —</span><span id="resultDuration" class="meta-chip">Duration: —</span><span id="resultSegments" class="meta-chip">0 segments</span></div><div class="transcript-body" id="transcriptBody" tabindex="0" aria-label="Transcript text"></div><div class="segment-heading">TIMESTAMPED SEGMENTS</div><div id="segmentList" class="segment-list"></div></div>

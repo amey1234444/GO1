@@ -12,9 +12,11 @@ const { cancelPrivateProcessing } = require('./privacy/presentation');
 const { PrivacyGate } = require('./privacy/gate');
 const { PRIVACY_SHORTCUT, registerEmergencyPrivacy } = require('./privacy/shortcut');
 const { analysePractice } = require('./practice/feedback');
+const { prepareReview, reviewAllowed } = require('./practice/review-policy');
 
 app.setName('GO1');
 let mainWindow;
+let reviewWindow = null;
 let activeController;
 let liveController;
 let liveSession;
@@ -30,6 +32,8 @@ let emergencyShortcutRegistered = false;
 // Stop all in-flight work before asking the renderer to mask sensitive text.
 function activatePresentationPrivacy(source = 'button') {
   privacyGate.enter();
+  if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close();
+  reviewWindow = null;
   displayPermissionUntil = 0;
   cancelPrivateProcessing({ activeController, liveController, liveSession });
   liveSession = null;
@@ -83,7 +87,7 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     if (privacyGate.paused) mainWindow.webContents.send('go1:privacy-activate', { source: 'restored' });
   });
-  mainWindow.on('closed', () => { activeController?.abort(); liveController?.abort(); liveSession?.cancel(); liveSession = null; mainWindow = null; });
+  mainWindow.on('closed', () => { if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close(); reviewWindow = null; activeController?.abort(); liveController?.abort(); liveSession?.cancel(); liveSession = null; mainWindow = null; });
 }
 
 app.whenReady().then(async () => {
@@ -275,6 +279,40 @@ ipcMain.handle('go1:prepare-system-audio', event => {
 ipcMain.handle('go1:privacy-pause', event => {
   onlyApp(event);
   return activatePresentationPrivacy('button');
+});
+
+
+// Normal, visible post-practice window. It never receives live audio.
+ipcMain.handle('go1:review-open', async (event, result) => {
+  onlyApp(event);
+  privacyGate.assertAllowed();
+  if (!reviewAllowed({ paused: privacyGate.paused, activeTranscription: Boolean(activeController), liveSession: Boolean(liveSession) })) {
+    throw new Error('Stop recording and finish transcription before opening a review.');
+  }
+  const data = prepareReview(result);
+  if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close();
+  const window = new BrowserWindow({
+    title: 'GO1 — Practice review',
+    width: 540, height: 650, minWidth: 390, minHeight: 420,
+    parent: mainWindow, modal: false, show: false,
+    backgroundColor: '#11182c',
+    webPreferences: {
+      preload: path.join(__dirname, 'renderer', 'review-preload.js'),
+      contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true
+    }
+  });
+  reviewWindow = window;
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  window.webContents.on('will-navigate', event => event.preventDefault());
+  window.webContents.once('did-finish-load', () => {
+    if (privacyGate.paused || window.isDestroyed()) { if (!window.isDestroyed()) window.close(); return; }
+    window.webContents.send('go1:review-data', data);
+    window.show();
+  });
+  window.on('closed', () => { if (reviewWindow === window) reviewWindow = null; });
+  try { await window.loadFile(path.join(__dirname, 'renderer', 'review.html')); }
+  catch (error) { if (!window.isDestroyed()) window.close(); throw error; }
+  return true;
 });
 
 // Local-only deterministic practice statistics; no model provider or external service.

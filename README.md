@@ -155,3 +155,7 @@ This shortcut stops active capture and inference and requests an immediate priva
 **Before presenting:** activate privacy, wait until GO1 confirms capture has stopped, then select the *specific window or tab* in the meeting app. GO1 does not detect when external applications start screen sharing and does not hide a live assistant from participants or proctoring software.
 
 The main process now independently rejects new microphone, system-audio, and transcription requests while privacy is active. Requests that started before activation cannot restart capture after a later return to the workspace. Transcript results arriving late are ignored by the UI. Read `docs/SHARE_SAFE_ACCEPTANCE.md` for controlled two-device tests.
+
+## Practice review panel (v0.10.0)
+
+After completing a consent-based recording or importing a practice audio file, select **Practice review** next to Copy/Export to open a separate read-only window showing the completed transcript and timeline. It is a normal visible window (not always-on-top or capture-excluded), has no recording functionality and closes when Presentation Privacy begins. See docs/GO_CLIENT_ARCHITECTURE_STUDY.md for the independent binary-based comparison.

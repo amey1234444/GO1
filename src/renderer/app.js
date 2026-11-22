@@ -148,7 +148,7 @@ function setBusy(busy) {
   renderCaptureState();
   if (busy) { $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
 }
-function resetResults() { state.result = null; $('copyButton').disabled = true; $('exportButton').disabled = true; $('exportMenu').hidden = true; $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
+function resetResults() { state.result = null; $('openReviewButton').disabled = true; $('copyButton').disabled = true; $('exportButton').disabled = true; $('exportMenu').hidden = true; $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
 function renderResult(result, live = false) {
   if (state.privacyActive) return;
   state.result = result;
@@ -168,6 +168,7 @@ function renderResult(result, live = false) {
   }
   $('copyButton').disabled = !result.text;
   $('exportButton').disabled = live;
+  $('openReviewButton').disabled = live || !result.text || state.recording;
   setStatus(live ? 'Recording • live captions may lag behind speech' : result.text ? 'Transcription completed' : 'No speech detected', live ? 'active' : 'success');
   if (result.latency?.count) renderLatency(result.latency);
   if (!live) void reviewPractice(result);
@@ -551,6 +552,10 @@ $('dropZone').addEventListener('dragleave', () => $('dropZone').classList.remove
 $('dropZone').addEventListener('drop', event => { event.preventDefault(); $('dropZone').classList.remove('drag'); selectFile(event.dataTransfer.files?.[0]); });
 $('recheckButton').addEventListener('click', checkSetup);
 $('cancelButton').addEventListener('click', async () => { $('processingMessage').textContent = 'Cancelling...'; await window.go1.cancel(); });
+$('openReviewButton').addEventListener('click', async () => {
+  if (state.privacyActive || state.recording || state.busy || !state.result || state.result.isLive) return;
+  try { await window.go1.openReview(state.result); } catch (error) { showError(error); }
+});
 $('copyButton').addEventListener('click', async () => { if (state.result) { await window.go1.copy(state.result.text); setStatus('Transcript copied', 'success'); } });
 $('exportButton').addEventListener('click', () => { $('exportMenu').hidden = !$('exportMenu').hidden; });
 $('exportMenu').addEventListener('click', async event => {
