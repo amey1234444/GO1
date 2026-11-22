@@ -848,6 +848,13 @@ $('installVadButton').addEventListener('click', async () => {
 
 // Report API state without claiming that a meeting receiver cannot see the app.
 function renderProtection(info) {
+  const presentation = info.presentation;
+  $('liveDockToggle').checked = presentation?.enabled === true;
+  $('liveDockToggle').disabled = !presentation?.supported;
+  $('liveDockStatus').textContent = !presentation?.supported ? 'Dock control is available on macOS.'
+    : presentation.error ? `Dock control needs attention: ${presentation.error}`
+      : presentation.dockVisible === false ? 'GO1 Dock icon hidden. The companion and processing remain active.'
+        : 'GO1 Dock icon visible. Closing the companion or returning to the workspace restores it.';
   $('captureProtectionToggle').checked = info.enabled;
   $('captureProtectionToggle').disabled = !info.supported;
   const failures = info.windows.filter(w => w.error).map(w => `${w.role}: ${w.error}`);
@@ -882,3 +889,11 @@ $('refreshProtectionButton').addEventListener('click', refreshProtection);
 window.go1.onCaptureProtectionChanged(renderProtection);
 window.addEventListener('focus', refreshProtection);
 void refreshProtection();
+
+$('liveDockToggle').addEventListener('change', async event => {
+  const control = event.target;
+  control.disabled = true;
+  try { renderProtection(await window.go1.setLiveDockHidden(control.checked)); }
+  catch (error) { $('liveDockStatus').textContent = `Could not save Dock preference: ${error.message || error}`; }
+  finally { control.disabled = false; }
+});

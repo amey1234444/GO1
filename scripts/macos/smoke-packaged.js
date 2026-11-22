@@ -173,6 +173,27 @@ async function main() {
     assert.ok(info.windows.some(window => window.role === 'companion'));
     return id;
   });
+  await record('Live Dock mode hides and restores navigation without stopping processing', async () => {
+    const hidden = await until(async () => {
+      const info = await api('window.go1.captureProtectionInfo()');
+      return info.presentation.dockVisible === false ? info : null;
+    });
+    assert.equal(hidden.activity.liveSession, true); assert.equal(hidden.allApplied, true);
+    const visible = await api('window.go1.setLiveDockHidden(false)');
+    assert.equal(visible.presentation.dockVisible, true); assert.equal(visible.activity.aiEnabled, true);
+    await api('window.go1.setLiveDockHidden(true)');
+    const temporaryPanel = await connect(await until(async () => (await targets()).find(t => t.url.endsWith('/companion.html'))));
+    await temporaryPanel.evaluate('window.go1Companion.focusWorkspace()');
+    assert.equal((await api('window.go1.captureProtectionInfo()')).presentation.dockVisible, true);
+    await api('window.go1.showCompanion()');
+    const restored = await until(async () => {
+      const info = await api('window.go1.captureProtectionInfo()');
+      return info.presentation.dockVisible === false ? info : null;
+    });
+    temporaryPanel.close();
+    assert.equal(restored.activity.liveSession, true); assert.equal(restored.activity.aiEnabled, true);
+    return { hidden, visible, restored };
+  });
   await api(`window.qaUpdates=[]; window.qaChunks=[]; window.go1.onLiveUpdate(x=>window.qaUpdates.push(x)); window.go1.onAssistChunk(x=>window.qaChunks.push(x)); true`);
   await record('Protection toggles preserve the active session', async () => {
     const results = [];
@@ -229,6 +250,7 @@ async function main() {
     const result = await api(`window.go1.stopLive(${JSON.stringify(id)})`); checkWords(result.text);
     const info = await api('window.go1.captureProtectionInfo()'); assert.equal(info.activity.liveSession, false);
     assert.ok(!info.windows.some(window => window.role === 'companion'));
+    await until(async () => (await api('window.go1.captureProtectionInfo()')).presentation.dockVisible === true);
     return result;
   });
   await record('Imported audio runs bundled FFprobe, FFmpeg and Whisper CLI', async () => {

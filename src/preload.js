@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('go1', Object.freeze({
   resumeFromPresentation: () => ipcRenderer.invoke('go1:privacy-resume'),
   privacyInfo: () => ipcRenderer.invoke('go1:privacy-info'),
   captureProtectionInfo: () => ipcRenderer.invoke('go1:content-protection-info'),
+  setLiveDockHidden: enabled => ipcRenderer.invoke('go1:live-dock-set', enabled),
   setCaptureProtection: enabled => ipcRenderer.invoke('go1:content-protection-set', enabled),
   onCaptureProtectionChanged: callback => { const cb = (_event, data) => callback(data); ipcRenderer.on('go1:content-protection-changed', cb); return () => ipcRenderer.removeListener('go1:content-protection-changed', cb); },
   onPrivacyActivated: callback => { const listener = (_event, data) => callback(data); ipcRenderer.on('go1:privacy-activate', listener); return () => ipcRenderer.removeListener('go1:privacy-activate', listener); },

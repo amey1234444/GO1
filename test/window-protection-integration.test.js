@@ -34,6 +34,9 @@ async function boot(preferences = {}, overrides = {}) {
     async loadFile() { this.events.push(['load']); this.webContents.emit('did-finish-load'); this.emit('ready-to-show'); }
   }
   const app = new EventEmitter();
+  let dockVisible = true;
+  app.setActivationPolicy = policy => { app.policy = policy; };
+  app.dock = { hide: () => { dockVisible = false; }, show: async () => { dockVisible = true; }, isVisible: () => dockVisible };
   Object.assign(app, { setName() {}, getPath: () => '/test-user-data', whenReady: () => ({ then: fn => { ready = fn; } }), quit() {} });
   const fakeSession = { setDisplayMediaRequestHandler() {}, setPermissionRequestHandler() {}, setPermissionCheckHandler() {} };
   const area = { x: 0, y: 0, width: 1440, height: 900 };
@@ -58,7 +61,7 @@ async function boot(preferences = {}, overrides = {}) {
   }, { filename: mainPath });
   await ready();
   const invoke = (channel, payload, sender = windows[0].webContents) => handlers.get(channel)({ sender }, payload);
-  return { windows, writes, invoke, sent, send: (channel, payload) => listeners.get(channel)({ sender: windows[0].webContents }, payload) };
+  return { app, windows, writes, invoke, sent, send: (channel, payload) => listeners.get(channel)({ sender: windows[0].webContents }, payload) };
 }
 test('real main process protects workspace, review and companion before loading/showing them', async () => {
   const { windows, invoke } = await boot();
@@ -257,4 +260,22 @@ test('workspace closure aborts AI and speech and rejects a late provider result'
   release.resolve();
   await assert.rejects(ai, /Session stopped/);
   assert.equal(sent.length, count);
+});
+
+test('Dock preference is wired to live lifecycle without changing capture protection or AI', async () => {
+  const { app, windows, invoke, writes } = await boot();
+  const id = await invoke('go1:live-start', { assistancePermitted: true });
+  assert.equal(app.dock.isVisible(), false);
+  const info = await invoke('go1:live-dock-set', false);
+  assert.equal(info.activity.liveSession, true); assert.equal(info.activity.aiEnabled, true);
+  assert.equal(info.allApplied, true); assert.equal(app.dock.isVisible(), true);
+  assert.equal(writes.at(-1).hideDockDuringLive, false);
+  await invoke('go1:live-dock-set', true); assert.equal(app.dock.isVisible(), false);
+  await invoke('go1:companion-focus-main', null, windows[1].webContents);
+  assert.equal(app.dock.isVisible(), true);
+  await invoke('go1:companion-open'); assert.equal(app.dock.isVisible(), false);
+  invoke('go1:live-cancel', id); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(app.dock.isVisible(), true);
+  const next = await boot({ hideDockDuringLive: false });
+  await next.invoke('go1:live-start'); assert.equal(next.app.dock.isVisible(), true);
 });

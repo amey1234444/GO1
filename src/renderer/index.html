@@ -54,6 +54,8 @@
             <p id="protectedActivityStatus" role="status" aria-live="polite">Checking live-session state...</p>
             <p id="captureProtectionStatus" role="status" aria-live="polite">Checking window protection...</p>
             <p id="captureProtectionLimitation">Protection is not verified until you check the receiving device.</p>
+            <label class="switch-line" for="liveDockToggle"><span><strong>Hide Dock icon with live companion</strong><small>Mac only. Use the companion’s workspace arrow to restore it. This does not prove capture exclusion.</small></span><input type="checkbox" id="liveDockToggle" checked disabled></label>
+            <p id="liveDockStatus" role="status" aria-live="polite">Checking Dock visibility...</p>
             <button id="refreshProtectionButton" class="small-button" type="button">Refresh protection status</button>
           </div>
           <p class="meeting-safe-help" id="meetingHelp" role="status">Select the platform to see sharing guidance.</p><details class="receiver-check"><summary>How to verify what the other participant sees</summary><p>Use two consenting test accounts on separate devices. Enable live capture protection, start a permitted session and confirm that a fresh spoken phrase and AI response appear locally. Share a selected other window, then separately test your entire screen; inspect both on the receiving device while GO1 remains open. Do not press Stop &amp; mask during this test: it deliberately stops transcription and AI. If GO1 is visible remotely, full-screen exclusion has failed for that configuration.</p><p>Record the macOS version, meeting application version, share source and receiver screenshot. Repeat for Google Meet, Teams and Zoom.</p></details>

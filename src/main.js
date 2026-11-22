@@ -12,6 +12,7 @@ const { ModelManager, MODEL_CATALOG, modelState } = require('./transcription/mod
 const { cancelPrivateProcessing } = require('./privacy/presentation');
 const { PrivacyGate } = require('./privacy/gate');
 const { ContentProtection } = require('./privacy/content-protection');
+const { LiveDock } = require('./privacy/live-dock');
 const { companionWindowOptions, configureCompanionWindow } = require('./privacy/companion-window');
 const { PRIVACY_SHORTCUT, registerEmergencyPrivacy } = require('./privacy/shortcut');
 const { analysePractice } = require('./practice/feedback');
@@ -41,6 +42,11 @@ let selectedModel = 'small';
 let displayPermissionUntil = 0;
 const privacyGate = new PrivacyGate();
 const contentProtection = new ContentProtection({ platform: process.platform });
+const liveDock = new LiveDock({ app, platform: process.platform, onChange: () => {
+  // Reapply the existing preference after macOS activation-policy changes.
+  contentProtection.setEnabled(contentProtection.enabled);
+  publishProtection();
+} });
 let emergencyShortcutRegistered = false;
 let coachController = null;
 let assistController = null;
@@ -51,6 +57,7 @@ const profilePath = () => path.join(app.getPath('userData'), 'practice-profile.j
 function closeCompanion(clear = true) {
   const openWindow = companionWindow;
   companionWindow = null;
+  void liveDock.setCompanionOpen(false);
   if (clear) companionState = null; // Stop/privacy clears data; closing just the panel keeps the live session.
   if (openWindow && !openWindow.isDestroyed()) openWindow.close();
 }
@@ -60,7 +67,7 @@ function publishCompanion() {
   }
 }
 function protectionInfo() {
-  return { ...contentProtection.snapshot(), activity: {
+  return { ...contentProtection.snapshot(), presentation: liveDock.snapshot(), activity: {
     liveSession: Boolean(liveSession), aiEnabled: Boolean(liveSession && assistPermitted),
     aiRunning: Boolean(assistController), paused: privacyGate.paused
   } };
@@ -73,6 +80,8 @@ async function openCompanion() {
   privacyGate.assertAllowed();
   if (!liveSession || !liveId) throw new Error('Start a live session first.');
   if (companionWindow && !companionWindow.isDestroyed()) {
+    await liveDock.setCompanionOpen(true);
+    if (!companionWindow || companionWindow.isDestroyed() || privacyGate.paused) return false;
     companionWindow.show(); companionWindow.focus(); publishCompanion(); return true;
   }
   const window = new BrowserWindow({
@@ -100,9 +109,10 @@ async function openCompanion() {
     if (process.platform === 'darwin') window.showInactive();
     else window.show();
   });
-  window.on('closed', () => { if (companionWindow === window) companionWindow = null; });
+  window.on('closed', () => { if (companionWindow === window) { companionWindow = null; void liveDock.setCompanionOpen(false); } });
   try { await window.loadFile(path.join(__dirname, 'renderer', 'companion.html')); }
   catch (error) { if (!window.isDestroyed()) window.close(); throw error; }
+  if (companionWindow === window && !privacyGate.paused) await liveDock.setCompanionOpen(true);
   return true;
 }
 function companionOnly(event) {
@@ -118,8 +128,9 @@ ipcMain.handle('go1:companion-close', event => {
   companionOnly(event);
   closeCompanion(false); return true;
 });
-ipcMain.handle('go1:companion-focus-main', event => {
+ipcMain.handle('go1:companion-focus-main', async event => {
   companionOnly(event);
+  await liveDock.showWorkspace();
   if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus(); }
   return true;
 });
@@ -180,7 +191,7 @@ const modelDirectory = () => path.join(app.getPath('userData'), 'models');
 const configPath = () => path.join(app.getPath('userData'), 'settings.json');
 let settingsWrite = Promise.resolve();
 function saveSettings() {
-  const settings = JSON.stringify({ selectedModel, captureProtection: contentProtection.enabled });
+  const settings = JSON.stringify({ selectedModel, captureProtection: contentProtection.enabled, hideDockDuringLive: liveDock.enabled });
   settingsWrite = settingsWrite.catch(() => {}).then(async () => {
     const file = configPath();
     const temp = file + '.tmp';
@@ -248,6 +259,7 @@ app.whenReady().then(async () => {
     const prefs = JSON.parse(await fs.readFile(configPath(), 'utf8'));
     if (Object.prototype.hasOwnProperty.call(MODEL_CATALOG, prefs.selectedModel) && prefs.selectedModel !== 'silero') selectedModel = prefs.selectedModel;
     if (typeof prefs.captureProtection === 'boolean') contentProtection.setEnabled(prefs.captureProtection);
+    if (typeof prefs.hideDockDuringLive === 'boolean') liveDock.enabled = prefs.hideDockDuringLive;
   } catch { /* defaults on fresh install */ }
   try {
     const file = await fs.readFile(profilePath(), 'utf8');
@@ -276,7 +288,13 @@ app.whenReady().then(async () => {
   });
   createWindow();
   emergencyShortcutRegistered = registerEmergencyPrivacy(globalShortcut, activatePresentationPrivacy);
-  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+  app.on('activate', () => {
+    void liveDock.showWorkspace().then(() => {
+      if (!mainWindow || mainWindow.isDestroyed()) createWindow();
+      else { mainWindow.show(); mainWindow.focus(); }
+    });
+  });
+  app.on('did-become-active', () => { if (liveDock.requestedHidden) void liveDock.refresh(); });
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
@@ -284,6 +302,13 @@ app.on('before-quit', () => { closeWorkspaceSession(); manager?.cancel(); });
 
 function onlyApp(event) { if (!ownWindow(event)) throw new Error('Unrecognized request origin.'); }
 ipcMain.handle('go1:content-protection-info', event => { onlyApp(event); return protectionInfo(); });
+ipcMain.handle('go1:live-dock-set', async (event, enabled) => {
+  onlyApp(event);
+  await liveDock.setEnabled(enabled);
+  await saveSettings();
+  publishProtection();
+  return protectionInfo();
+});
 ipcMain.handle('go1:content-protection-set', async (event, enabled) => {
   onlyApp(event);
   contentProtection.setEnabled(enabled);

@@ -18,6 +18,8 @@ jobs:
           node-version: '22'
       - name: Install app dependencies
         run: npm install --no-audit --no-fund
+      - name: Compare official Electron framework with GO Client static fingerprints
+        run: python3 scripts/research/compare-electron.py --reference docs/evidence/go-client-native-audit-v020.json --framework 'node_modules/electron/dist/Electron.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework' --output out/release-evidence/framework-comparison.json
       - name: Run source checks and automated tests
         run: npm run check && npm test
       - name: Verify native window capture-protection API state
@@ -38,13 +40,13 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: GO1-packaged-app-evidence-arm64-v0.19.0
+          name: GO1-packaged-app-evidence-arm64-v0.20.0
           path: out/release-evidence/
           if-no-files-found: warn
           retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
-          name: GO1-macOS-arm64-v0.19.0-validated-runtime-unsigned-DMG
+          name: GO1-macOS-arm64-v0.20.0-live-presentation-unsigned-DMG
           path: out/make/**/*.dmg
           if-no-files-found: error
           retention-days: 14

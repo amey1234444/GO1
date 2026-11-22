@@ -1,0 +1,190 @@
+{
+  "schema": 1,
+  "analysis": "Static metadata/import/call-site inspection, not runtime meeting verification",
+  "appVersion": "2.0.11",
+  "build": "2.0.11.1448",
+  "bundleIdentifier": "com.imf.greatofferai",
+  "LSUIElement": true,
+  "electronVersion": "43.3.0",
+  "electronFrameworkFingerprint": {
+    "fileSHA256": "469c1eded27e04465b87433cb57a07ad5a58a264f99ea01780468aa1b7e81325",
+    "sections": [
+      {
+        "segment": "__TEXT",
+        "section": "__text",
+        "bytes": 148319260,
+        "sha256": "e888894e6c57408d14df0158e1abad14db050ca02c63a0d82ab82bcaf6d8be87"
+      },
+      {
+        "segment": "__TEXT",
+        "section": "__cstring",
+        "bytes": 15450069,
+        "sha256": "c14bf79f1201554c5d6b74d0195f9886c55b7904cdf1d7ceff7ced7bb1fee216"
+      },
+      {
+        "segment": "__TEXT",
+        "section": "__objc_methname",
+        "bytes": 98854,
+        "sha256": "77f1710c64c8c107cf925f3f239133ce1d283727a07336212f33e9aad454c1e7"
+      }
+    ]
+  },
+  "mainJsSHA256": "4520046dcc683d45f41df7689017605412c1c7ca4ed6d4be4b3337d38c52d66d",
+  "sourceLineLocations": {
+    "setContentProtection": [
+      18718,
+      18812,
+      19469,
+      26062,
+      26508,
+      26510,
+      26973,
+      27533,
+      27535
+    ],
+    "setActivationPolicy": [
+      27504,
+      27515,
+      27588
+    ],
+    "setVisibleOnAllWorkspaces": [
+      18713,
+      19465
+    ],
+    "screen-saver": [
+      18712,
+      19104,
+      19464,
+      21453,
+      21469
+    ],
+    "backgroundThrottling": [
+      18629,
+      19461,
+      26970
+    ],
+    "hideMacosDockIcon": [
+      27503,
+      27513,
+      27550
+    ],
+    "loadNativeWindowControl": [
+      17765,
+      17784,
+      17793,
+      17800,
+      17807,
+      17812
+    ]
+  },
+  "modules": [
+    {
+      "filename": "greatofferai_audio_capture.darwin-arm64.node",
+      "bytes": 2040944,
+      "sha256": "e92fcb0ab5359cc65b6bae11fd3222e7b42f1f619f0d5c4b91a5f707de4d33db",
+      "linkedLibraries": [
+        "/System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics",
+        "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+        "/System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/MobileDevice",
+        "/System/Library/Frameworks/AudioToolbox.framework/Versions/A/AudioToolbox",
+        "/System/Library/Frameworks/AVFoundation.framework/Versions/A/AVFoundation",
+        "/System/Library/Frameworks/AVFAudio.framework/Versions/A/AVFAudio",
+        "/System/Library/Frameworks/AVKit.framework/Versions/A/AVKit",
+        "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices",
+        "/usr/lib/libSystem.B.dylib",
+        "/System/Library/Frameworks/QuartzCore.framework/Versions/A/QuartzCore",
+        "/System/Library/Frameworks/ImageIO.framework/Versions/A/ImageIO",
+        "/System/Library/Frameworks/CoreImage.framework/Versions/A/CoreImage",
+        "/System/Library/Frameworks/CoreLocation.framework/Versions/A/CoreLocation",
+        "/System/Library/Frameworks/CoreMedia.framework/Versions/A/CoreMedia",
+        "/System/Library/Frameworks/CoreMediaIO.framework/Versions/A/CoreMediaIO",
+        "/System/Library/Frameworks/CoreAudio.framework/Versions/A/CoreAudio",
+        "/usr/lib/libcompression.dylib",
+        "/System/Library/Frameworks/CoreText.framework/Versions/A/CoreText",
+        "/System/Library/Frameworks/CoreVideo.framework/Versions/A/CoreVideo",
+        "/System/Library/Frameworks/DiskArbitration.framework/Versions/A/DiskArbitration",
+        "/System/Library/Frameworks/GameController.framework/Versions/A/GameController",
+        "/System/Library/Frameworks/IOSurface.framework/Versions/A/IOSurface",
+        "/System/Library/Frameworks/MultipeerConnectivity.framework/Versions/A/MultipeerConnectivity",
+        "/System/Library/Frameworks/MediaToolbox.framework/Versions/A/MediaToolbox",
+        "/System/Library/Frameworks/Metal.framework/Versions/A/Metal",
+        "/System/Library/Frameworks/MetalKit.framework/Versions/A/MetalKit",
+        "/System/Library/Frameworks/MLCompute.framework/Versions/A/MLCompute",
+        "/System/Library/Frameworks/CoreML.framework/Versions/A/CoreML",
+        "/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation",
+        "/System/Library/Frameworks/AppKit.framework/Versions/C/AppKit",
+        "/System/Library/Frameworks/NaturalLanguage.framework/Versions/A/NaturalLanguage",
+        "/System/Library/Frameworks/Network.framework/Versions/A/Network",
+        "/usr/lib/libobjc.A.dylib",
+        "/System/Library/Frameworks/Security.framework/Versions/A/Security",
+        "/System/Library/Frameworks/VideoToolbox.framework/Versions/A/VideoToolbox",
+        "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",
+        "/System/Library/Frameworks/ScreenCaptureKit.framework/Versions/A/ScreenCaptureKit",
+        "/System/Library/Frameworks/SoundAnalysis.framework/Versions/A/SoundAnalysis",
+        "/System/Library/Frameworks/UniformTypeIdentifiers.framework/Versions/A/UniformTypeIdentifiers",
+        "/System/Library/Frameworks/UserNotifications.framework/Versions/A/UserNotifications",
+        "/System/Library/Frameworks/Vision.framework/Versions/A/Vision",
+        "/usr/lib/libiconv.2.dylib",
+        "/System/Library/Frameworks/AudioUnit.framework/Versions/A/AudioUnit",
+        "/usr/lib/libc++.1.dylib",
+        "/System/Library/Frameworks/WebKit.framework/Versions/A/WebKit"
+      ],
+      "undefinedSymbolCount": 453,
+      "relevantImports": [
+        "_CGRequestScreenCaptureAccess",
+        "_OBJC_CLASS_$_AVCaptureAudioDataOutput",
+        "_OBJC_CLASS_$_AVCaptureConnection",
+        "_OBJC_CLASS_$_AVCaptureDevice",
+        "_OBJC_CLASS_$_AVCaptureDeviceDiscoverySession",
+        "_OBJC_CLASS_$_AVCaptureDeviceInput",
+        "_OBJC_CLASS_$_AVCapturePhotoOutput",
+        "_OBJC_CLASS_$_AVCaptureSession",
+        "_OBJC_CLASS_$_AVCaptureVideoDataOutput",
+        "_OBJC_CLASS_$_AVCaptureVideoPreviewLayer",
+        "_OBJC_CLASS_$_MTLCaptureDescriptor",
+        "_OBJC_CLASS_$_MTLCaptureManager",
+        "_OBJC_CLASS_$_NSWindow",
+        "_OBJC_CLASS_$_NSWindowController",
+        "_OBJC_CLASS_$_VNDetectFaceCaptureQualityRequest",
+        "_objc_msgSend",
+        "_objc_msgSendSuper2"
+      ],
+      "hasWindowsOnlyTaskbarMessage": false,
+      "hasWindowsOnlyDragMessage": false,
+      "exportNameStrings": []
+    },
+    {
+      "filename": "greatofferai_window_control.darwin-arm64.node",
+      "bytes": 584784,
+      "sha256": "0ce9fb56034c158dc33f5033187bd5a5d86ae1fe8bd66d777d99e1331d93d4c3",
+      "linkedLibraries": [
+        "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+        "/System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics",
+        "/usr/lib/libiconv.2.dylib",
+        "/usr/lib/libSystem.B.dylib"
+      ],
+      "undefinedSymbolCount": 74,
+      "relevantImports": [
+        "_CGWindowListCopyWindowInfo",
+        "_kCGWindowBounds",
+        "_kCGWindowLayer",
+        "_kCGWindowOwnerPID"
+      ],
+      "hasWindowsOnlyTaskbarMessage": true,
+      "hasWindowsOnlyDragMessage": true,
+      "exportNameStrings": [
+        "hideFromTaskbar",
+        "beginPointerDrag",
+        "pointerDragActive",
+        "primaryButtonDown",
+        "listCaptureWindows"
+      ]
+    }
+  ],
+  "limitations": [
+    "No original-app execution or receiving-device meeting test.",
+    "Import/string analysis does not prove absence of dynamic/framework behavior.",
+    "No proprietary native module or application source is redistributed."
+  ],
+  "dmgSHA256": "059ff75f28b7604966a800493c3c05c52aeebdf28ee1ccafed28a39e5c7a3b54"
+}

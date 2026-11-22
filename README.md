@@ -1,5 +1,9 @@
 # GO1
 
+## v0.20 — deeper GO Client audit and live Mac presentation
+
+The native module/import audit and Electron framework comparison are documented in [GO_CLIENT_STEALTH_AUDIT_V020.md](docs/GO_CLIENT_STEALTH_AUDIT_V020.md). GO1 now uses Electron 43.3.0, matching the supplied DMG, and supports a saved live-session Dock-hiding preference with workspace recovery. Capture protection remains separate and leaves transcription/AI running. Universal meeting invisibility is not claimed.
+
 ## v0.19 — packaged-app validation and reliable session lifecycle
 
 Live capture protection keeps transcription and enabled AI running; Stop & mask cancels both. The translucent companion remains available during a live session. This release prevents duplicate startup, stale session callbacks, stale stop/cancel requests and background AI work after closing the workspace.

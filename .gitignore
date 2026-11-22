@@ -11,3 +11,6 @@ coverage/
 
 # Generated native binaries are placed outside the signed ASAR
 build/native/
+
+__pycache__/
+*.pyc
