@@ -35,6 +35,7 @@ class VadLiveSession {
       if (this.failed || this.signal?.aborted) throw this.failed || new Error('Transcription cancelled.');
       const inferenceAt = this.clock();
       const output = await this.transcribeWindow(pcm, { language: this.language, translate: this.translate, signal: this.signal });
+      if (this.failed || this.signal?.aborted) throw this.failed || new Error('Transcription cancelled.');
       const completedAt = this.clock();
       if (output.language && output.language !== 'auto' && output.language !== 'unknown') this.detectedLanguage = output.language;
       const segments = output.segments?.length ? output.segments : (output.text ? [{ startMs: 0, endMs: endMs - startMs, text: output.text }] : []);

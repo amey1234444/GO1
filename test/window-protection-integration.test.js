@@ -178,3 +178,83 @@ for (const audioSource of ['microphone', 'system']) {
     assert.equal(stopped.enabled, true);
   });
 }
+
+test('startup reserves the session and privacy invalidates a pending model load', async () => {
+  const ready = deferred();
+  const { invoke } = await boot({}, {
+    './transcription/worker': { createWorker: () => ({ ensureReady: () => ready.promise, close() {} }) }
+  });
+  const starting = invoke('go1:live-start');
+  await assert.rejects(invoke('go1:live-start'), /current session/);
+  await assert.rejects(invoke('go1:transcribe', { bytes: [1] }), /current session/);
+  await assert.rejects(invoke('go1:model-install', 'small'), /Stop transcription/);
+  invoke('go1:privacy-pause');
+  invoke('go1:privacy-resume');
+  ready.resolve();
+  await assert.rejects(starting, /privacy|cancel|paused/i);
+  assert.equal(invoke('go1:content-protection-info').activity.liveSession, false);
+  const next = await invoke('go1:live-start');
+  assert.ok(next);
+});
+
+test('failed worker startup releases the reservation and allows a fresh worker', async () => {
+  let workers = 0, closed = 0;
+  const { invoke } = await boot({}, {
+    './transcription/worker': { createWorker: () => {
+      const first = ++workers === 1;
+      return { ensureReady: async () => { if (first) throw new Error('Model failed to load'); }, close: () => closed++ };
+    } }
+  });
+  await assert.rejects(invoke('go1:live-start'), /failed to load/);
+  assert.ok(await invoke('go1:live-start'));
+  assert.equal(workers, 2); assert.equal(closed, 1);
+});
+
+test('stale stop/cancel and old VAD callbacks leave the new session intact', async () => {
+  const sessions = [];
+  const { windows, invoke, sent } = await boot({}, {
+    './transcription/vad-live': { VadLiveSession: class {
+      constructor(options) { this.options = options; sessions.push(this); }
+      cancel() {} snapshot() { return { text: '' }; }
+    } }
+  });
+  const oldId = await invoke('go1:live-start');
+  invoke('go1:live-cancel', oldId);
+  const currentId = await invoke('go1:live-start', { assistancePermitted: true });
+  const panel = windows.at(-1), count = sent.length;
+  sessions[0].options.onUpdate({ text: 'Late obsolete transcript' });
+  sessions[0].options.onStatus({ type: 'error', message: 'Obsolete error' });
+  assert.equal(sent.length, count);
+  await assert.rejects(invoke('go1:live-stop', oldId), /No matching/);
+  assert.equal(invoke('go1:live-cancel', oldId), false);
+  assert.equal(panel.dead, false);
+  assert.equal(invoke('go1:content-protection-info').activity.aiEnabled, true);
+  sessions[1].options.onUpdate({ text: 'Current transcript' });
+  assert.equal(sent.filter(s => s.channel === 'go1:live-update').at(-1).data.id, currentId);
+});
+
+test('workspace closure aborts AI and speech and rejects a late provider result', async () => {
+  const release = deferred(), started = deferred();
+  let aiSignal, speechSignal, closed = 0;
+  const { windows, invoke, sent } = await boot({}, {
+    './transcription/worker': { createWorker: () => ({ ensureReady: async () => {}, close: () => closed++ }) },
+    './transcription/vad-live': { VadLiveSession: class {
+      constructor(options) { speechSignal = options.signal; }
+      cancel() {} snapshot() { return { text: '' }; }
+    } },
+    './practice/live-assist': { generateLiveGuidance: async options => {
+      aiSignal = options.signal; started.resolve(); await release.promise;
+      options.onChunk('Must not be delivered'); return 'Must not be delivered';
+    } }
+  });
+  await invoke('go1:live-start', { assistancePermitted: true });
+  const ai = invoke('go1:assist-generate', { question: 'Explain deployment?', context: '' });
+  await started.promise;
+  windows[0].close();
+  const count = sent.length;
+  assert.equal(aiSignal.aborted, true); assert.equal(speechSignal.aborted, true);
+  assert.equal(windows[1].dead, true); assert.equal(closed, 1);
+  release.resolve();
+  await assert.rejects(ai, /Session stopped/);
+  assert.equal(sent.length, count);
+});

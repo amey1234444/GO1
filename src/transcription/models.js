@@ -42,10 +42,10 @@ class ModelManager {
     const item = this.catalog[id];
     const controller = new AbortController();
     this.controller = controller; this.activeId = id;
-    await fsp.mkdir(this.directory, { recursive: true, mode: 0o700 });
     const destination = path.join(this.directory, item.file);
     const temporary = `${destination}.${randomUUID()}.part`;
     try {
+      await fsp.mkdir(this.directory, { recursive: true, mode: 0o700 });
       const state = modelState(this.directory, this.catalog);
       if (state[id].installed) return { id, installed: true, cached: true };
       const response = await this.fetchFn(item.url, { signal: controller.signal, redirect: 'follow' });

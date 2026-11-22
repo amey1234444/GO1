@@ -33,6 +33,7 @@ let activeController;
 let liveController;
 let liveSession;
 let liveId;
+let liveStarting = null;
 let captureDiagnostics = null;
 let worker = null;
 let manager = null;
@@ -151,6 +152,7 @@ ipcMain.handle('go1:companion-privacy', event => {
 // Stop all in-flight work before asking the renderer to mask sensitive text.
 function activatePresentationPrivacy(source = 'button') {
   privacyGate.enter();
+  liveStarting = null;
   coachController?.abort();
   assistController?.abort();
   assistPermitted = false;
@@ -197,6 +199,23 @@ function getWorker() {
 }
 function resetWorker() { worker?.close(); worker = null; }
 
+function closeWorkspaceSession() {
+  // Invalidate pending startup before aborting work; macOS can reopen this workspace.
+  liveStarting = null;
+  coachController?.abort();
+  assistController?.abort();
+  activeController?.abort();
+  liveController?.abort();
+  liveSession?.cancel();
+  liveSession = liveController = liveId = captureDiagnostics = null;
+  assistPermitted = false;
+  displayPermissionUntil = 0;
+  closeCompanion();
+  if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close();
+  reviewWindow = null;
+  resetWorker();
+}
+
 const ownWindow = event => mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents;
 
 function createWindow() {
@@ -221,7 +240,7 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     if (privacyGate.paused) mainWindow.webContents.send('go1:privacy-activate', { source: 'restored' });
   });
-  mainWindow.on('closed', () => { closeCompanion(); if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close(); reviewWindow = null; activeController?.abort(); liveController?.abort(); liveSession?.cancel(); liveSession = null; mainWindow = null; });
+  mainWindow.on('closed', () => { closeWorkspaceSession(); mainWindow = null; });
 }
 
 app.whenReady().then(async () => {
@@ -261,7 +280,7 @@ app.whenReady().then(async () => {
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
-app.on('before-quit', () => { closeCompanion(); coachController?.abort(); activeController?.abort(); liveController?.abort(); liveSession?.cancel(); manager?.cancel(); resetWorker(); });
+app.on('before-quit', () => { closeWorkspaceSession(); manager?.cancel(); });
 
 function onlyApp(event) { if (!ownWindow(event)) throw new Error('Unrecognized request origin.'); }
 ipcMain.handle('go1:content-protection-info', event => { onlyApp(event); return protectionInfo(); });
@@ -300,7 +319,7 @@ ipcMain.handle('go1:microphone', async event => {
 ipcMain.handle('go1:transcribe', async (event, payload) => {
   onlyApp(event);
   privacyGate.assertAllowed();
-  if (activeController) throw new Error('A transcription is already in progress.');
+  if (activeController || liveSession || liveStarting) throw new Error('Finish the current session first.');
   const controller = new AbortController();
   activeController = controller;
   try {
@@ -308,7 +327,7 @@ ipcMain.handle('go1:transcribe', async (event, payload) => {
       modelDirectory: modelDirectory(), selectedModel,
       signal: controller.signal,
       onStage: message => {
-        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:stage', message);
+        if (!controller.signal.aborted && !privacyGate.paused && mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:stage', message);
       }
     });
   } finally {
@@ -340,7 +359,7 @@ ipcMain.handle('go1:save', async (event, { format, content }) => {
 ipcMain.handle('go1:live-start', async (event, options = {}) => {
   onlyApp(event);
   const privacyTicket = privacyGate.ticket();
-  if (liveSession || activeController) throw new Error('Finish the current session first.');
+  if (liveSession || liveStarting || activeController) throw new Error('Finish the current session first.');
   const language = String(options.language || 'auto').toLowerCase();
   const audioSource = options.audioSource || 'microphone';
   if (!['microphone', 'system'].includes(audioSource)) throw new Error('Invalid audio source.');
@@ -348,33 +367,48 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   if (!/^(auto|[a-z]{2,3})$/.test(language)) throw new Error('Invalid language code.');
   if (!setup().modelFound || !setup().whisperServer) throw new Error('Install whisper-server and the selected multilingual model first.');
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:stage', 'Loading Whisper model in persistent worker...');
-  await getWorker().ensureReady();
-  privacyGate.validate(privacyTicket);
+  const startup = {};
+  liveStarting = startup;
+  let sessionWorker;
+  try {
+    sessionWorker = getWorker();
+    await sessionWorker.ensureReady();
+    privacyGate.validate(privacyTicket);
+    if (liveStarting !== startup || !ownWindow(event)) throw new Error('Session startup cancelled.');
+  } catch (error) {
+    if (liveStarting === startup && worker === sessionWorker) resetWorker();
+    throw error;
+  } finally {
+    if (liveStarting === startup) liveStarting = null;
+  }
   assistPermitted = options.assistancePermitted === true;
   liveController = new AbortController();
-  liveId = randomUUID();
+  const sessionId = randomUUID();
+  liveId = sessionId;
   captureDiagnostics = new CaptureDiagnostics({ source: audioSource });
   liveSession = new VadLiveSession({
     language,
     latencyMode,
     translate: options.translate === true,
     signal: liveController.signal,
-    transcribeWindow: (pcm, opts) => getWorker().infer(pcm, opts),
+    transcribeWindow: (pcm, opts) => sessionWorker.infer(pcm, opts),
     onUpdate: result => {
+      if (liveId !== sessionId || privacyGate.paused) return;
       if (companionState && !privacyGate.paused) { companionState = updateTranscript(companionState, result.text || ''); publishCompanion(); }
-      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-update', { id: liveId, result });
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-update', { id: sessionId, result });
     },
-    onStatus: status => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-status', { id: liveId, status }); }
+    onStatus: status => { if (liveId === sessionId && !privacyGate.paused && mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-status', { id: sessionId, status }); }
   });
   companionState = freshCompanionState({ role: practiceProfile.role, language, sessionId: liveId, assistancePermitted: assistPermitted });
   companionCompact = false;
   try { await openCompanion(); } catch (error) { console.warn('Companion window unavailable:', error.message); }
   publishProtection();
-  return liveId;
+  if (liveId !== sessionId || privacyGate.paused) throw new Error('Session startup cancelled.');
+  return sessionId;
 });
 
 ipcMain.on('go1:live-frame', (event, { id, pcm } = {}) => {
-  if (!ownWindow(event) || privacyGate.paused || !liveSession || id !== liveId) return;
+  if (!ownWindow(event) || privacyGate.paused || !liveSession || !captureDiagnostics || id !== liveId) return;
   try {
     // Normalize Int16Array from AudioWorklet to PCM16 bytes required by VAD.
     const bytes = captureDiagnostics.ingest(pcm);
@@ -390,10 +424,10 @@ ipcMain.on('go1:live-frame', (event, { id, pcm } = {}) => {
 
 ipcMain.handle('go1:live-stop', async (event, id) => {
   onlyApp(event);
+  if (!liveSession || id !== liveId) throw new Error('No matching live session.');
   assistController?.abort(); assistPermitted = false;
   closeCompanion();
   captureDiagnostics = null;
-  if (!liveSession || id !== liveId) throw new Error('No matching live session.');
   const sessionToStop = liveSession;
   try { return await sessionToStop.stop(); }
   finally {
@@ -407,6 +441,7 @@ ipcMain.handle('go1:live-stop', async (event, id) => {
 });
 ipcMain.handle('go1:live-cancel', (event, id) => {
   onlyApp(event);
+  if (!liveSession || id !== liveId) return false;
   assistController?.abort(); assistPermitted = false;
   closeCompanion();
   captureDiagnostics = null;
@@ -424,7 +459,7 @@ ipcMain.handle('go1:live-cancel', (event, id) => {
 
 ipcMain.handle('go1:model-install', async (event, id) => {
   onlyApp(event);
-  if (activeController || liveSession) throw new Error('Stop transcription before installing models.');
+  if (activeController || liveSession || liveStarting) throw new Error('Stop transcription before installing models.');
   if (!manager) throw new Error('Model manager unavailable.');
   return manager.install(id);
 });
@@ -432,7 +467,7 @@ ipcMain.handle('go1:model-cancel', event => { onlyApp(event); manager?.cancel();
 ipcMain.handle('go1:model-select', async (event, id) => {
   onlyApp(event);
   if (!Object.prototype.hasOwnProperty.call(MODEL_CATALOG, id) || id === 'silero') throw new Error('Invalid model.');
-  if (liveSession || activeController || manager?.controller) throw new Error('Stop other operations first.');
+  if (liveSession || liveStarting || activeController || manager?.controller) throw new Error('Stop other operations first.');
   if (!modelState(modelDirectory())[id].installed) throw new Error('Download this model before selecting it.');
   selectedModel = id;
   resetWorker();
@@ -459,7 +494,7 @@ ipcMain.handle('go1:privacy-pause', event => {
 ipcMain.handle('go1:review-open', async (event, result) => {
   onlyApp(event);
   privacyGate.assertAllowed();
-  if (!reviewAllowed({ paused: privacyGate.paused, activeTranscription: Boolean(activeController), liveSession: Boolean(liveSession) })) {
+  if (!reviewAllowed({ paused: privacyGate.paused, activeTranscription: Boolean(activeController), liveSession: Boolean(liveSession || liveStarting) })) {
     throw new Error('Stop recording and finish transcription before opening a review.');
   }
   const data = prepareReview(result);
@@ -496,7 +531,7 @@ ipcMain.handle('go1:practice-profile-get', event => { onlyApp(event); return { .
 ipcMain.handle('go1:practice-profile-save', async (event, profile) => {
   onlyApp(event);
   privacyGate.assertAllowed();
-  if (liveSession || activeController) throw new Error('Finish the recording before changing interview context.');
+  if (liveSession || liveStarting || activeController) throw new Error('Finish the recording before changing interview context.');
   const next = normalizeProfile(profile);
   const dest = profilePath(), tmp = dest + '.tmp';
   await fs.writeFile(tmp, JSON.stringify(next), { encoding: 'utf8', mode: 0o600 });
@@ -515,7 +550,7 @@ ipcMain.handle('go1:coach-status', async event => {
 ipcMain.handle('go1:coach-feedback', async (event, transcript) => {
   onlyApp(event);
   const ticket = privacyGate.ticket();
-  if (liveSession || activeController || coachController) throw new Error('Finish recording and processing before requesting practice feedback.');
+  if (liveSession || liveStarting || activeController || coachController) throw new Error('Finish recording and processing before requesting practice feedback.');
   const text = validateTranscript(transcript);
   const controller = new AbortController();
   coachController = controller;
@@ -526,12 +561,13 @@ ipcMain.handle('go1:coach-feedback', async (event, transcript) => {
       transcript: text,
       signal: controller.signal,
       onChunk: delta => {
-        if (!privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {
+        if (!controller.signal.aborted && !privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('go1:coach-chunk', { id, delta });
         }
       }
     });
     privacyGate.validate(ticket);
+    if (controller.signal.aborted) throw new Error('Practice feedback cancelled.');
     return { id, feedback };
   } finally { if (coachController === controller) coachController = null; }
 });
@@ -555,6 +591,7 @@ async function generateSessionGuidance({ question, context } = {}) {
   if (typeof context !== 'string' || context.length > 12000) throw new Error('Invalid live transcript context.');
   const controller = new AbortController();
   assistController = controller;
+  const sessionId = liveId;
   publishProtection();
   const id = randomUUID();
   if (companionState) {
@@ -566,18 +603,18 @@ async function generateSessionGuidance({ question, context } = {}) {
       profile: practiceProfile, question, context,
       signal: controller.signal,
       onChunk: delta => {
-        if (!controller.signal.aborted && !privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {
+        if (liveId === sessionId && !controller.signal.aborted && !privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('go1:assist-chunk', { id, delta });
           if (companionState) { companionState = addGuidance(companionState, delta); publishCompanion(); }
         }
       }
     });
     privacyGate.validate(ticket);
-    if (!liveSession || !assistPermitted) throw new Error('Session stopped before guidance completed.');
+    if (controller.signal.aborted || liveId !== sessionId || !liveSession || !assistPermitted) throw new Error('Session stopped before guidance completed.');
     if (companionState) { companionState = { ...companionState, status: 'Guidance complete. Verify facts before use.' }; publishCompanion(); }
     return { id, guidance };
   } catch (error) {
-    if (companionState && !privacyGate.paused) { companionState = { ...companionState, status: error.message || 'Guidance failed.' }; publishCompanion(); }
+    if (liveId === sessionId && companionState && !privacyGate.paused) { companionState = { ...companionState, status: error.message || 'Guidance failed.' }; publishCompanion(); }
     throw error;
   } finally { if (assistController === controller) { assistController = null; publishProtection(); } }
 }

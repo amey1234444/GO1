@@ -59,3 +59,19 @@ test('VadLiveSession sends no model request for silence', async () => {
   assert.equal(invoked, 0);
   assert.deepEqual(result.segments, []);
 });
+
+test('a cancelled VAD session discards inference that ignores abort', async () => {
+  let release, started;
+  const ready = new Promise(resolve => { started = resolve; });
+  const pending = new Promise(resolve => { release = resolve; });
+  const updates = [];
+  const session = new VadLiveSession({
+    transcribeWindow: async () => { started(); await pending; return { text: 'Obsolete text', language: 'en' }; },
+    onUpdate: result => updates.push(result)
+  });
+  session.append(samples(.5, .5)); session.append(samples(.8));
+  await ready;
+  session.cancel(); release(); await session.queue;
+  assert.equal(updates.length, 0);
+  assert.equal(session.snapshot().text, '');
+});

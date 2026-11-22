@@ -46,6 +46,7 @@ class WhisperWorker {
     if (!this.binary || !fs.existsSync(this.binary)) throw new Error('whisper-server binary not found. Run the setup script.');
     if (!this.model || !fs.existsSync(this.model)) throw new Error('Whisper model not installed.');
     const port = await this.getPort();
+    if (this.stopped) throw new Error('Whisper worker is closed.');
     const url = `http://127.0.0.1:${port}`;
     const args = ['--host', '127.0.0.1', '--port', String(port), '-m', this.model, '-l', 'auto'];
     if (this.vadModel && fs.existsSync(this.vadModel)) args.push('--vad', '-vm', this.vadModel);
@@ -68,6 +69,7 @@ class WhisperWorker {
         try {
           // The upstream default root serves an HTML page; any HTTP response means ready.
           const response = await this.fetchFn(url + '/', { signal: controller.signal });
+          if (this.stopped) throw new Error('Whisper worker is closed.');
           if (response && typeof response.status === 'number') {
             this.url = url;
             return url;
@@ -89,6 +91,7 @@ class WhisperWorker {
   async _infer(pcm, { language, translate, signal }) {
     if (signal?.aborted) throw new Error('Transcription cancelled.');
     const url = await this.ensureReady();
+    if (signal?.aborted) throw new Error('Transcription cancelled.');
     if (!/^(auto|[a-z]{2,3})$/.test(language)) throw new Error('Invalid speech language.');
     const form = new FormData();
     form.set('file', new Blob([wavFromPCM16(pcm)], { type: 'audio/wav' }), 'segment.wav');
@@ -103,6 +106,7 @@ class WhisperWorker {
       const response = await this.fetchFn(url + '/inference', { method: 'POST', body: form, signal: timeout.signal });
       if (!response.ok) throw new Error(`Whisper inference failed (HTTP ${response.status}): ${(await response.text()).slice(0,400)}`);
       const body = await response.json();
+      if (signal?.aborted || this.stopped) throw new Error('Transcription cancelled.');
       return normalizeServerResponse(body);
     } finally {
       clearTimeout(timeoutId);

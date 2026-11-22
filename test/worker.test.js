@@ -49,3 +49,25 @@ test('worker keeps model process loaded for multiple requests and shuts down', a
     await assert.rejects(worker.infer(sample()), /closed/i);
   } finally { worker.close(); await fs.rm(dir, { force: true, recursive: true }); }
 });
+
+test('cancellation during model startup never dispatches an inference request', async () => {
+  const controller = new AbortController();
+  let completeStartup, calls = 0;
+  const ready = new Promise(resolve => { completeStartup = resolve; });
+  const worker = new WhisperWorker({ fetchFn: async () => { calls++; } });
+  worker.ensureReady = () => ready;
+  const work = worker.infer(sample(), { signal: controller.signal });
+  await new Promise(resolve => setImmediate(resolve));
+  controller.abort(); completeStartup('http://127.0.0.1:8765');
+  await assert.rejects(work, /cancelled/);
+  assert.equal(calls, 0);
+});
+
+test('worker does not publish a response decoded after cancellation', async () => {
+  const controller = new AbortController();
+  const worker = new WhisperWorker({ fetchFn: async () => ({ ok: true, json: async () => {
+    controller.abort(); return { text: 'Obsolete text', language: 'en' };
+  } }) });
+  worker.ensureReady = async () => 'http://127.0.0.1:8765';
+  await assert.rejects(worker.infer(sample(), { signal: controller.signal }), /cancelled/);
+});
