@@ -12,10 +12,18 @@ parser.add_argument('--output', type=Path, required=True)
 args = parser.parse_args()
 reference = json.loads(args.reference.read_text())
 expected = reference['electronFrameworkFingerprint']
-actual = fingerprint(args.framework)
+framework = args.framework
+if framework.is_dir():
+    candidates = {path.resolve() for path in framework.rglob('Electron Framework')
+                  if path.is_file() and 'Electron Framework.framework' in path.parts}
+    if len(candidates) != 1:
+        raise ValueError(f'Expected one Electron framework binary in {framework}, found {len(candidates)}')
+    framework = candidates.pop()
+actual = fingerprint(framework)
 result = {
     'referenceDMGSHA256': reference['dmgSHA256'], 'referenceElectron': reference['electronVersion'],
     'reference': expected, 'officialInstalledFramework': actual,
+    'officialFrameworkPath': str(framework),
     'fullFileMatches': actual['fileSHA256'] == expected['fileSHA256'],
     'selectedCodeAndStringSectionsMatch': actual['sections'] == expected['sections'],
     'meetingReceiverVerified': False,

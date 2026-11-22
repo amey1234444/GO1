@@ -19,7 +19,7 @@ jobs:
       - name: Install app dependencies
         run: npm install --no-audit --no-fund
       - name: Compare official Electron framework with GO Client static fingerprints
-        run: python3 scripts/research/compare-electron.py --reference docs/evidence/go-client-native-audit-v020.json --framework 'node_modules/electron/dist/Electron.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework' --output out/release-evidence/framework-comparison.json
+        run: python3 scripts/research/compare-electron.py --reference docs/evidence/go-client-native-audit-v020.json --framework node_modules/electron/dist --output out/release-evidence/framework-comparison.json
       - name: Run source checks and automated tests
         run: npm run check && npm test
       - name: Verify native window capture-protection API state
