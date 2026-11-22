@@ -56,7 +56,11 @@
       "fix": "Use Node to execute integration fixtures via injected command runner; production defaults unchanged. Windows rerun pending.",
       "secondWindowsRun": "https://github.com/amey1234444/GO1/actions/runs/44977666457",
       "secondWindowsTests": "86 passed, 0 failed",
-      "secondWindowsNativeSmoke": "Failed on never-shown fixture windows; Chromium 142 defers native affinity until Show. Fixture corrected to show windows; runtime result pending."
+      "secondWindowsNativeSmoke": "Failed on never-shown fixture windows; Chromium 142 defers native affinity until Show. Fixture corrected to show windows; runtime result pending.",
+      "validatedSourceCommit": "ec5357433238a725fb2c4caffecc986169004217",
+      "nativeApiResults": "macOS PASS; Windows PASS. All 87 tests pass on both. See github-ci.json.",
+      "macDmg": "Built, mounted and validated successfully; artifact link in github-ci.json",
+      "windowsMsi": "Built successfully; validator had incorrect expected ProductName. Validator corrected for known WiX suffix plus exact version/upgrade code; rerun pending."
     }
   },
   "guaranteedCaptureExclusion": false,
@@ -65,7 +69,7 @@
     ".github/workflows/installers.yml": "799db490d84aba1717875b125ae7bfa2b477d64495acf1dd560b53dc5692e524",
     ".github/workflows/macos-build.yml": "65bba4f6b60a5dc86bd1d52eaca417d1577b2a00d412ffc3563cdac3eff3400d",
     "README.md": "cc114cd03f49946e342959c98bacd17b881a14d5d0e35d7ac2e3dcb6829e103c",
-    "docs/CAPTURE_PROTECTION_STUDY.md": "c265974add8d87c742a8f3bcb61a4c3808ab680887ce5a34a87607bf48217b35",
+    "docs/CAPTURE_PROTECTION_STUDY.md": "7aed9ae6cf0eaae45621980ca5e077e24cafed07a7d3c57ca06adb24f4feb8fe",
     "docs/GO_CLIENT_ARCHITECTURE_STUDY.md": "21579ba87bf56af8c375dd91c81940f4df648f3c964effc7e406af2cf9d2b053",
     "docs/GO_CLIENT_AUDIO_COMPARISON_V014.md": "010a8b0d92f559e2b24b841eb2a9657c844c0c409d40f4ce2fedab03fe11d09a",
     "docs/LIVE_ASSIST.md": "4f6e38747effd630db7e55d5b1b1453ba275be47475f24fe7a5113cde8101a2d",
@@ -90,6 +94,8 @@
     "test/content-protection.test.js": "8d54c4030a6eff1776d5cb2e72c6f1c6ba703461b7c2f91f18b879e4e7696d87",
     "test/window-protection-integration.test.js": "ecca257b57f9726ffa9ba3c51ff1b280f5231ded20a0c13f1af2f1b4e42d9cb3",
     "src/transcription/engine.js": "1e096b211e8d8372f71be81f59ce8468aa9cdc9f0ee67568e2c6be849837f511",
-    "test/pipeline.test.js": "f5362fe94d6fbfc3e278229124acbec164473f9977330fa4dd5f07f7fc5b85ed"
+    "test/pipeline.test.js": "f5362fe94d6fbfc3e278229124acbec164473f9977330fa4dd5f07f7fc5b85ed",
+    "scripts/verify-msi.ps1": "5807da23c75a38be9fc93325a380fd6d188f380014a89569633c8e032ea2b7d8",
+    "docs/evidence/github-ci.json": "8bb2faf2c619aa2791ff1ad14cbdadd3a67afa2718a94f748113f6a2bfd9556b"
   }
 }

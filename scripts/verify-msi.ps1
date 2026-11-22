@@ -5,15 +5,23 @@ if ($msi[0].Length -lt 1000000) { throw 'MSI suspiciously small.' }
 $installer = New-Object -ComObject WindowsInstaller.Installer
 $database = $installer.OpenDatabase($msi[0].FullName, 0)
 function Get-MsiProperty([string]$key) {
-    $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = '$key'")
+    $query = 'SELECT `Value` FROM `Property` WHERE `Property` = ''{0}''' -f $key
+    $view = $database.OpenView($query)
     $view.Execute()
     $record = $view.Fetch()
     $result = if ($null -eq $record) { $null } else { $record.StringData(1) }
     $view.Close()
     return $result
 }
-if ((Get-MsiProperty 'ProductName') -ne 'GO1') { throw 'Missing GO1 ProductName metadata.' }
-if (-not (Get-MsiProperty 'ProductVersion')) { throw 'Missing ProductVersion.' }
-if (-not (Get-MsiProperty 'UpgradeCode')) { throw 'Missing stable UpgradeCode.' }
+# electron-wix-msi's template adds this suffix to the internal MSI ProductName.
+# The visible app/shortcut name is still GO1. Accept only these known exact names.
+$productName = Get-MsiProperty 'ProductName'
+if ($productName -notin @('GO1', 'GO1 (Machine - MSI)')) { throw "Unexpected MSI ProductName: $productName" }
+$expectedVersion = (Get-Content 'package.json' -Raw | ConvertFrom-Json).version
+$productVersion = Get-MsiProperty 'ProductVersion'
+if ($productVersion -ne $expectedVersion) { throw "MSI version $productVersion does not match $expectedVersion" }
+$upgradeCode = Get-MsiProperty 'UpgradeCode'
+if ($upgradeCode.Trim('{}') -ne '6DD60BAC-2AC4-41AC-BB14-8FC5F194B918') { throw "Unexpected MSI UpgradeCode: $upgradeCode" }
+Write-Host "MSI metadata: $productName / $productVersion / $upgradeCode"
 Write-Host "Validated MSI: $($msi[0].FullName) ($($msi[0].Length) bytes)"
 Write-Host 'Note: metadata validation does not prove live audio transcription or signature trust.'

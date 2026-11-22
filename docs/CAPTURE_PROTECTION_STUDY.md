@@ -119,6 +119,8 @@ The first Windows CI run on implementation commit `bd3a1f4d1856dbc0b8b4f3f4aa3b9
 
 The next Windows run passed all 86 automated tests but exposed a smoke-fixture lifecycle mistake: the fixture never displayed its windows. In [Chromium 142's Windows implementation](https://github.com/chromium/chromium/blob/142.0.7444.265/ui/views/widget/desktop_aura/desktop_window_tree_host_win.cc), setting protection while hidden stores the request and defers native display affinity until Show; readback queries the native flag. The smoke fixture now shows its synthetic windows, exercising the same show lifecycle as GO1. A regression checks that hidden/deferred state is not falsely certified and that first show refreshes the result. This also reinforces why “requested before show” cannot guarantee exclusion of every composed frame. The updated suite contains 87 tests.
 
+On `ec5357433238a725fb2c4caffecc986169004217`, all 87 tests and native API checks passed on macOS and Windows. The macOS DMG built, mounted, validated and uploaded successfully. Windows built its MSI, then exposed a pre-existing validator mismatch: the installed `electron-wix-msi` template uses `GO1 (Machine - MSI)` as the internal ProductName, whereas the repository required exactly `GO1`. The validator now accepts that exact generated name and additionally checks the exact package version and stable UpgradeCode. This is a packaging validation correction, not a change to capture protection.
+
 ## Receiver acceptance procedure
 
 Use synthetic test text and two consenting devices/accounts. Record OS version, Electron version, GO1 commit/build, meeting/browser version, share source, hardware/display arrangement and a timestamp.

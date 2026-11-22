@@ -1,0 +1,260 @@
+{
+  "sourceCommit": "ec5357433238a725fb2c4caffecc986169004217",
+  "observedAt": "2026-11-22T02:55:07.066Z",
+  "nativeApiResults": [
+    {
+      "result": "pass",
+      "platform": "win32",
+      "osRelease": "10.0.26100",
+      "electron": "39.8.10",
+      "node": "22.22.1",
+      "enabled": {
+        "enabled": true,
+        "supported": true,
+        "platform": "win32",
+        "allApplied": true,
+        "receiverVerified": false,
+        "guaranteedCaptureExclusion": false,
+        "windows": [
+          {
+            "role": "workspace",
+            "applied": true,
+            "error": null
+          },
+          {
+            "role": "companion",
+            "applied": true,
+            "error": null
+          },
+          {
+            "role": "review",
+            "applied": true,
+            "error": null
+          }
+        ],
+        "limitation": "Windows capture exclusion depends on the capture method and OS version. Check a second device before sharing private content."
+      },
+      "receiverTests": "not_run",
+      "guaranteedCaptureExclusion": false
+    },
+    {
+      "result": "pass",
+      "platform": "darwin",
+      "osRelease": "24.6.0",
+      "electron": "39.8.10",
+      "node": "22.22.1",
+      "enabled": {
+        "enabled": true,
+        "supported": true,
+        "platform": "darwin",
+        "allApplied": true,
+        "receiverVerified": false,
+        "guaranteedCaptureExclusion": false,
+        "windows": [
+          {
+            "role": "workspace",
+            "applied": true,
+            "error": null
+          },
+          {
+            "role": "companion",
+            "applied": true,
+            "error": null
+          },
+          {
+            "role": "review",
+            "applied": true,
+            "error": null
+          }
+        ],
+        "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device."
+      },
+      "receiverTests": "not_run",
+      "guaranteedCaptureExclusion": false
+    }
+  ],
+  "jobs": [
+    {
+      "id": 137071981362,
+      "name": "windows-msi",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 44977965802,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Verify pre-installed WiX 3 tools",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run npm install --no-audit --no-fund",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run npm run check && npm test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Verify native window capture-protection API state",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Build MSI for Windows x64",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Validate MSI file and metadata",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 9
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        }
+      ]
+    },
+    {
+      "id": 137071981250,
+      "name": "macos-arm64-dmg",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 44977965785,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install app dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run source checks and automated tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify native window capture-protection API state",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Build bundled transcription tools (ARM64)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Build Apple Silicon DMG",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Mount DMG and verify app contents and native tools",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        }
+      ]
+    }
+  ],
+  "macDmgArtifactUrl": "https://github.com/amey1234444/GO1/actions/runs/44977965785/artifacts/14736442453",
+  "receiverTests": {
+    "Zoom": "not_run",
+    "GoogleMeet": "not_run",
+    "MicrosoftTeams": "not_run"
+  }
+}
