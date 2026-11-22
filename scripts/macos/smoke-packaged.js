@@ -117,7 +117,12 @@ async function main() {
   report.macOS = (await run('sw_vers', ['-productVersion'])).stdout.trim();
   await run('hdiutil', ['attach', '-readonly', '-nobrowse', '-mountpoint', mount, dmg], { timeout: 120000 }); mounted = true;
   const appName = (await fs.readdir(mount)).find(name => name.endsWith('.app')); assert.ok(appName);
-  const bundle = path.join(mount, appName), native = await fs.realpath(path.join(bundle, 'Contents/Resources/native/bin'));
+  // Test a Finder-style copy instead of running from the mounted image.
+  const bundle = path.join(temp, appName);
+  await run('ditto', [path.join(mount, appName), bundle], { timeout: 120000 });
+  await run('codesign', ['--verify', '--deep', '--strict', bundle]);
+  report.installCopy = { method: 'ditto from mounted DMG to writable directory', signatureVerified: true, finderQuarantineTested: false };
+  const native = await fs.realpath(path.join(bundle, 'Contents/Resources/native/bin'));
   report.appVersion = (await run('plutil', ['-extract', 'CFBundleShortVersionString', 'raw', path.join(bundle, 'Contents/Info.plist')])).stdout.trim();
   const ollama = await launch('ollama', ['serve'], 'ollama', { ...process.env, OLLAMA_HOST: '127.0.0.1:11434', OLLAMA_MODELS: path.join(temp, 'ollama-models') });
   await record('Local AI runtime and model', async () => {

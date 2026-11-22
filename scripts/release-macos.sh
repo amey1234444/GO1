@@ -9,8 +9,11 @@ if ! security find-identity -v -p codesigning | grep -q 'Developer ID Applicatio
   echo 'Missing Developer ID Application signing identity' >&2; exit 1
 fi
 export GO1_SIGNED_RELEASE=1
+export GO1_BUNDLE_NATIVE=1
 npm install --no-audit --no-fund
 npm run check
 npm test
-npm run make
+bash scripts/build-macos-native.sh
+npm run make:mac
+bash scripts/verify-dmg.sh
 printf '\nInspect out/make/ before distributing. Verify signature and notarization with codesign and spctl.\n'

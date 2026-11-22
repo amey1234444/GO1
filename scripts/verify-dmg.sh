@@ -28,3 +28,27 @@ if [[ "${GO1_BUNDLE_NATIVE:-0}" == 1 ]]; then
   echo 'All four embedded ARM64 transcription tools present.'
 fi
 printf 'Verified DMG: %s\n' "$file"
+# Disk-image checks alone cannot detect an invalid app code signature.
+codesign --verify --deep --strict --verbose=2 "$APP"
+for binary in "$APP"/Contents/Resources/native/bin/*; do
+  [[ ! -f "$binary" ]] || codesign --verify --strict "$binary"
+done
+SIGNING_LOG="out/release-evidence/signature.txt"
+mkdir -p out/release-evidence
+codesign -dvvv "$APP" > "$SIGNING_LOG" 2>&1
+set +e
+spctl --assess --type execute --verbose=4 "$APP" > out/release-evidence/gatekeeper.txt 2>&1
+assessment=$?
+set -e
+notarized=false
+if [[ "${GO1_SIGNED_RELEASE:-0}" == 1 ]]; then
+  grep -q 'Authority=Developer ID Application:' "$SIGNING_LOG"
+  xcrun stapler validate "$APP"
+  [[ "$assessment" == 0 ]] || { cat out/release-evidence/gatekeeper.txt; exit 1; }
+  notarized=true
+else
+  grep -q 'Signature=adhoc' "$SIGNING_LOG"
+  echo 'Ad-hoc signature integrity passed. This preview is NOT Apple-notarized.'
+fi
+printf '{"signatureVerified":true,"developerIdNotarized":%s,"gatekeeperExitCode":%s}\n' "$notarized" "$assessment" > out/release-evidence/signing.json
+node scripts/macos/package-report.js "$APP" "$file" out/release-evidence/signing.json

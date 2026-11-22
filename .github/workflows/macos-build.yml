@@ -5,12 +5,21 @@ on:
     paths-ignore: ['docs/**', 'README.md']
   pull_request:
   workflow_dispatch:
+    inputs:
+      require_notarization:
+        description: Fail unless Apple signing and notarization credentials are configured
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   macos-arm64-dmg:
     runs-on: macos-15
     timeout-minutes: 60
+    outputs:
+      artifact_name: ${{ steps.release.outputs.artifact_name }}
+      release_tag: ${{ steps.release.outputs.release_tag }}
+      notarized: ${{ steps.release.outputs.notarized }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,7 +37,23 @@ jobs:
         run: npm run smoke:protection
       - name: Build bundled transcription tools (ARM64)
         run: bash scripts/build-macos-native.sh
-      - name: Build Apple Silicon DMG
+      - name: Configure Mac signing for trusted builds
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          GO1_REQUIRE_NOTARIZATION: ${{ inputs.require_notarization || 'false' }}
+        run: bash scripts/macos/configure-signing.sh
+      - name: Build and sign Apple Silicon DMG
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: npm run make:mac
       - name: Mount DMG and verify app contents and native tools
         env:
@@ -42,13 +67,57 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: GO1-packaged-app-evidence-arm64-v0.21.0
+          name: GO1-packaged-app-evidence-arm64-${{ github.run_id }}
           path: out/release-evidence/
           if-no-files-found: warn
           retention-days: 14
+      - name: Prepare direct-download release assets
+        id: release
+        run: python3 scripts/macos/prepare-release.py
       - uses: actions/upload-artifact@v4
         with:
-          name: GO1-macOS-arm64-v0.21.0-desktop-recovery-unsigned-DMG
-          path: out/make/**/*.dmg
+          name: ${{ steps.release.outputs.artifact_name }}
+          path: out/distribution/
+          compression-level: 0
           if-no-files-found: error
           retention-days: 14
+      - name: Remove temporary signing credentials
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/go1-signing.keychain-db" ]]; then
+            security delete-keychain "$RUNNER_TEMP/go1-signing.keychain-db"
+          fi
+          rm -f "$RUNNER_TEMP/go1-certificate.p12"
+
+  publish-dmg:
+    needs: macos-arm64-dmg
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.macos-arm64-dmg.outputs.artifact_name }}
+          path: distribution
+      - name: Publish DMG and checksums directly on GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.macos-arm64-dmg.outputs.release_tag }}
+          NOTARIZED: ${{ needs.macos-arm64-dmg.outputs.notarized }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd distribution
+          shasum -a 256 -c ./*.dmg.sha256
+          flags=(--prerelease --latest=false)
+          label='Ad-hoc preview — not Apple-notarized'
+          if [[ "$NOTARIZED" == true ]]; then
+            flags=(--latest)
+            label='Developer ID signed and Apple-notarized'
+          fi
+          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" \
+            --title "GO1 $RELEASE_TAG — $label" --notes-file RELEASE_NOTES.md \
+            "${flags[@]}" ./*.dmg ./*.dmg.sha256 ./package-integrity.json ./packaged-smoke.json
+          echo "Direct DMG: https://github.com/$GH_REPO/releases/download/$RELEASE_TAG/$(basename ./*.dmg)" >> "$GITHUB_STEP_SUMMARY"

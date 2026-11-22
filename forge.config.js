@@ -8,6 +8,8 @@ const packagerConfig = {
   name: 'GO1',
   appBundleId: 'dev.go1.transcription',
   asar: true,
+  // Runtime-only allowlist: native tools are copied once via extraResource.
+  ignore: [/^\/(?!src(?:\/|$)|package\.json$|LICENSE(?:\.[^/]*)?$)/],
   extendInfo: {
     NSMicrophoneUsageDescription: 'GO1 records microphone audio only when you start a session.',
     NSAudioCaptureUsageDescription: 'GO1 captures Mac system playback audio only after you explicitly select it and grant permission.',
@@ -28,18 +30,35 @@ if (signing) {
   if (!process.env.APPLE_ID || !process.env.APPLE_APP_SPECIFIC_PASSWORD || !process.env.APPLE_TEAM_ID) {
     throw new Error('Signing requested, but Apple notarization credentials are missing.');
   }
-  packagerConfig.osxSign = { optionsForFile: () => ({ entitlements: 'build/macos-entitlements.plist' }) };
+  packagerConfig.osxSign = {
+    identity: process.env.APPLE_SIGNING_IDENTITY,
+    keychain: process.env.GO1_SIGNING_KEYCHAIN,
+    continueOnError: false,
+    optionsForFile: file => ({
+      entitlements: file.includes('/Resources/native/bin/') ? [] : 'build/macos-entitlements.plist',
+      hardenedRuntime: true
+    })
+  };
   packagerConfig.osxNotarize = {
     appleId: process.env.APPLE_ID,
     appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD,
     teamId: process.env.APPLE_TEAM_ID
   };
 }
+if (process.platform === 'darwin' && !signing) {
+  // Re-seal renamed Electron and every nested Mach-O after packaging.
+  // Ad-hoc integrity is NOT Developer ID trust or Apple notarization.
+  packagerConfig.osxSign = {
+    identity: '-', identityValidation: false, preAutoEntitlements: false,
+    continueOnError: false,
+    optionsForFile: () => ({ hardenedRuntime: false, timestamp: 'none',
+      entitlements: 'build/macos-entitlements.plist' })
+  };
+}
 module.exports = {
   packagerConfig,
   makers: [
-    { name: '@electron-forge/maker-zip', platforms: ['darwin'] },
-    { name: '@electron-forge/maker-dmg', platforms: ['darwin'] },
+    { name: '@electron-forge/maker-dmg', platforms: ['darwin'], config: { format: 'UDBZ' } },
     { name: '@electron-forge/maker-wix', platforms: ['win32'], config: {
       manufacturer: 'GO1 Project',
       description: 'Local, privacy-first multilingual transcription',

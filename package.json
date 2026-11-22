@@ -1,6 +1,6 @@
 {
   "name": "go1-multilingual-transcription",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "Local transcription and opt-in live meeting guidance for authorized use",
   "main": "src/main.js",
   "license": "MIT",
