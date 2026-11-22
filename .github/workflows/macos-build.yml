@@ -55,6 +55,8 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: npm run make:mac
+      - name: Select smaller verified DMG compression
+        run: python3 scripts/macos/optimize-dmg.py
       - name: Mount DMG and verify app contents and native tools
         env:
           GO1_BUNDLE_NATIVE: '1'
@@ -119,5 +121,5 @@ jobs:
           fi
           gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" \
             --title "GO1 $RELEASE_TAG — $label" --notes-file RELEASE_NOTES.md \
-            "${flags[@]}" ./*.dmg ./*.dmg.sha256 ./package-integrity.json ./packaged-smoke.json
+            "${flags[@]}" ./*.dmg ./*.dmg.sha256 ./package-integrity.json ./packaged-smoke.json ./download-policy.json ./compression.json
           echo "Direct DMG: https://github.com/$GH_REPO/releases/download/$RELEASE_TAG/$(basename ./*.dmg)" >> "$GITHUB_STEP_SUMMARY"

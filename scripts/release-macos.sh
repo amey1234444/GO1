@@ -15,5 +15,6 @@ npm run check
 npm test
 bash scripts/build-macos-native.sh
 npm run make:mac
+python3 scripts/macos/optimize-dmg.py
 bash scripts/verify-dmg.sh
 printf '\nInspect out/make/ before distributing. Verify signature and notarization with codesign and spctl.\n'

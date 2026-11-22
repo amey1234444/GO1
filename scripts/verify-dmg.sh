@@ -52,3 +52,5 @@ else
 fi
 printf '{"signatureVerified":true,"developerIdNotarized":%s,"gatekeeperExitCode":%s}\n' "$notarized" "$assessment" > out/release-evidence/signing.json
 node scripts/macos/package-report.js "$APP" "$file" out/release-evidence/signing.json
+
+python3 scripts/macos/assess-download.py "$APP"

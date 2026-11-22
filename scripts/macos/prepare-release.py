@@ -17,14 +17,20 @@ assert integrity['signing']['signatureVerified'] is True
 images = list((root / 'make').rglob('*.dmg'))
 assert len(images) == 1, 'Expected exactly one DMG'
 assert hashlib.sha256(images[0].read_bytes()).hexdigest() == integrity['dmg']['sha256']
+download_policy = json.loads((root / 'release-evidence/download-policy.json').read_text())
+assert download_policy['sourceCommit'] == integrity['sourceCommit']
+assert download_policy['syntheticQuarantineApplied'] is True
+assert download_policy['signatureVerified'] is True
 notarized = integrity['signing']['developerIdNotarized']
 if notarized:
     assert integrity['signing']['gatekeeperExitCode'] == 0
+    assert download_policy['policyAccepted'] is True
 label = 'Apple-notarized' if notarized else 'ad-hoc preview, NOT Apple-notarized'
 dest = root / 'distribution'
 dest.mkdir(parents=True, exist_ok=True)
 for source in [images[0], Path(str(images[0]) + '.sha256'),
-               root / 'release-evidence/package-integrity.json', root / 'release-evidence/packaged-smoke.json']:
+               root / 'release-evidence/package-integrity.json', root / 'release-evidence/packaged-smoke.json',
+               root / 'release-evidence/download-policy.json', root / 'release-evidence/compression.json']:
     shutil.copy2(source, dest / source.name)
 tag = f"v{integrity['version']}-mac.{os.environ['GITHUB_RUN_NUMBER']}"
 notes = f"""Apple Silicon (ARM64) DMG — {label}.
@@ -34,7 +40,7 @@ Download **{images[0].name}** directly below. The automatically generated source
 Size: {integrity['dmg']['bytes'] / 1024 / 1024:.1f} MiB. SHA-256: `{integrity['dmg']['sha256']}`.
 Source: `{integrity['sourceCommit']}`.
 
-Signature integrity, mounted-image validation and {len(smoke['steps'])} packaged-app checks passed, including real local speech/AI inference from a copied app. Hardware microphone input, browser quarantine/Finder first launch and remote meeting receivers were not tested.
+Signature integrity, mounted-image validation and {len(smoke['steps'])} packaged-app checks passed, including real local speech/AI inference from a copied app. A synthetic quarantine policy assessment is recorded separately in download-policy.json. Actual browser download/Finder first launch, hardware microphone input and remote meeting receivers were not tested.
 
 Open the DMG, drag GO1.app to Applications, eject the disk and open Applications → GO1. Speech model weights download separately. Optional AI uses a separately installed Ollama.
 """

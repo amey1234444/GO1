@@ -23,12 +23,14 @@ function sizeTree(dir) {
   return bytes;
 }
 const sha256 = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const imageInfo = execFileSync('hdiutil', ['imageinfo', '-plist', dmg]);
+const imageFormat = execFileSync('plutil', ['-extract', 'Format', 'raw', '-o', '-', '-'], { input: imageInfo, encoding: 'utf8' }).trim();
 const report = {
   sourceCommit: process.env.GITHUB_SHA || null,
   version: require('../../package.json').version,
   macOS: execFileSync('sw_vers', ['-productVersion'], { encoding: 'utf8' }).trim(),
   architecture: 'arm64', signing: JSON.parse(fs.readFileSync(assessmentFile, 'utf8')),
-  dmg: { filename: path.basename(dmg), bytes: fs.statSync(dmg).size, sha256: sha256(dmg), format: 'UDBZ' },
+  dmg: { filename: path.basename(dmg), bytes: fs.statSync(dmg).size, sha256: sha256(dmg), format: imageFormat },
   app: { bytes: sizeTree(bundle), asarBytes: fs.statSync(archive).size, asarEntries: entries.length,
     nativeBytes: sizeTree(path.join(bundle, 'Contents/Resources/native')), runtimeOnly: true },
   browserDownloadTested: false, remoteMeetingReceiverTested: false
