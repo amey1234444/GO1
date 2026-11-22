@@ -1,0 +1,30 @@
+{
+  "sourceCommit": "1f77a1576230f485dd3d3cd0378c360c30121003",
+  "macRun": 45058471572,
+  "captureRun": 45058471575,
+  "artifacts": [
+    {
+      "id": 14768527951,
+      "kind": "packaged-evidence",
+      "zipSha256": "ba52afe7f18a2df2bd51342ac8258453f335090f32ef384cd3c9cbeb53eac1b4"
+    },
+    {
+      "id": 14768184286,
+      "kind": "installer",
+      "zipSha256": "b3dc7fa1f970b9416db0a74c312e1eb6a5c04c9d7c76e9740702220efb8080b6"
+    },
+    {
+      "id": 14768920365,
+      "kind": "capture-macos-15",
+      "zipSha256": "934bd606eacbaa379a3528bf9c2b57bb7ca6af0ab46e54ae3e48c10cf153aa4c"
+    },
+    {
+      "id": 14768348244,
+      "kind": "capture-macos-26",
+      "zipSha256": "d3193197bcbdf314bf91613c7b8b5463703ea7ee4d7edb137c782ddd2893c2f1"
+    }
+  ],
+  "hardwareAudioTested": false,
+  "remoteMeetingReceiverTested": false,
+  "gatekeeperFirstLaunchTested": false
+}

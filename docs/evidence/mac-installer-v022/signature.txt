@@ -1,0 +1,16 @@
+Executable=/private/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-mount.cK0jx8kT/GO1.app/Contents/MacOS/GO1
+Identifier=dev.go1.transcription
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=622 flags=0x2(adhoc) hashes=9+7 location=embedded
+Hash type=sha256 size=32
+CandidateCDHash sha256=0ae74a1a0b3d8a630000b49c93c542765dfde5be
+CandidateCDHashFull sha256=0ae74a1a0b3d8a630000b49c93c542765dfde5be153ea662f4f980b674e21df3
+Hash choices=sha256
+CMSDigest=0ae74a1a0b3d8a630000b49c93c542765dfde5be153ea662f4f980b674e21df3
+CMSDigestType=2
+CDHash=0ae74a1a0b3d8a630000b49c93c542765dfde5be
+Signature=adhoc
+Info.plist entries=32
+TeamIdentifier=not set
+Sealed Resources version=2 rules=13 files=16
+Internal requirements count=0 size=12

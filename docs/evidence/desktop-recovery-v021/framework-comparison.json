@@ -1,0 +1,55 @@
+{
+  "referenceDMGSHA256": "059ff75f28b7604966a800493c3c05c52aeebdf28ee1ccafed28a39e5c7a3b54",
+  "referenceElectron": "43.3.0",
+  "reference": {
+    "fileSHA256": "469c1eded27e04465b87433cb57a07ad5a58a264f99ea01780468aa1b7e81325",
+    "sections": [
+      {
+        "segment": "__TEXT",
+        "section": "__text",
+        "bytes": 148319260,
+        "sha256": "e888894e6c57408d14df0158e1abad14db050ca02c63a0d82ab82bcaf6d8be87"
+      },
+      {
+        "segment": "__TEXT",
+        "section": "__cstring",
+        "bytes": 15450069,
+        "sha256": "c14bf79f1201554c5d6b74d0195f9886c55b7904cdf1d7ceff7ced7bb1fee216"
+      },
+      {
+        "segment": "__TEXT",
+        "section": "__objc_methname",
+        "bytes": 98854,
+        "sha256": "77f1710c64c8c107cf925f3f239133ce1d283727a07336212f33e9aad454c1e7"
+      }
+    ]
+  },
+  "officialInstalledFramework": {
+    "fileSHA256": "344853b7b621f5f50a9d8608855ce6462cdc93c0b7edc3ca9d2ce04b9d0dd09b",
+    "sections": [
+      {
+        "segment": "__TEXT",
+        "section": "__text",
+        "bytes": 148319260,
+        "sha256": "e888894e6c57408d14df0158e1abad14db050ca02c63a0d82ab82bcaf6d8be87"
+      },
+      {
+        "segment": "__TEXT",
+        "section": "__cstring",
+        "bytes": 15450069,
+        "sha256": "c14bf79f1201554c5d6b74d0195f9886c55b7904cdf1d7ceff7ced7bb1fee216"
+      },
+      {
+        "segment": "__TEXT",
+        "section": "__objc_methname",
+        "bytes": 98854,
+        "sha256": "77f1710c64c8c107cf925f3f239133ce1d283727a07336212f33e9aad454c1e7"
+      }
+    ]
+  },
+  "officialFrameworkPath": "/Users/runner/work/GO1/GO1/node_modules/electron/dist/Electron.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+  "fullFileMatches": false,
+  "selectedCodeAndStringSectionsMatch": true,
+  "meetingReceiverVerified": false,
+  "scope": "Binary section identity only. Does not test meetings or prove universal capture exclusion."
+}

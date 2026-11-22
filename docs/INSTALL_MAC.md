@@ -1,26 +1,39 @@
 # Install GO1 on an Apple Silicon Mac
 
-## Get the installer, not the source or test evidence
+## Download the DMG directly
 
-Open the [Mac DMG workflow](https://github.com/amey1234444/GO1/actions/workflows/macos-build.yml), select the latest successful v0.20 run, and download **GO1-macOS-arm64-v0.20.0-live-presentation-unsigned-DMG** from its Artifacts section while signed in to GitHub. The [v0.20 validation report](GO_CLIENT_STEALTH_AUDIT_V020.md#validation-and-download) records the verified run and exact download.
+Current: **[GO1-0.22.0-arm64.dmg — 130.1 MiB](https://github.com/amey1234444/GO1/releases/download/v0.22.0-mac.32/GO1-0.22.0-arm64.dmg)** · [Checksum](https://github.com/amey1234444/GO1/releases/download/v0.22.0-mac.32/GO1-0.22.0-arm64.dmg.sha256). This is an **ad-hoc preview** with verified signature integrity, but it is **not Apple-notarized** and its CI Gatekeeper assessment was rejected. A normally trusted first launch still requires the project’s Apple signing setup.
 
-GitHub Actions downloads artifacts as ZIP archives. **The ZIP is the delivery wrapper; the file inside is GO1-0.20.0-arm64.dmg.** Do not rename `.zip` to `.dmg`.
+Open [GO1 Releases](https://github.com/amey1234444/GO1/releases) and choose the latest Mac release. Under **Assets**, download **GO1-0.22.0-arm64.dmg** and its `.sha256` checksum. Do not download the automatically generated source ZIP/tarball. The release title and evidence state whether it is **Apple-notarized** or an **ad-hoc preview**.
 
-| Download | What it contains | Installable? |
-|---|---|---|
-| Artifact ending in `unsigned-DMG` | The built `.dmg` disk image | Yes, after extracting the ZIP |
-| `packaged-app-evidence` or `capture-evidence` | JSON, screenshots and execution logs | No |
-| Repository **Code → Download ZIP** | Source files | No; this requires building |
+GitHub Actions artifacts still download as ZIP archives; that is a GitHub artifact wrapper. The release asset is the direct DMG download. Never rename a ZIP to DMG. See [v0.22 packaging evidence and signing setup](MAC_INSTALLER_V022.md).
 
 ## Install and open
 
-1. Quit any running older GO1 copy.
-2. Double-click the downloaded ZIP in Finder to extract it. Open the extracted folder if Finder creates one.
-3. Double-click **GO1-0.20.0-arm64.dmg**. Copy **GO1.app** from the mounted disk to your **Applications** folder, replacing the older app if desired.
-4. Eject the mounted disk and launch **Applications → GO1**. Run the installed copy, not the app on the mounted disk.
-5. This preview is unsigned and not Apple-notarized. If macOS blocks it as an unidentified/unverified developer, first attempt to open it, then use **System Settings → Privacy & Security → Open Anyway** for this specific GO1 app only if you trust the source. Follow [Apple's instructions](https://support.apple.com/en-us/102445); do not disable Gatekeeper globally. A damaged/malware warning is a different issue: verify the download rather than bypassing it.
+1. Quit any older running GO1 copy.
+2. Open the downloaded DMG and drag **GO1.app** into **Applications**. Replace an older copy only if desired.
+3. Eject the mounted image and open **Applications → GO1**.
+4. Grant microphone/system-audio permissions only for the audio source you choose.
 
-This build targets **Apple Silicon (ARM64)**, not Intel Macs. Check **Apple menu → About This Mac** for the chip type. The DMG workflow mounts the built image, verifies the app and its four bundled ARM64 speech tools, and launches the actual packaged app before publishing the installer.
+This installer targets **Apple Silicon (ARM64)**. It is not an Intel build. Check **Apple menu → About This Mac** for the chip type. Speech model weights download separately; optional local AI requires Ollama.
+
+## If macOS reports “damaged”
+
+Do not keep using the old app or disable Gatekeeper. Download a fresh copy from the release, and verify it in Terminal from the download directory:
+
+```sh
+shasum -a 256 -c GO1-0.22.0-arm64.dmg.sha256
+hdiutil verify GO1-0.22.0-arm64.dmg
+codesign --verify --deep --strict --verbose=2 /Applications/GO1.app
+spctl --assess --type execute --verbose=4 /Applications/GO1.app
+```
+
+- Failed checksum or disk-image verification: the local download does not match the published image; redownload it.
+- Failed code-signature verification: do not bypass the error. Preserve the exact output and report the release/version.
+- Valid signature but rejected Gatekeeper on an **ad-hoc preview**: this is not an Apple-notarized distribution. The project needs the [Developer ID setup](MAC_INSTALLER_V022.md#apple-signed-distribution-setup) for normal first-launch trust.
+- An unidentified-developer or “Apple could not verify” prompt differs from a damaged/malware warning. Apple's [Open Anyway instructions](https://support.apple.com/en-us/102445) apply only when appropriate and when you trust the specific app. They do not repair a corrupted signature. Do not globally disable security checks.
+
+If the failure occurs while copying rather than launching, include the exact Finder message and whether the Applications copy already existed. Copy permissions, disk space and image integrity need separate diagnosis; the word “damaged” alone does not identify the cause.
 
 ## First session
 

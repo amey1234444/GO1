@@ -1,5 +1,13 @@
 # GO1
 
+## v0.22 — direct Mac DMG and signature verification
+
+**[Direct DMG download — 130.1 MiB](https://github.com/amey1234444/GO1/releases/download/v0.22.0-mac.32/GO1-0.22.0-arm64.dmg)** · [Checksums and release](https://github.com/amey1234444/GO1/releases/tag/v0.22.0-mac.32). 23.5% smaller than v0.20; 115 source tests and all 15 copied-app checks passed. **This preview has a valid ad-hoc signature but Gatekeeper still rejects it; Apple notarization is pending signing credentials.**
+
+The Mac workflow now seals and verifies app signatures, tests a copy from the DMG, excludes development files and duplicate native tools, and publishes the DMG directly as a [GitHub Release asset](https://github.com/amey1234444/GO1/releases). [Install on Mac](docs/INSTALL_MAC.md) · [Packaging changes and Apple signing setup](docs/MAC_INSTALLER_V022.md). Ad-hoc previews remain **not Apple-notarized**; Developer ID credentials are required for normal Gatekeeper trust.
+
+The [full GO Client package study](docs/GO_CLIENT_FULL_PACKAGE_STUDY.md) includes a file/hash inventory, subsystem comparison and actual v0.21 app screenshots. v0.21 added saved companion appearance, display/wake recovery and one-instance behavior; 115 tests and all 15 native packaged-app stages passed. Remaining cloud/audio/UI differences and unverified meeting receiver behavior are listed explicitly.
+
 ## v0.20 — deeper GO Client audit and live Mac presentation
 
 The native module/import audit and Electron framework comparison are documented in [GO_CLIENT_STEALTH_AUDIT_V020.md](docs/GO_CLIENT_STEALTH_AUDIT_V020.md). GO1 now uses Electron 43.3.0, matching the supplied DMG, and supports a saved live-session Dock-hiding preference with workspace recovery. Capture protection remains separate and leaves transcription/AI running. Universal meeting invisibility is not claimed.

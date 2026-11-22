@@ -1,0 +1,30 @@
+{
+  "codeCommit": "bdd8403799f61d825b8e124069e58aa06842631f",
+  "macRun": 45081962658,
+  "captureRun": 45081962756,
+  "releaseTag": "v0.22.0-mac.32",
+  "artifacts": [
+    {
+      "id": 14778345037,
+      "kind": "packaged-evidence",
+      "zipSha256": "48ff9faeba177c210a3114ff6413e0dc4e87c00311fff4ba5e5dc476f9a4dbb1"
+    },
+    {
+      "id": 14777671685,
+      "kind": "distribution",
+      "zipSha256": "bd9cd07d433e3c5b7b2b5901a2fcc228066bda000b059d0bad401d20f42bcd6f"
+    }
+  ],
+  "files": {
+    "packaged-companion-real-inference.png": "10c3dbc9bf82d3b05cac0e7504857cfb76d4a2bdbf011eba06697b12a6856282",
+    "signature.txt": "a95c25500396a088bf146a7319bfca13139b61aa0a1dd03881b2b3011999de54",
+    "packaged-smoke.json": "1b8b634d322e1646e1b0c8eaa46cf98ba045c4bbf7f426acca79536818189f18",
+    "gatekeeper.txt": "dc6bfc1c135ea58f0d5233909a82710184b0e16400d1c83ac81f3e77308d5973",
+    "package-integrity.json": "2e8c2d1ecddc6b1239f32b21bbe802a1f0433dd403cb7f96e5be2aab226c62a7",
+    "packaged-companion-compact.png": "d5436d64bb61b68add670013099dd6104404b5c95418a4ab6aa91f8624e532eb"
+  },
+  "developerIdNotarized": false,
+  "browserQuarantineTested": false,
+  "hardwareAudioTested": false,
+  "meetingReceiverTested": false
+}
