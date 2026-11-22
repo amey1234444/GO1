@@ -7,6 +7,7 @@ const { promisify } = require('node:util');
 const { companionWindowOptions, configureCompanionWindow } = require('../../src/privacy/companion-window');
 const { ContentProtection } = require('../../src/privacy/content-protection');
 const { captureVerdict } = require('../../src/privacy/capture-verdict');
+const { probeCompanion } = require('./probe-companion');
 const execute = promisify(execFile);
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const root = path.resolve(__dirname, '../..');
@@ -64,6 +65,7 @@ app.whenReady().then(async () => {
     for (const trial of report.trials) trial.verdict = captureVerdict(control, trial.capture);
     const own = report.trials.find(t => t.scenario.name === 'go1-mac-panel');
     report.result = control?.status === 'blocked' ? 'blocked' : own?.verdict.result || 'inconclusive';
+    if (control?.status === 'captured') report.companion = await probeCompanion({ root, output, helper, display });
     await fs.writeFile(path.join(output, 'report.json'), JSON.stringify(report, null, 2));
     console.log('GO1_CAPTURE_PIXELS ' + JSON.stringify(report));
     if (report.result !== 'excluded-in-tested-paths') console.log(`::warning::GO1 capture result: ${report.result}. No full-screen invisibility certification.`);

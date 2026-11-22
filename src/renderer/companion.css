@@ -2,3 +2,5 @@
 /* Frameless Mac panel: retain a drag handle and clickable controls. */
 .top { -webkit-app-region: drag; }
 button, input, a { -webkit-app-region: no-drag; }
+
+#protectionState { margin: 0; padding: 0; border: 0; background: transparent; color: #b8c9ed; font-size: 11px; line-height: 1.45; }

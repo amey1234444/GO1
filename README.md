@@ -1,5 +1,9 @@
 # GO1
 
+## v0.17 — live protection keeps processing active
+
+**Live capture protection (stealth)** leaves transcription and enabled AI running. **Stop & mask** deliberately stops both. Workspace and companion windows disable background throttling, and the UI reports live session/AI status separately from capture protection. [Live mode behavior and Google Meet verification](docs/LIVE_PROTECTION_AND_MEET.md).
+
 ## v0.16 — macOS panel and pixel capture validation
 
 The Mac companion now uses a frameless nonactivating panel, the screen-saver window level, all Spaces/fullscreen visibility and inactive initial display. Capture protection remains a separate best-effort request.

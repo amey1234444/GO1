@@ -856,6 +856,12 @@ function renderProtection(info) {
         : info.allApplied ? `Protection requested for ${info.windows.length} window(s). Receiver view not verified.`
           : 'Protection requested but not applied to every window.';
   $('captureProtectionLimitation').textContent = info.limitation;
+  const activity = info.activity || {};
+  $('protectedActivityStatus').textContent = activity.paused
+    ? 'Stop & mask is active. Transcription and AI are stopped. Exit that mode before starting a new session.'
+    : activity.liveSession
+      ? `Live session active · transcription enabled · AI ${activity.aiRunning ? 'generating' : activity.aiEnabled ? 'enabled' : 'not enabled for this session'}. Capture protection does not pause processing.`
+      : 'Ready for a live session. Capture protection leaves transcription and AI available; it does not start recording.';
 }
 async function refreshProtection() {
   try { renderProtection(await window.go1.captureProtectionInfo()); }
@@ -871,5 +877,6 @@ $('captureProtectionToggle').addEventListener('change', async event => {
   } finally { toggle.disabled = false; }
 });
 $('refreshProtectionButton').addEventListener('click', refreshProtection);
+window.go1.onCaptureProtectionChanged(renderProtection);
 window.addEventListener('focus', refreshProtection);
 void refreshProtection();

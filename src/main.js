@@ -52,8 +52,18 @@ function closeCompanion() {
 }
 function publishCompanion() {
   if (companionWindow && !companionWindow.isDestroyed() && companionState && !privacyGate.paused) {
-    companionWindow.webContents.send('go1:companion-snapshot', { ...companionState });
+    companionWindow.webContents.send('go1:companion-snapshot', { ...companionState, captureProtection: protectionInfo() });
   }
+}
+function protectionInfo() {
+  return { ...contentProtection.snapshot(), activity: {
+    liveSession: Boolean(liveSession), aiEnabled: Boolean(liveSession && assistPermitted),
+    aiRunning: Boolean(assistController), paused: privacyGate.paused
+  } };
+}
+function publishProtection() {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:content-protection-changed', protectionInfo());
+  publishCompanion();
 }
 async function openCompanion() {
   privacyGate.assertAllowed();
@@ -69,6 +79,7 @@ async function openCompanion() {
     // Capture protection is applied below before the first show.
     webPreferences: {
       preload: path.join(__dirname, 'renderer', 'companion-preload.js'),
+      backgroundThrottling: false,
       contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true
     }
   });
@@ -137,6 +148,7 @@ function activatePresentationPrivacy(source = 'button') {
   liveController = null;
   liveId = null;
   captureDiagnostics = null;
+  publishProtection();
   if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
     mainWindow.webContents.send('go1:privacy-activate', { source });
   }
@@ -180,6 +192,7 @@ function createWindow() {
     backgroundColor: '#0b1020',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      backgroundThrottling: false,
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
@@ -236,17 +249,19 @@ app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('before-quit', () => { closeCompanion(); coachController?.abort(); activeController?.abort(); liveController?.abort(); liveSession?.cancel(); manager?.cancel(); resetWorker(); });
 
 function onlyApp(event) { if (!ownWindow(event)) throw new Error('Unrecognized request origin.'); }
-ipcMain.handle('go1:content-protection-info', event => { onlyApp(event); return contentProtection.snapshot(); });
+ipcMain.handle('go1:content-protection-info', event => { onlyApp(event); return protectionInfo(); });
 ipcMain.handle('go1:content-protection-set', async (event, enabled) => {
   onlyApp(event);
   contentProtection.setEnabled(enabled);
+  publishProtection();
   await saveSettings();
-  return contentProtection.snapshot();
+  return protectionInfo();
 });
 ipcMain.handle('go1:privacy-info', event => { onlyApp(event); return shortcutInfo(); });
 ipcMain.handle('go1:privacy-resume', event => {
   onlyApp(event);
   privacyGate.exit();
+  publishProtection();
   return shortcutInfo();
 });
 
@@ -338,6 +353,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   });
   companionState = freshCompanionState({ role: practiceProfile.role, language, sessionId: liveId, assistancePermitted: assistPermitted });
   try { await openCompanion(); } catch (error) { console.warn('Companion window unavailable:', error.message); }
+  publishProtection();
   return liveId;
 });
 
@@ -369,6 +385,7 @@ ipcMain.handle('go1:live-stop', async (event, id) => {
       liveSession = null;
       liveController = null;
       liveId = null;
+      publishProtection();
     }
   }
 });
@@ -383,6 +400,7 @@ ipcMain.handle('go1:live-cancel', (event, id) => {
     liveSession = null;
     liveController = null;
     liveId = null;
+    publishProtection();
   }
   return true;
 });
@@ -518,6 +536,7 @@ ipcMain.handle('go1:assist-generate', async (event, { question, context } = {}) 
   if (typeof context !== 'string' || context.length > 12000) throw new Error('Invalid live transcript context.');
   const controller = new AbortController();
   assistController = controller;
+  publishProtection();
   const id = randomUUID();
   if (companionState) {
     companionState = { ...updateQuestion(companionState, question), guidance: '', status: 'Generating local talking points...' };
@@ -541,7 +560,7 @@ ipcMain.handle('go1:assist-generate', async (event, { question, context } = {}) 
   } catch (error) {
     if (companionState && !privacyGate.paused) { companionState = { ...companionState, status: error.message || 'Guidance failed.' }; publishCompanion(); }
     throw error;
-  } finally { if (assistController === controller) assistController = null; }
+  } finally { if (assistController === controller) { assistController = null; publishProtection(); } }
 });
 ipcMain.handle('go1:assist-cancel', event => {
   onlyApp(event); assistController?.abort();

@@ -19,7 +19,7 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.16.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Stop &amp; mask</button><div class="version">GO1 • version 0.17.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
@@ -43,19 +43,20 @@
               </div>
               <div class="studio-actions"><button id="launchPracticeButton" type="submit" class="studio-launch">Launch consented live session <span aria-hidden="true">↗</span></button><button id="savePracticeButton" type="button" class="studio-save">Save context</button><span id="studioStatus" role="status" aria-live="polite">Ready to configure</span></div>
             </form>
-            <div class="studio-info"><div class="studio-info-head">02 / SESSION FLOW</div><div class="studio-flow-row"><span>01</span><div><strong>Configure</strong><p>Role, context, language and focus</p></div></div><div class="studio-flow-row"><span>02</span><div><strong>Capture a permitted session</strong><p>Local Whisper captions while you speak</p></div></div><div class="studio-flow-row"><span>03</span><div><strong>Review and improve</strong><p>Use local Ollama for optional guidance and post-session review</p></div></div><div class="studio-divider"></div><div class="studio-ai-status" id="studioAiStatus">AI coach: not checked</div><button id="checkCoachButton" type="button" class="studio-save">Check local AI</button><div class="studio-small">No covert overlay. No hidden capture. Privacy mode always stops recording.</div></div>
+            <div class="studio-info"><div class="studio-info-head">02 / SESSION FLOW</div><div class="studio-flow-row"><span>01</span><div><strong>Configure</strong><p>Role, context, language and focus</p></div></div><div class="studio-flow-row"><span>02</span><div><strong>Capture a permitted session</strong><p>Local Whisper captions while you speak</p></div></div><div class="studio-flow-row"><span>03</span><div><strong>Review and improve</strong><p>Use local Ollama for optional guidance and post-session review</p></div></div><div class="studio-divider"></div><div class="studio-ai-status" id="studioAiStatus">AI coach: not checked</div><button id="checkCoachButton" type="button" class="studio-save">Check local AI</button><div class="studio-small">Live capture protection keeps transcription and enabled AI running. Stop &amp; mask is a separate emergency action.</div></div>
           </div>
         </section>
         <section class="meeting-safe" aria-labelledby="meetingSafeTitle">
-          <div class="meeting-safe-copy"><div class="meeting-safe-eyebrow">SHARE-SAFE PRESENTATIONS</div><h2 id="meetingSafeTitle">Control what you present</h2><p>For authorized meetings, share a selected window or tab. Use privacy mode to stop recording and mask transcripts before sharing your whole screen. Capture protection is best effort; verify the receiving device before sharing private content.</p></div>
+          <div class="meeting-safe-copy"><div class="meeting-safe-eyebrow">SHARE-SAFE PRESENTATIONS</div><h2 id="meetingSafeTitle">Control what you present</h2><p>Live capture protection requests that GO1 stay out of screen captures while transcription and enabled AI keep running. Share a selected other window or tab, and verify the receiving device. Stop &amp; mask separately ends processing and clears private text.</p></div>
           <div class="meeting-safe-actions"><label for="meetingPlatform">Meeting app</label><select id="meetingPlatform" class="select"><option value="meet">Google Meet</option><option value="teams">Microsoft Teams</option><option value="zoom">Zoom</option></select><button id="shareSafeButton" class="secondary-button" type="button">Stop capture &amp; mask transcript</button><span id="privacyShortcutStatus" class="shortcut-note" role="status">Checking privacy shortcut...</span></div>
           <div class="capture-protection-controls">
-            <label class="switch-line" for="captureProtectionToggle"><span><strong>Request screen-capture protection</strong><small>Applies to all GO1 windows. Does not stop recording.</small></span><input type="checkbox" id="captureProtectionToggle" checked disabled></label>
+            <label class="switch-line" for="captureProtectionToggle"><span><strong>Live capture protection (stealth)</strong><small>Transcription and enabled AI keep running. Exclusion depends on the sharing method.</small></span><input type="checkbox" id="captureProtectionToggle" checked disabled></label>
+            <p id="protectedActivityStatus" role="status" aria-live="polite">Checking live-session state...</p>
             <p id="captureProtectionStatus" role="status" aria-live="polite">Checking window protection...</p>
             <p id="captureProtectionLimitation">Protection is not verified until you check the receiving device.</p>
             <button id="refreshProtectionButton" class="small-button" type="button">Refresh protection status</button>
           </div>
-          <p class="meeting-safe-help" id="meetingHelp" role="status">Select the platform to see sharing guidance.</p><details class="receiver-check"><summary>How to verify what the other participant sees</summary><p>Use two consenting test accounts on separate devices. First share a selected window and inspect it on the receiving device. Then activate GO1 privacy, test entire-display sharing, and confirm the transcript is masked and the microphone has stopped. Do not assume a window is invisible.</p><p>Record the macOS version, meeting application version, share source and receiver screenshot. Repeat for Google Meet, Teams and Zoom.</p></details>
+          <p class="meeting-safe-help" id="meetingHelp" role="status">Select the platform to see sharing guidance.</p><details class="receiver-check"><summary>How to verify what the other participant sees</summary><p>Use two consenting test accounts on separate devices. Enable live capture protection, start a permitted session and confirm that a fresh spoken phrase and AI response appear locally. Share a selected other window, then separately test your entire screen; inspect both on the receiving device while GO1 remains open. Do not press Stop &amp; mask during this test: it deliberately stops transcription and AI. If GO1 is visible remotely, full-screen exclusion has failed for that configuration.</p><p>Record the macOS version, meeting application version, share source and receiver screenshot. Repeat for Google Meet, Teams and Zoom.</p></details>
         </section>
         <div id="setupAlert" class="setup-alert" role="status" aria-live="polite" hidden><div><strong>Local transcription engine setup required</strong><p id="setupMessage"></p></div><button id="recheckButton" class="small-button" type="button">Recheck</button></div>
         <div class="card model-manager" id="modelManager" style="margin-bottom:16px;padding:20px">
@@ -149,7 +150,7 @@
   <section id="privacyCurtain" class="privacy-curtain" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" hidden>
     <div class="privacy-curtain-panel">
       <div class="privacy-curtain-icon" aria-hidden="true">◈</div>
-      <h1 id="privacyTitle">Presentation privacy mode</h1>
+      <h1 id="privacyTitle">Stop &amp; mask is active</h1>
       <p id="privacyCurtainStatus" role="status" aria-live="polite">Stopping capture and clearing private content...</p>
       <p class="privacy-curtain-note">GO1 isn't recording or transcribing while this mode is active. This does not make the application invisible to meeting platforms. Share a specific window or tab, not your entire desktop, to control what you present.</p>
       <button id="exitPrivacyButton" type="button" class="primary-button">Return to workspace</button>

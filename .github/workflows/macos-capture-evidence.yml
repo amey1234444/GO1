@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/privacy/**'
       - 'src/main.js'
+      - 'src/renderer/companion*'
       - 'scripts/macos/**'
       - '.github/workflows/macos-capture-evidence.yml'
   workflow_dispatch:

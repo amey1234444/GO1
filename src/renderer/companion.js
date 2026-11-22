@@ -2,6 +2,10 @@
 const el = id => document.getElementById(id);
 let currentSessionId = null;
 window.go1Companion.onSnapshot(snapshot => {
+  const protection = snapshot.captureProtection;
+  el('protectionState').textContent = protection?.enabled
+    ? `Live protection ${protection.allApplied ? 'requested' : 'needs attention'} · transcription and enabled AI continue · receiver not verified`
+    : 'Capture protection off · transcription and enabled AI continue';
   if (!snapshot || typeof snapshot !== 'object') return;
   if (currentSessionId && snapshot.sessionId !== currentSessionId) return;
   currentSessionId = snapshot.sessionId;
