@@ -1,0 +1,43 @@
+name: macOS capture pixel experiment (not meeting certification)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/privacy/**'
+      - 'src/main.js'
+      - 'scripts/macos/**'
+      - '.github/workflows/macos-capture-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture-evidence:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-26]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Compile independent ScreenCaptureKit observer
+        run: bash scripts/macos/build-capture-probe.sh
+      - name: Collect synthetic capture pixels and verdicts
+        run: npm run probe:capture
+      - name: Publish experiment result
+        if: always()
+        run: |
+          if [ -f out/capture-evidence/report.json ]; then
+            node -e 'const r=require("./out/capture-evidence/report.json"); require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, "Capture result: **" + r.result + "**\n\nThis is local ScreenCaptureKit evidence, not a Zoom/Meet/Teams receiver test. Inspect the JSON and PNG artifacts.\n")'
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: GO1-capture-evidence-${{ matrix.os }}
+          path: out/capture-evidence/
+          if-no-files-found: warn
+          retention-days: 14

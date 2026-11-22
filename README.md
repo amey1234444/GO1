@@ -1,5 +1,12 @@
 ## GO1 v0.14 — Audio transport health from GO Client architecture study
 
+## v0.16 — macOS panel and pixel capture validation
+
+The Mac companion now uses a frameless nonactivating panel, the screen-saver window level, all Spaces/fullscreen visibility and inactive initial display. Capture protection remains a separate best-effort request.
+
+The [macOS validation guide](docs/MACOS_CAPTURE_VALIDATION.md) explains the ScreenCaptureKit pixel experiment. It tests an ordinary window, the actual GO1 panel policy, an accessory-app variant and selected-window capture, including a running stream after its filter is refreshed. Reports include captured PNGs, pixel counts and explicit blocked/exposed/inconclusive results. This does not certify any meeting application's receiver output.
+
+
 ## v0.15 — best-effort screen-capture protection
 
 GO1 now requests OS capture protection for the workspace, live companion and review windows **before they appear**. It reapplies the policy on show/restore and saves the setting across restarts. Use **Request screen-capture protection** under **Control what you present** to inspect or change it.

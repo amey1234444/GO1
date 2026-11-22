@@ -12,6 +12,7 @@ const { ModelManager, MODEL_CATALOG, modelState } = require('./transcription/mod
 const { cancelPrivateProcessing } = require('./privacy/presentation');
 const { PrivacyGate } = require('./privacy/gate');
 const { ContentProtection } = require('./privacy/content-protection');
+const { companionWindowOptions, configureCompanionWindow } = require('./privacy/companion-window');
 const { PRIVACY_SHORTCUT, registerEmergencyPrivacy } = require('./privacy/shortcut');
 const { analysePractice } = require('./practice/feedback');
 const { prepareReview, reviewAllowed } = require('./practice/review-policy');
@@ -64,6 +65,7 @@ async function openCompanion() {
     title: 'GO1 — Live Companion',
     width: 445, height: 660, minWidth: 360, minHeight: 440,
     show: false, opacity: 0.94, backgroundColor: '#0f1425',
+    ...companionWindowOptions(process.platform),
     // Capture protection is applied below before the first show.
     webPreferences: {
       preload: path.join(__dirname, 'renderer', 'companion-preload.js'),
@@ -71,6 +73,7 @@ async function openCompanion() {
     }
   });
   contentProtection.register(window, 'companion');
+  configureCompanionWindow(window, process.platform);
   companionWindow = window;
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());
@@ -78,7 +81,9 @@ async function openCompanion() {
     if (privacyGate.paused || !liveSession || companionWindow !== window || window.isDestroyed()) {
       if (!window.isDestroyed()) window.close(); return;
     }
-    publishCompanion(); window.show();
+    publishCompanion();
+    if (process.platform === 'darwin') window.showInactive();
+    else window.show();
   });
   window.on('closed', () => { if (companionWindow === window) companionWindow = null; });
   try { await window.loadFile(path.join(__dirname, 'renderer', 'companion.html')); }

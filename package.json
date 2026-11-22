@@ -1,17 +1,18 @@
 {
   "name": "go1-multilingual-transcription",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Local transcription and opt-in live meeting guidance for authorized use",
   "main": "src/main.js",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "check": "node --check src/main.js && node --check src/audio/diagnostics.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/transcription/vad.js && node --check src/transcription/vad-live.js && node --check src/transcription/worker.js && node --check src/transcription/models.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js && node --check src/renderer/review.js && node --check src/renderer/review-preload.js && node --check src/renderer/companion-preload.js && node --check src/renderer/companion.js && node --check src/companion/state.js && node --check src/practice/review-policy.js && node --check forge.config.js && node --check src/privacy/presentation.js && node --check src/transcription/latency.js && node --check src/practice/feedback.js && node --check src/privacy/platform.js && node --check src/privacy/gate.js && node --check src/privacy/shortcut.js && node --check src/practice/session.js && node --check src/practice/local-coach.js && node --check src/practice/live-assist.js && node --check src/practice/question.js && node --check src/privacy/content-protection.js && node --check scripts/smoke-content-protection.js",
+    "check": "node --check src/main.js && node --check src/audio/diagnostics.js && node --check src/preload.js && node --check src/transcription/engine.js && node --check src/transcription/formats.js && node --check src/transcription/live.js && node --check src/transcription/vad.js && node --check src/transcription/vad-live.js && node --check src/transcription/worker.js && node --check src/transcription/models.js && node --check src/renderer/pcm-worklet.js && node --check src/renderer/app.js && node --check src/renderer/review.js && node --check src/renderer/review-preload.js && node --check src/renderer/companion-preload.js && node --check src/renderer/companion.js && node --check src/companion/state.js && node --check src/practice/review-policy.js && node --check forge.config.js && node --check src/privacy/presentation.js && node --check src/transcription/latency.js && node --check src/practice/feedback.js && node --check src/privacy/platform.js && node --check src/privacy/gate.js && node --check src/privacy/shortcut.js && node --check src/practice/session.js && node --check src/practice/local-coach.js && node --check src/practice/live-assist.js && node --check src/practice/question.js && node --check src/privacy/content-protection.js && node --check scripts/smoke-content-protection.js && node --check src/privacy/companion-window.js && node --check src/privacy/capture-verdict.js && node --check scripts/macos/probe-capture.js",
     "make": "electron-forge make",
     "package": "electron-forge package",
     "make:mac": "GO1_BUNDLE_NATIVE=1 electron-forge make --platform darwin --arch arm64",
-    "smoke:protection": "electron scripts/smoke-content-protection.js"
+    "smoke:protection": "electron scripts/smoke-content-protection.js",
+    "probe:capture": "electron scripts/macos/probe-capture.js"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.10.0",

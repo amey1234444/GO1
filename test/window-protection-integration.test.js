@@ -25,6 +25,9 @@ async function boot(preferences = {}) {
     isContentProtected() { return this.protected; }
     show() { this.events.push(['show']); this.emit('show'); }
     focus() {}
+    showInactive() { this.show(); }
+    setAlwaysOnTop() {}
+    setVisibleOnAllWorkspaces() {}
     close() { this.dead = true; this.emit('closed'); }
     async loadFile() { this.events.push(['load']); this.webContents.emit('did-finish-load'); this.emit('ready-to-show'); }
   }
