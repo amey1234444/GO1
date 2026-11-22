@@ -363,7 +363,7 @@ ipcMain.handle('go1:coach-feedback', async (event, transcript) => {
       transcript: text,
       signal: controller.signal,
       onChunk: delta => {
-        if (!privacyGate.paused && privacyGate.isCurrent(ticket) && mainWindow && !mainWindow.isDestroyed()) {
+        if (!privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('go1:coach-chunk', { id, delta });
         }
       }
