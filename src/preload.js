@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld('go1', Object.freeze({
   localCoachStatus: () => ipcRenderer.invoke('go1:coach-status'),
   getPracticeFeedback: transcript => ipcRenderer.invoke('go1:coach-feedback', transcript),
   generateLiveGuidance: payload => ipcRenderer.invoke('go1:assist-generate', payload),
+  showCompanion: () => ipcRenderer.invoke('go1:companion-open'),
+  setCompanionQuestion: text => ipcRenderer.invoke('go1:companion-question', text),
   cancelLiveGuidance: () => ipcRenderer.invoke('go1:assist-cancel'),
   onAssistChunk: callback => { const cb = (_event, data) => callback(data); ipcRenderer.on('go1:assist-chunk', cb); return () => ipcRenderer.removeListener('go1:assist-chunk', cb); },
   cancelPracticeFeedback: () => ipcRenderer.invoke('go1:coach-cancel'),

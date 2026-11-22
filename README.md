@@ -1,3 +1,7 @@
+## GO1 v0.13 — Visible Live Companion
+
+Launching a consent-based live session opens a compact 94%-opacity **ordinary macOS/Windows app window** with latest live transcript, selected role/language and manually requested local Ollama talking points. The panel can be reopened from **Show companion**, adjusted to 82–100% opacity, closed, or used to trigger **Stop & mask**. Stopping a session or engaging Presentation Privacy closes the companion and clears in-memory text. It does **not** evade screen-sharing or proctoring: the panel may be visible to other participants when sharing a desktop. No capture exclusion, click-through, process hiding, automatic AI answers, or stealth behavior is implemented.
+
 ## macOS first: testable ARM64 DMG (v0.10.0)
 
 The **macOS Apple Silicon DMG workflow** now builds and bundles `ffmpeg`, `ffprobe`, `whisper-cli`, and a persistent `whisper-server` in `GO1.app/Contents/Resources/native/bin`. The model is downloaded on the first launch from inside GO1; no per-minute API charges. For local builds, run `bash scripts/build-macos-native.sh && npm run make:mac`, then `GO1_BUNDLE_NATIVE=1 bash scripts/verify-dmg.sh`. Full Mac installation and recording checklist: [docs/MAC_FIRST_INSTALL_AND_QA.md](docs/MAC_FIRST_INSTALL_AND_QA.md).

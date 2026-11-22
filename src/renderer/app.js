@@ -16,6 +16,7 @@ function updateAssistAvailability() {
   const live = !state.privacyActive && Boolean(state.liveId) && state.recording && !state.stopping;
   const permitted = $('assistConsent').checked;
   $('assistConsent').disabled = state.recording || state.starting || state.privacyActive;
+  $('showCompanionButton').disabled = !live || state.privacyActive;
   $('assistQuestion').disabled = !live || state.privacyActive;
   $('assistGenerate').disabled = !live || !permitted || assistRunning || $('assistQuestion').value.trim().length < 4;
   $('assistCancel').hidden = !assistRunning;
@@ -35,6 +36,7 @@ function updateAssistCandidate(result) {
   const candidate = window.GO1Question.suggestQuestion(result);
   if (candidate.text && candidate.detected) {
     $('assistQuestion').value = candidate.text;
+    void window.go1.setCompanionQuestion(candidate.text).catch(() => {});
     $('assistStatus').textContent = 'Possible question recognized. Review it and request help only if authorized.';
   }
   updateAssistAvailability();
@@ -604,7 +606,11 @@ async function saveStudioProfile() {
   return result;
 }
 $('assistConsent').addEventListener('change', updateAssistAvailability);
-$('assistQuestion').addEventListener('input', () => { assistQuestionEdited = true; updateAssistAvailability(); });
+$('assistQuestion').addEventListener('input', () => { assistQuestionEdited = true; updateAssistAvailability(); void window.go1.setCompanionQuestion($('assistQuestion').value).catch(() => {}); });
+$('showCompanionButton').addEventListener('click', async () => {
+  if (!state.recording || state.privacyActive) return;
+  try { await window.go1.showCompanion(); } catch (error) { $('assistStatus').textContent = String(error.message || error); }
+});
 $('assistGenerate').addEventListener('click', async () => {
   if (assistRunning || !state.liveId || !state.recording || state.privacyActive || !$('assistConsent').checked) return;
   const question = $('assistQuestion').value.trim();

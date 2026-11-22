@@ -16,10 +16,13 @@ const { prepareReview, reviewAllowed } = require('./practice/review-policy');
 const { normalizeProfile, DEFAULT_PROFILE, validateTranscript } = require('./practice/session');
 const { localModelStatus, generatePracticeFeedback } = require('./practice/local-coach');
 const { generateLiveGuidance } = require('./practice/live-assist');
+const { freshCompanionState, updateTranscript, updateQuestion, addGuidance, opacityFromInput } = require('./companion/state');
 
 app.setName('GO1');
 let mainWindow;
 let reviewWindow = null;
+let companionWindow = null;
+let companionState = null;
 let activeController;
 let liveController;
 let liveSession;
@@ -36,6 +39,78 @@ let assistPermitted = false;
 let practiceProfile = { ...DEFAULT_PROFILE };
 const profilePath = () => path.join(app.getPath('userData'), 'practice-profile.json');
 
+function closeCompanion() {
+  const openWindow = companionWindow;
+  companionWindow = null;
+  companionState = null; // Do not retain guidance or transcript after stop/privacy.
+  if (openWindow && !openWindow.isDestroyed()) openWindow.close();
+}
+function publishCompanion() {
+  if (companionWindow && !companionWindow.isDestroyed() && companionState && !privacyGate.paused) {
+    companionWindow.webContents.send('go1:companion-snapshot', { ...companionState });
+  }
+}
+async function openCompanion() {
+  privacyGate.assertAllowed();
+  if (!liveSession || !liveId) throw new Error('Start a live session first.');
+  if (companionWindow && !companionWindow.isDestroyed()) {
+    companionWindow.show(); companionWindow.focus(); publishCompanion(); return true;
+  }
+  const window = new BrowserWindow({
+    title: 'GO1 — Visible Live Companion',
+    width: 445, height: 660, minWidth: 360, minHeight: 440,
+    show: false, opacity: 0.94, backgroundColor: '#0f1425',
+    // A normal OS window. No process hiding, screen-capture exclusion or click-through.
+    webPreferences: {
+      preload: path.join(__dirname, 'renderer', 'companion-preload.js'),
+      contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true
+    }
+  });
+  companionWindow = window;
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  window.webContents.on('will-navigate', event => event.preventDefault());
+  window.webContents.once('did-finish-load', () => {
+    if (privacyGate.paused || !liveSession || companionWindow !== window || window.isDestroyed()) {
+      if (!window.isDestroyed()) window.close(); return;
+    }
+    publishCompanion(); window.show();
+  });
+  window.on('closed', () => { if (companionWindow === window) companionWindow = null; });
+  try { await window.loadFile(path.join(__dirname, 'renderer', 'companion.html')); }
+  catch (error) { if (!window.isDestroyed()) window.close(); throw error; }
+  return true;
+}
+function companionOnly(event) {
+  if (!companionWindow || companionWindow.isDestroyed() || event.sender !== companionWindow.webContents) throw new Error('Unrecognized companion window.');
+}
+ipcMain.handle('go1:companion-open', async event => { onlyApp(event); return openCompanion(); });
+ipcMain.handle('go1:companion-question', (event, text) => {
+  onlyApp(event);
+  if (privacyGate.paused || !liveSession || !companionState) return false;
+  companionState = updateQuestion(companionState, text); publishCompanion(); return true;
+});
+ipcMain.handle('go1:companion-close', event => {
+  companionOnly(event);
+  closeCompanion(); return true;
+});
+ipcMain.handle('go1:companion-focus-main', event => {
+  companionOnly(event);
+  if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus(); }
+  return true;
+});
+ipcMain.handle('go1:companion-opacity', (event, value) => {
+  companionOnly(event);
+  const opacity = opacityFromInput(value);
+  companionWindow.setOpacity(opacity);
+  return opacity;
+});
+ipcMain.handle('go1:companion-privacy', event => {
+  companionOnly(event);
+  activatePresentationPrivacy('companion');
+  return true;
+});
+
+
 // Invoked synchronously by both the main-process hotkey and the UI action.
 // Stop all in-flight work before asking the renderer to mask sensitive text.
 function activatePresentationPrivacy(source = 'button') {
@@ -43,6 +118,7 @@ function activatePresentationPrivacy(source = 'button') {
   coachController?.abort();
   assistController?.abort();
   assistPermitted = false;
+  closeCompanion();
   if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close();
   reviewWindow = null;
   displayPermissionUntil = 0;
@@ -98,7 +174,7 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     if (privacyGate.paused) mainWindow.webContents.send('go1:privacy-activate', { source: 'restored' });
   });
-  mainWindow.on('closed', () => { if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close(); reviewWindow = null; activeController?.abort(); liveController?.abort(); liveSession?.cancel(); liveSession = null; mainWindow = null; });
+  mainWindow.on('closed', () => { closeCompanion(); if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close(); reviewWindow = null; activeController?.abort(); liveController?.abort(); liveSession?.cancel(); liveSession = null; mainWindow = null; });
 }
 
 app.whenReady().then(async () => {
@@ -137,7 +213,7 @@ app.whenReady().then(async () => {
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
-app.on('before-quit', () => { coachController?.abort(); activeController?.abort(); liveController?.abort(); liveSession?.cancel(); manager?.cancel(); resetWorker(); });
+app.on('before-quit', () => { closeCompanion(); coachController?.abort(); activeController?.abort(); liveController?.abort(); liveSession?.cancel(); manager?.cancel(); resetWorker(); });
 
 function onlyApp(event) { if (!ownWindow(event)) throw new Error('Unrecognized request origin.'); }
 ipcMain.handle('go1:privacy-info', event => { onlyApp(event); return shortcutInfo(); });
@@ -224,9 +300,14 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
     translate: options.translate === true,
     signal: liveController.signal,
     transcribeWindow: (pcm, opts) => getWorker().infer(pcm, opts),
-    onUpdate: result => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-update', { id: liveId, result }); },
+    onUpdate: result => {
+      if (companionState && !privacyGate.paused) { companionState = updateTranscript(companionState, result.text || ''); publishCompanion(); }
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-update', { id: liveId, result });
+    },
     onStatus: status => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-status', { id: liveId, status }); }
   });
+  companionState = freshCompanionState({ role: practiceProfile.role, language, sessionId: liveId, assistancePermitted: assistPermitted });
+  try { await openCompanion(); } catch (error) { console.warn('Companion window unavailable:', error.message); }
   return liveId;
 });
 
@@ -243,6 +324,7 @@ ipcMain.on('go1:live-frame', (event, { id, pcm } = {}) => {
 ipcMain.handle('go1:live-stop', async (event, id) => {
   onlyApp(event);
   assistController?.abort(); assistPermitted = false;
+  closeCompanion();
   if (!liveSession || id !== liveId) throw new Error('No matching live session.');
   const sessionToStop = liveSession;
   try { return await sessionToStop.stop(); }
@@ -257,6 +339,7 @@ ipcMain.handle('go1:live-stop', async (event, id) => {
 ipcMain.handle('go1:live-cancel', (event, id) => {
   onlyApp(event);
   assistController?.abort(); assistPermitted = false;
+  closeCompanion();
   if (liveSession && id === liveId) {
     liveController?.abort();
     liveSession.cancel();
@@ -398,6 +481,10 @@ ipcMain.handle('go1:assist-generate', async (event, { question, context } = {}) 
   const controller = new AbortController();
   assistController = controller;
   const id = randomUUID();
+  if (companionState) {
+    companionState = { ...updateQuestion(companionState, question), guidance: '', status: 'Generating local talking points...' };
+    publishCompanion();
+  }
   try {
     const guidance = await generateLiveGuidance({
       profile: practiceProfile, question, context,
@@ -405,16 +492,23 @@ ipcMain.handle('go1:assist-generate', async (event, { question, context } = {}) 
       onChunk: delta => {
         if (!controller.signal.aborted && !privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('go1:assist-chunk', { id, delta });
+          if (companionState) { companionState = addGuidance(companionState, delta); publishCompanion(); }
         }
       }
     });
     privacyGate.validate(ticket);
     if (!liveSession || !assistPermitted) throw new Error('Session stopped before guidance completed.');
+    if (companionState) { companionState = { ...companionState, status: 'Guidance complete. Verify facts before use.' }; publishCompanion(); }
     return { id, guidance };
+  } catch (error) {
+    if (companionState && !privacyGate.paused) { companionState = { ...companionState, status: error.message || 'Guidance failed.' }; publishCompanion(); }
+    throw error;
   } finally { if (assistController === controller) assistController = null; }
 });
 ipcMain.handle('go1:assist-cancel', event => {
-  onlyApp(event); assistController?.abort(); return true;
+  onlyApp(event); assistController?.abort();
+  if (companionState) { companionState = { ...companionState, status: 'Guidance cancelled.' }; publishCompanion(); }
+  return true;
 });
 
 // Local-only deterministic practice statistics; no model provider or external service.
