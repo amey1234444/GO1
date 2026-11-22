@@ -1,5 +1,14 @@
 ## GO1 v0.14 — Audio transport health from GO Client architecture study
 
+## v0.15 — best-effort screen-capture protection
+
+GO1 now requests OS capture protection for the workspace, live companion and review windows **before they appear**. It reapplies the policy on show/restore and saves the setting across restarts. Use **Request screen-capture protection** under **Control what you present** to inspect or change it.
+
+**macOS ScreenCaptureKit can still capture protected windows.** This is not guaranteed invisibility in Zoom, Google Meet or Teams. Check the receiving device; use selected-window/tab sharing or the existing stop-and-mask action when exclusion is unverified. Capture protection does not stop recording.
+
+See the [DMG/repository study, implementation and receiver test plan](docs/CAPTURE_PROTECTION_STUDY.md), [static evidence](docs/evidence/go-client-2.0.11-static.json) and [validation record](docs/evidence/validation.json). Older release notes below describe their original behavior; v0.15 supersedes statements that capture exclusion is absent.
+
+
 This version repairs a live PCM16 sample/byte mismatch between AudioWorklet and VAD; adds source-labelled audio diagnostics (RMS, clipping, received duration, possible arrival stalls); retains emergency privacy shutdown; and adds independent comparison documentation at `docs/GO_CLIENT_AUDIO_COMPARISON_V014.md`. It does **not** copy the proprietary GO Client native module or add covert capture evasion. The diagnostics panel is in the normal workspace's Latency Lab. Real Apple Silicon microphone/system-audio validation is still required.
 
 ## GO1 v0.13 — Visible Live Companion

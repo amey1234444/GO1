@@ -1,5 +1,7 @@
 # GO1 v0.13 — Live Companion (ordinary visible window)
 
+> Historical release notes. v0.15 adds best-effort OS capture protection; see [current behavior and evidence](CAPTURE_PROTECTION_STUDY.md). Stop-and-mask remains available. No universal invisibility is claimed.
+
 The companion opens after the persistent Whisper live session is initialized, and closes on stop, cancel, privacy activation, app shutdown and main-window close. It mirrors the live transcript (up to 1,800 characters), the detected/edited question (up to 2,000 characters), and the output of **user-triggered** Ollama talking points (up to 16,000 characters). Data stays in application memory and flows through restricted Electron IPC; the companion cannot access a microphone or AI provider.
 
 The panel is a **regular focusable window**, with 94% opacity by default. Its slider allows 82–100% opacity. It is not capture-excluded and can appear in full-screen desktop sharing. Do not use it for unauthorized assistance. The companion displays a visible disclaimer and offers **Stop & mask**, which invokes the same main-process privacy gate as the emergency shortcut.

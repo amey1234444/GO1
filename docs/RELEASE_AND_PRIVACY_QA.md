@@ -1,5 +1,7 @@
 # GO1 release and presentation privacy QA — v0.7.0
 
+> Historical release notes. v0.15 adds best-effort OS capture protection; see [current behavior and evidence](CAPTURE_PROTECTION_STUDY.md). Stop-and-mask remains available. No universal invisibility is claimed.
+
 ## Scope and limits
 
 GO1 is a consent-based transcription application. It does **not** promise to bypass assessment monitoring or disappear from capture feeds. Zoom, Meet, and Teams control their own sharing pipelines. OS-level exclusion techniques are not reliable across versions and providers; Electron explicitly warns that some macOS ScreenCaptureKit paths can capture content-protected windows.

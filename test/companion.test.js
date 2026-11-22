@@ -25,12 +25,12 @@ test('companion state never stores unbounded session text', () => {
   assert.equal(state.question.length, 2000);
   assert.ok(state.guidance.length <= 16000);
 });
-test('companion uses restricted preload and has no capture exclusion', () => {
+test('companion retains restricted preload alongside shared capture protection', () => {
   const main = fs.readFileSync(path.join(__dirname, '../src/main.js'), 'utf8');
   const preload = fs.readFileSync(path.join(__dirname, '../src/renderer/companion-preload.js'), 'utf8');
   assert.match(main, /companion-preload\.js/);
   assert.match(main, /closeCompanion\(\)/);
   assert.match(main, /activatePresentationPrivacy/);
-  assert.doesNotMatch(main, /setContentProtection\(/);
+  assert.match(main, /contentProtection.register\(window, 'companion'\)/);
   assert.doesNotMatch(preload, /getUserMedia|desktopCapturer|nodeIntegration/);
 });

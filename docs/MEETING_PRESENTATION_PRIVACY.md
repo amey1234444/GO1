@@ -1,5 +1,7 @@
 # GO1 Presentation Privacy Mode (0.4.0)
 
+> Historical release notes. v0.15 adds best-effort OS capture protection; see [current behavior and evidence](CAPTURE_PROTECTION_STUDY.md). Stop-and-mask remains available. No universal invisibility is claimed.
+
 This mode is designed to prevent accidental disclosure of private transcripts during **authorized** presentations. It does not conceal ongoing interview assistance, bypass proctoring, or guarantee nondetection.
 
 ## User flow

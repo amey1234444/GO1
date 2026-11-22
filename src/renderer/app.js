@@ -842,3 +842,34 @@ $('installVadButton').addEventListener('click', async () => {
   } catch (error) { showError(error); }
   finally { $('installVadButton').disabled = false; }
 });
+
+
+// Report API state without claiming that a meeting receiver cannot see the app.
+function renderProtection(info) {
+  $('captureProtectionToggle').checked = info.enabled;
+  $('captureProtectionToggle').disabled = !info.supported;
+  const failures = info.windows.filter(w => w.error).map(w => `${w.role}: ${w.error}`);
+  $('captureProtectionStatus').textContent = failures.length
+    ? `Protection needs attention — ${failures.join('; ')}`
+    : !info.supported ? 'Capture protection unavailable on this platform.'
+      : !info.enabled ? 'Capture protection off. GO1 windows may be shared.'
+        : info.allApplied ? `Protection requested for ${info.windows.length} window(s). Receiver view not verified.`
+          : 'Protection requested but not applied to every window.';
+  $('captureProtectionLimitation').textContent = info.limitation;
+}
+async function refreshProtection() {
+  try { renderProtection(await window.go1.captureProtectionInfo()); }
+  catch (error) { $('captureProtectionStatus').textContent = `Cannot read protection status: ${error.message || error}`; }
+}
+$('captureProtectionToggle').addEventListener('change', async event => {
+  const toggle = event.target;
+  toggle.disabled = true;
+  try { renderProtection(await window.go1.setCaptureProtection(toggle.checked)); }
+  catch (error) {
+    await refreshProtection();
+    $('captureProtectionStatus').textContent = `Could not save protection preference: ${error.message || error}. Refresh status to inspect current protection.`;
+  } finally { toggle.disabled = false; }
+});
+$('refreshProtectionButton').addEventListener('click', refreshProtection);
+window.addEventListener('focus', refreshProtection);
+void refreshProtection();

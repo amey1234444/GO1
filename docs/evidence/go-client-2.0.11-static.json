@@ -1,0 +1,530 @@
+{
+  "schemaVersion": 1,
+  "method": "Static ASAR byte/line indexing and native symbol-string search; no execution or meeting capture test",
+  "dmg": {
+    "size": 143490518,
+    "sha256": "059ff75f28b7604966a800493c3c05c52aeebdf28ee1ccafed28a39e5c7a3b54"
+  },
+  "asar": {
+    "size": 91281781,
+    "sha256": "d7f833bba2e53ceebd284ddc4660ad9f1645542b611e235471ce1227759b4b4b",
+    "packedFileCount": 9496
+  },
+  "packageVersion": "2.0.11",
+  "files": [
+    {
+      "path": "package.json",
+      "size": 1858,
+      "sha256": "ce385684a88adbb6d9a2a1aca6516dab25837fe8d1bf1b577d8bf0cb246b97d9",
+      "asarByteOffset": 91245039,
+      "matches": []
+    },
+    {
+      "path": "out/main/index.js",
+      "size": 1087353,
+      "sha256": "4520046dcc683d45f41df7689017605412c1c7ca4ed6d4be4b3337d38c52d66d",
+      "asarByteOffset": 71641081,
+      "matches": [
+        {
+          "token": "DEFAULT_CONTENT_PROTECTION",
+          "line": 17836,
+          "fileByteOffset": 659010,
+          "asarByteOffset": 72300091
+        },
+        {
+          "token": "DEFAULT_CONTENT_PROTECTION",
+          "line": 17837,
+          "fileByteOffset": 659079,
+          "asarByteOffset": 72300160
+        },
+        {
+          "token": "DEFAULT_CONTENT_PROTECTION",
+          "line": 18816,
+          "fileByteOffset": 698366,
+          "asarByteOffset": 72339447
+        },
+        {
+          "token": "setContentProtection",
+          "line": 18718,
+          "fileByteOffset": 694161,
+          "asarByteOffset": 72335242
+        },
+        {
+          "token": "setContentProtection",
+          "line": 18812,
+          "fileByteOffset": 698212,
+          "asarByteOffset": 72339293
+        },
+        {
+          "token": "setContentProtection",
+          "line": 19469,
+          "fileByteOffset": 724275,
+          "asarByteOffset": 72365356
+        },
+        {
+          "token": "setContentProtection",
+          "line": 26062,
+          "fileByteOffset": 985524,
+          "asarByteOffset": 72626605
+        },
+        {
+          "token": "setContentProtection",
+          "line": 26508,
+          "fileByteOffset": 1004008,
+          "asarByteOffset": 72645089
+        },
+        {
+          "token": "setContentProtection",
+          "line": 26510,
+          "fileByteOffset": 1004111,
+          "asarByteOffset": 72645192
+        },
+        {
+          "token": "setContentProtection",
+          "line": 26973,
+          "fileByteOffset": 1021186,
+          "asarByteOffset": 72662267
+        },
+        {
+          "token": "setContentProtection",
+          "line": 27533,
+          "fileByteOffset": 1041648,
+          "asarByteOffset": 72682729
+        },
+        {
+          "token": "setContentProtection",
+          "line": 27535,
+          "fileByteOffset": 1041701,
+          "asarByteOffset": 72682782
+        },
+        {
+          "token": "setAlwaysOnTop",
+          "line": 18712,
+          "fileByteOffset": 693960,
+          "asarByteOffset": 72335041
+        },
+        {
+          "token": "setAlwaysOnTop",
+          "line": 19104,
+          "fileByteOffset": 710448,
+          "asarByteOffset": 72351529
+        },
+        {
+          "token": "setAlwaysOnTop",
+          "line": 19464,
+          "fileByteOffset": 724111,
+          "asarByteOffset": 72365192
+        },
+        {
+          "token": "setAlwaysOnTop",
+          "line": 21463,
+          "fileByteOffset": 801310,
+          "asarByteOffset": 72442391
+        },
+        {
+          "token": "setAlwaysOnTop",
+          "line": 21469,
+          "fileByteOffset": 801539,
+          "asarByteOffset": 72442620
+        },
+        {
+          "token": "setVisibleOnAllWorkspaces",
+          "line": 18713,
+          "fileByteOffset": 694007,
+          "asarByteOffset": 72335088
+        },
+        {
+          "token": "setVisibleOnAllWorkspaces",
+          "line": 19465,
+          "fileByteOffset": 724159,
+          "asarByteOffset": 72365240
+        },
+        {
+          "token": "setSkipTaskbar",
+          "line": 17847,
+          "fileByteOffset": 659488,
+          "asarByteOffset": 72300569
+        },
+        {
+          "token": "setSkipTaskbar",
+          "line": 27526,
+          "fileByteOffset": 1041444,
+          "asarByteOffset": 72682525
+        },
+        {
+          "token": "setIgnoreMouseEvents",
+          "line": 17915,
+          "fileByteOffset": 662277,
+          "asarByteOffset": 72303358
+        },
+        {
+          "token": "setIgnoreMouseEvents",
+          "line": 18580,
+          "fileByteOffset": 689339,
+          "asarByteOffset": 72330420
+        },
+        {
+          "token": "setIgnoreMouseEvents",
+          "line": 18678,
+          "fileByteOffset": 692858,
+          "asarByteOffset": 72333939
+        },
+        {
+          "token": "setIgnoreMouseEvents",
+          "line": 19083,
+          "fileByteOffset": 709708,
+          "asarByteOffset": 72350789
+        },
+        {
+          "token": "setIgnoreMouseEvents",
+          "line": 19088,
+          "fileByteOffset": 709861,
+          "asarByteOffset": 72350942
+        },
+        {
+          "token": "setIgnoreMouseEvents",
+          "line": 19096,
+          "fileByteOffset": 710194,
+          "asarByteOffset": 72351275
+        },
+        {
+          "token": "setIgnoreMouseEvents",
+          "line": 19146,
+          "fileByteOffset": 711926,
+          "asarByteOffset": 72353007
+        },
+        {
+          "token": "setIgnoreMouseEvents",
+          "line": 19259,
+          "fileByteOffset": 716556,
+          "asarByteOffset": 72357637
+        },
+        {
+          "token": "setActivationPolicy",
+          "line": 27504,
+          "fileByteOffset": 1040559,
+          "asarByteOffset": 72681640
+        },
+        {
+          "token": "setActivationPolicy",
+          "line": 27515,
+          "fileByteOffset": 1041101,
+          "asarByteOffset": 72682182
+        },
+        {
+          "token": "setActivationPolicy",
+          "line": 27588,
+          "fileByteOffset": 1043378,
+          "asarByteOffset": 72684459
+        },
+        {
+          "token": "dock?.hide",
+          "line": 27505,
+          "fileByteOffset": 1040608,
+          "asarByteOffset": 72681689
+        },
+        {
+          "token": "dock?.hide",
+          "line": 27589,
+          "fileByteOffset": 1043429,
+          "asarByteOffset": 72684510
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 27498,
+          "fileByteOffset": 1040330,
+          "asarByteOffset": 72681411
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 27545,
+          "fileByteOffset": 1042082,
+          "asarByteOffset": 72683163
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 27681,
+          "fileByteOffset": 1047202,
+          "asarByteOffset": 72688283
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 28258,
+          "fileByteOffset": 1068993,
+          "asarByteOffset": 72710074
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 28385,
+          "fileByteOffset": 1074929,
+          "asarByteOffset": 72716010
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 28572,
+          "fileByteOffset": 1082469,
+          "asarByteOffset": 72723550
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 28574,
+          "fileByteOffset": 1082631,
+          "asarByteOffset": 72723712
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 28575,
+          "fileByteOffset": 1082706,
+          "asarByteOffset": 72723787
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 28576,
+          "fileByteOffset": 1082756,
+          "asarByteOffset": 72723837
+        },
+        {
+          "token": "hideDashboardFromScreenCapturePreference",
+          "line": 28586,
+          "fileByteOffset": 1083098,
+          "asarByteOffset": 72724179
+        },
+        {
+          "token": "loadNativeWindowControl",
+          "line": 17765,
+          "fileByteOffset": 656309,
+          "asarByteOffset": 72297390
+        },
+        {
+          "token": "loadNativeWindowControl",
+          "line": 17784,
+          "fileByteOffset": 657084,
+          "asarByteOffset": 72298165
+        },
+        {
+          "token": "loadNativeWindowControl",
+          "line": 17793,
+          "fileByteOffset": 657447,
+          "asarByteOffset": 72298528
+        },
+        {
+          "token": "loadNativeWindowControl",
+          "line": 17800,
+          "fileByteOffset": 657726,
+          "asarByteOffset": 72298807
+        },
+        {
+          "token": "loadNativeWindowControl",
+          "line": 17807,
+          "fileByteOffset": 658002,
+          "asarByteOffset": 72299083
+        },
+        {
+          "token": "loadNativeWindowControl",
+          "line": 17812,
+          "fileByteOffset": 658154,
+          "asarByteOffset": 72299235
+        },
+        {
+          "token": "class NativeAudioCapture",
+          "line": 14002,
+          "fileByteOffset": 504269,
+          "asarByteOffset": 72145350
+        },
+        {
+          "token": "createAudioCapture",
+          "line": 13918,
+          "fileByteOffset": 500844,
+          "asarByteOffset": 72141925
+        },
+        {
+          "token": "createAudioCapture",
+          "line": 13918,
+          "fileByteOffset": 500882,
+          "asarByteOffset": 72141963
+        },
+        {
+          "token": "createAudioCapture",
+          "line": 13920,
+          "fileByteOffset": 501000,
+          "asarByteOffset": 72142081
+        },
+        {
+          "token": "createAudioCapture",
+          "line": 14015,
+          "fileByteOffset": 504703,
+          "asarByteOffset": 72145784
+        },
+        {
+          "token": "createAudioCapture",
+          "line": 14015,
+          "fileByteOffset": 504741,
+          "asarByteOffset": 72145822
+        },
+        {
+          "token": "createAudioCapture",
+          "line": 14016,
+          "fileByteOffset": 504831,
+          "asarByteOffset": 72145912
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 27497,
+          "fileByteOffset": 1040296,
+          "asarByteOffset": 72681377
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 27544,
+          "fileByteOffset": 1042023,
+          "asarByteOffset": 72683104
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 27549,
+          "fileByteOffset": 1042215,
+          "asarByteOffset": 72683296
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 27680,
+          "fileByteOffset": 1047150,
+          "asarByteOffset": 72688231
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 28257,
+          "fileByteOffset": 1068937,
+          "asarByteOffset": 72710018
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 28259,
+          "fileByteOffset": 1069116,
+          "asarByteOffset": 72710197
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 28557,
+          "fileByteOffset": 1081733,
+          "asarByteOffset": 72722814
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 28559,
+          "fileByteOffset": 1081857,
+          "asarByteOffset": 72722938
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 28560,
+          "fileByteOffset": 1081913,
+          "asarByteOffset": 72722994
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 28561,
+          "fileByteOffset": 1081944,
+          "asarByteOffset": 72723025
+        },
+        {
+          "token": "hideAppIconPreference",
+          "line": 28567,
+          "fileByteOffset": 1082241,
+          "asarByteOffset": 72723322
+        },
+        {
+          "token": "class SessionManager",
+          "line": 15149,
+          "fileByteOffset": 550898,
+          "asarByteOffset": 72191979
+        },
+        {
+          "token": "class AppPreferencesStore",
+          "line": 14094,
+          "fileByteOffset": 507724,
+          "asarByteOffset": 72148805
+        }
+      ]
+    },
+    {
+      "path": "out/preload/index.js",
+      "size": 13942,
+      "sha256": "fff28a3eced6c17bef1f7727351863ac02a625b5c8ae393dfe83e02fe2578661",
+      "asarByteOffset": 72745120,
+      "matches": [
+        {
+          "token": "setContentProtection",
+          "line": 231,
+          "fileByteOffset": 13211,
+          "asarByteOffset": 72758331
+        }
+      ]
+    },
+    {
+      "path": "out/preload/dashboard.js",
+      "size": 16686,
+      "sha256": "85459109030fecd093d3ce2dd09576abe0eb0ce451e925b816c7c97303a2fa95",
+      "asarByteOffset": 72728434,
+      "matches": []
+    }
+  ],
+  "nativeModules": [
+    {
+      "path": "node_modules/@greatofferai/audio-capture/greatofferai_audio_capture.darwin-arm64.node",
+      "size": 2040944,
+      "sha256": "e92fcb0ab5359cc65b6bae11fd3222e7b42f1f619f0d5c4b91a5f707de4d33db",
+      "symbolStringOffsets": {
+        "CGWindowListCopyWindowInfo": [],
+        "kCGWindowOwnerPID": [],
+        "kCGWindowLayer": [],
+        "CGSSet": [],
+        "SLSSet": [],
+        "setSharingType": [],
+        "NSWindowSharing": [],
+        "ScreenCaptureKit": [
+          6851,
+          6889
+        ],
+        "SCStream": [
+          1251334,
+          1251372
+        ],
+        "AXUIElement": [],
+        "CGEvent": []
+      }
+    },
+    {
+      "path": "node_modules/@greatofferai/window-control/greatofferai_window_control.darwin-arm64.node",
+      "size": 584784,
+      "sha256": "0ce9fb56034c158dc33f5033187bd5a5d86ae1fe8bd66d777d99e1331d93d4c3",
+      "symbolStringOffsets": {
+        "CGWindowListCopyWindowInfo": [
+          410154,
+          459494
+        ],
+        "kCGWindowOwnerPID": [
+          409883,
+          555292
+        ],
+        "kCGWindowLayer": [
+          409865,
+          454644
+        ],
+        "CGSSet": [],
+        "SLSSet": [],
+        "setSharingType": [],
+        "NSWindowSharing": [],
+        "ScreenCaptureKit": [],
+        "SCStream": [],
+        "AXUIElement": [],
+        "CGEvent": []
+      }
+    }
+  ],
+  "receiverTests": {
+    "Zoom": "not_run",
+    "Google Meet": "not_run",
+    "Microsoft Teams": "not_run"
+  }
+}

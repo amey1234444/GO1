@@ -11,6 +11,7 @@ const { createWorker } = require('./transcription/worker');
 const { ModelManager, MODEL_CATALOG, modelState } = require('./transcription/models');
 const { cancelPrivateProcessing } = require('./privacy/presentation');
 const { PrivacyGate } = require('./privacy/gate');
+const { ContentProtection } = require('./privacy/content-protection');
 const { PRIVACY_SHORTCUT, registerEmergencyPrivacy } = require('./privacy/shortcut');
 const { analysePractice } = require('./practice/feedback');
 const { prepareReview, reviewAllowed } = require('./practice/review-policy');
@@ -34,6 +35,7 @@ let manager = null;
 let selectedModel = 'small';
 let displayPermissionUntil = 0;
 const privacyGate = new PrivacyGate();
+const contentProtection = new ContentProtection({ platform: process.platform });
 let emergencyShortcutRegistered = false;
 let coachController = null;
 let assistController = null;
@@ -59,15 +61,16 @@ async function openCompanion() {
     companionWindow.show(); companionWindow.focus(); publishCompanion(); return true;
   }
   const window = new BrowserWindow({
-    title: 'GO1 — Visible Live Companion',
+    title: 'GO1 — Live Companion',
     width: 445, height: 660, minWidth: 360, minHeight: 440,
     show: false, opacity: 0.94, backgroundColor: '#0f1425',
-    // A normal OS window. No process hiding, screen-capture exclusion or click-through.
+    // Capture protection is applied below before the first show.
     webPreferences: {
       preload: path.join(__dirname, 'renderer', 'companion-preload.js'),
       contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true
     }
   });
+  contentProtection.register(window, 'companion');
   companionWindow = window;
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());
@@ -141,11 +144,16 @@ function shortcutInfo() {
 
 const modelDirectory = () => path.join(app.getPath('userData'), 'models');
 const configPath = () => path.join(app.getPath('userData'), 'settings.json');
-async function saveSettings() {
-  const file = configPath();
-  const temp = file + '.tmp';
-  await fs.writeFile(temp, JSON.stringify({ selectedModel }), { mode: 0o600 });
-  await fs.rename(temp, file);
+let settingsWrite = Promise.resolve();
+function saveSettings() {
+  const settings = JSON.stringify({ selectedModel, captureProtection: contentProtection.enabled });
+  settingsWrite = settingsWrite.catch(() => {}).then(async () => {
+    const file = configPath();
+    const temp = file + '.tmp';
+    await fs.writeFile(temp, settings, { mode: 0o600 });
+    await fs.rename(temp, file);
+  });
+  return settingsWrite;
 }
 function setup() {
   const status = getSetup({ modelDirectory: modelDirectory(), selectedModel });
@@ -163,6 +171,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     title: 'GO1 — Multilingual Transcription',
     width: 1190, height: 800, minWidth: 830, minHeight: 620,
+    show: false,
     backgroundColor: '#0b1020',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -172,6 +181,8 @@ function createWindow() {
       webSecurity: true
     }
   });
+  contentProtection.register(mainWindow, 'workspace');
+  mainWindow.once('ready-to-show', () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show(); });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   mainWindow.webContents.on('did-finish-load', () => {
@@ -184,6 +195,7 @@ app.whenReady().then(async () => {
   try {
     const prefs = JSON.parse(await fs.readFile(configPath(), 'utf8'));
     if (Object.prototype.hasOwnProperty.call(MODEL_CATALOG, prefs.selectedModel) && prefs.selectedModel !== 'silero') selectedModel = prefs.selectedModel;
+    if (typeof prefs.captureProtection === 'boolean') contentProtection.setEnabled(prefs.captureProtection);
   } catch { /* defaults on fresh install */ }
   try {
     const file = await fs.readFile(profilePath(), 'utf8');
@@ -219,6 +231,13 @@ app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('before-quit', () => { closeCompanion(); coachController?.abort(); activeController?.abort(); liveController?.abort(); liveSession?.cancel(); manager?.cancel(); resetWorker(); });
 
 function onlyApp(event) { if (!ownWindow(event)) throw new Error('Unrecognized request origin.'); }
+ipcMain.handle('go1:content-protection-info', event => { onlyApp(event); return contentProtection.snapshot(); });
+ipcMain.handle('go1:content-protection-set', async (event, enabled) => {
+  onlyApp(event);
+  contentProtection.setEnabled(enabled);
+  await saveSettings();
+  return contentProtection.snapshot();
+});
 ipcMain.handle('go1:privacy-info', event => { onlyApp(event); return shortcutInfo(); });
 ipcMain.handle('go1:privacy-resume', event => {
   onlyApp(event);
@@ -396,7 +415,7 @@ ipcMain.handle('go1:privacy-pause', event => {
 });
 
 
-// Deliberately ordinary and visible: not always-on-top, not capture-excluded, no hidden input.
+// Completed practice review uses the same capture-protection policy as other windows.
 // Only completed, consent-based practice results may appear in this separate window.
 ipcMain.handle('go1:review-open', async (event, result) => {
   onlyApp(event);
@@ -418,6 +437,7 @@ ipcMain.handle('go1:review-open', async (event, result) => {
       contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true
     }
   });
+  contentProtection.register(window, 'review');
   reviewWindow = window;
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());

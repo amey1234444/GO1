@@ -26,6 +26,8 @@ jobs:
           where.exe light.exe
       - run: npm install --no-audit --no-fund
       - run: npm run check && npm test
+      - name: Verify native window capture-protection API state
+        run: npm run smoke:protection
       - name: Build MSI for Windows x64
         run: npx electron-forge make --platform win32 --arch x64
       - name: Validate MSI file and metadata

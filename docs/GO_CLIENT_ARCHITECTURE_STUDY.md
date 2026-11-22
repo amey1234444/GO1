@@ -1,5 +1,7 @@
 # GO Client 2.0.11 → GO1 independent architecture study
 
+> Historical release notes. v0.15 adds best-effort OS capture protection; see [current behavior and evidence](CAPTURE_PROTECTION_STUDY.md). Stop-and-mask remains available. No universal invisibility is claimed.
+
 Scope: static inspection of the user-provided GO_Client-2.0.11-arm64(1).dmg, SHA-256 059ff75f28b7604966a800493c3c05c52aeebdf28ee1ccafed28a39e5c7a3b54. The program was not run, authenticated, or tested in Meet, Teams, Zoom or a proctored interview. No proprietary code or binaries are included here.
 
 ## Verified observations from the original binary

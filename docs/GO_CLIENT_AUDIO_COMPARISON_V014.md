@@ -1,5 +1,7 @@
 # GO Client 2.0.11 vs GO1 0.14.0 — evidence-based comparison
 
+> Historical release notes. v0.15 adds best-effort OS capture protection; see [current behavior and evidence](CAPTURE_PROTECTION_STUDY.md). Stop-and-mask remains available. No universal invisibility is claimed.
+
 **Input:** supplied `GO_Client-2.0.11-arm64(1).dmg`, SHA-256 `059ff75f28b7604966a800493c3c05c52aeebdf28ee1ccafed28a39e5c7a3b54`. Static code review only; no original-app execution or live receiver test. Do not redistribute proprietary recovered code.
 
 | Recovered original artifact | Direct observation | Not established |

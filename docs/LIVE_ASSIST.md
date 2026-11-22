@@ -1,5 +1,7 @@
 # GO1 Live Assist engineering notes
 
+> Historical release notes. v0.15 adds best-effort OS capture protection; see [current behavior and evidence](CAPTURE_PROTECTION_STUDY.md). Stop-and-mask remains available. No universal invisibility is claimed.
+
 This is a visible, expressly authorized, local interview/meeting copilot. It does not implement stealth overlays or anti-capture measures.
 
 ## Workflow

@@ -1,5 +1,7 @@
 # GO1 v0.9 — Presentation privacy acceptance protocol
 
+> Historical release notes. v0.15 adds best-effort OS capture protection; see [current behavior and evidence](CAPTURE_PROTECTION_STUDY.md). Stop-and-mask remains available. No universal invisibility is claimed.
+
 **Goal:** avoid disclosing private transcript data in ordinary, authorized meetings.
 **Not a test of hidden interview assistance or proctoring evasion.**
 
