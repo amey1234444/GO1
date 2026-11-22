@@ -7,6 +7,7 @@ let displayedLatency = null;
 // Incremented whenever privacy state changes; stale async replies cannot resurface.
 let privacyEpoch = 0;
 const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false, starting: false };
+let coachRunning = false;
 const languageNames = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', zh: 'Chinese', ja: 'Japanese', ko: 'Korean' };
 
 function setStatus(message, kind = '') {
@@ -148,7 +149,7 @@ function setBusy(busy) {
   renderCaptureState();
   if (busy) { $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
 }
-function resetResults() { state.result = null; $('openReviewButton').disabled = true; $('copyButton').disabled = true; $('exportButton').disabled = true; $('exportMenu').hidden = true; $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
+function resetResults() { state.result = null; if ($('generateFeedbackButton')) $('generateFeedbackButton').disabled = true; $('openReviewButton').disabled = true; $('copyButton').disabled = true; $('exportButton').disabled = true; $('exportMenu').hidden = true; $('emptyResult').hidden = true; $('transcriptContent').hidden = true; }
 function renderResult(result, live = false) {
   if (state.privacyActive) return;
   state.result = result;
@@ -171,7 +172,11 @@ function renderResult(result, live = false) {
   $('openReviewButton').disabled = live || !result.text || state.recording;
   setStatus(live ? 'Recording • live captions may lag behind speech' : result.text ? 'Transcription completed' : 'No speech detected', live ? 'active' : 'success');
   if (result.latency?.count) renderLatency(result.latency);
-  if (!live) void reviewPractice(result);
+  if (!live) {
+    void reviewPractice(result);
+    updateCoachAvailability();
+    $('studioStatus').textContent = 'Practice recording complete. Review your transcript, then request feedback.';
+  }
 }
 async function processBytes(bytes) {
   if (state.privacyActive || !setup.ready || state.busy) return;
@@ -305,6 +310,7 @@ async function startRecording() {
         return;
       }
       state.recording = true;
+      updateStudioState();
       renderCaptureState();
       state.startTime = Date.now();
       $('micCircle').classList.add('recording');
@@ -349,6 +355,7 @@ async function startRecording() {
     }, { once: true });
     recorder.start(1000);
     state.recording = true;
+    updateStudioState();
     renderCaptureState();
     state.startTime = Date.now();
     $('micCircle').classList.add('recording');
@@ -364,6 +371,7 @@ async function startRecording() {
   } catch (error) { await cleanupLive(); state.recording = false; showError(error); }
   finally {
     state.starting = false;
+    updateStudioState();
     if (!state.recording && !state.privacyActive) $('recordButton').disabled = !setup.ready || !setup.whisperServer;
     else if (state.recording) $('recordButton').disabled = false;
     renderCaptureState();
@@ -387,6 +395,8 @@ async function stopRecording() {
     } catch (error) { showError(error); }
     finally {
       state.liveId = null; state.stopping = false; state.recording = false;
+      updateStudioState();
+      updateCoachAvailability();
       renderCaptureState(); renderAudioLevel();
       $('micCircle').classList.remove('recording');
       $('recordButton').textContent = 'Start recording';
@@ -403,7 +413,7 @@ async function stopRecording() {
   }
   stopClock();
   if (state.recorder?.state === 'recording') state.recorder.stop();
-  else { stopTracks(); state.recording = false; renderCaptureState(); renderAudioLevel(); }
+  else { stopTracks(); state.recording = false; updateStudioState(); renderCaptureState(); renderAudioLevel(); }
 }
 function getExportContent(format, result) {
   const f = ms => { const n = Math.max(0, Math.floor(ms)); const h = Math.floor(n / 3600000); const m = Math.floor(n % 3600000 / 60000); const s = Math.floor(n % 60000 / 1000); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(n % 1000).padStart(3,'0')}`; };
@@ -420,6 +430,13 @@ function getExportContent(format, result) {
 async function enablePresentationPrivacy() {
   if (state.privacyActive || state.privacyTransition) return;
   state.privacyActive = true; // synchronous guard against late microphone permissions and UI updates
+  coachRunning = false;
+  $('feedbackOutput').textContent = '';
+  $('feedbackOutput').hidden = true;
+  $('generateFeedbackButton').disabled = true;
+  $('cancelFeedbackButton').hidden = true;
+  $('studioStatus').textContent = 'Practice paused for presentation privacy.';
+  updateStudioState();
   privacyEpoch += 1;
   state.privacyTransition = true;
   // Call the main-process privacy gate immediately, before the first await.
@@ -501,6 +518,7 @@ async function disablePresentationPrivacy() {
     setStatus('Presentation privacy ended — recording remains off');
     $('emptyResult').hidden = false;
     await checkSetup();
+    updateStudioState();
   } catch (error) {
     $('privacyCurtainStatus').textContent = 'Could not exit privacy mode: ' + String(error.message || error);
   } finally {
@@ -508,6 +526,109 @@ async function disablePresentationPrivacy() {
     $('exitPrivacyButton').disabled = false;
   }
 }
+// Visible mock-interview studio. Recording uses the existing explicit microphone path.
+function practiceProfileFromForm() {
+  return {
+    role: $('studioRole').value,
+    roleDescription: $('studioRoleDescription').value,
+    jobDescription: $('studioJobDescription').value,
+    language: $('studioLanguage').value,
+    mode: $('studioMode').value,
+    model: $('studioModel').value
+  };
+}
+function populatePracticeProfile(profile) {
+  for (const [id, key] of [
+    ['studioRole','role'], ['studioRoleDescription','roleDescription'],
+    ['studioJobDescription','jobDescription'], ['studioLanguage','language'],
+    ['studioMode','mode'], ['studioModel','model']
+  ]) if (typeof profile?.[key] === 'string') $(id).value = profile[key];
+}
+function updateStudioState() {
+  const locked = state.privacyActive || state.recording || state.starting || state.stopping || state.busy;
+  $('launchPracticeButton').disabled = locked;
+  $('savePracticeButton').disabled = locked;
+  for (const field of $('studioForm').querySelectorAll('input,textarea,select')) field.disabled = locked;
+  if (state.recording) $('studioStatus').textContent = 'Practice session live · stop recording when your answer is complete.';
+}
+function updateCoachAvailability() {
+  $('generateFeedbackButton').disabled = coachRunning || state.privacyActive || state.recording || state.starting || state.busy || state.stopping || !state.result || state.result.isLive || !(state.result.text || '').trim();
+}
+async function saveStudioProfile() {
+  if (state.privacyActive || state.recording || state.busy) throw new Error('Finish the current practice session before changing its context.');
+  const result = await window.go1.savePracticeProfile(practiceProfileFromForm());
+  populatePracticeProfile(result);
+  $('studioStatus').textContent = `Saved ${result.role} context locally.`;
+  return result;
+}
+$('savePracticeButton').addEventListener('click', async () => {
+  try { await saveStudioProfile(); } catch (error) { $('studioStatus').textContent = error.message || String(error); }
+});
+$('studioForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (state.privacyActive || state.recording || state.starting || state.busy) return;
+  $('studioStatus').textContent = 'Preparing local interview practice...';
+  try {
+    const saved = await saveStudioProfile();
+    if (!setup.ready || !setup.whisperServer) throw new Error('Install a multilingual Whisper model before launching.');
+    chooseMode('record');
+    $('sourceSelect').value = 'microphone'; // No automatic system-call interception.
+    $('languageSelect').value = saved.language;
+    $('liveToggle').checked = true;
+    $('translateToggle').checked = false;
+    $('latencyMode').value = 'fast';
+    $('feedbackOutput').hidden = true;
+    $('feedbackOutput').textContent = '';
+    $('feedbackStatus').textContent = 'Finish your practice recording to enable feedback.';
+    await startRecording();
+    if (state.recording) {
+      $('studioStatus').textContent = 'Recording your mock interview. Use Stop live recording to finish.';
+      $('recordPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else $('studioStatus').textContent = 'Recording did not start. Check microphone permissions and local model setup.';
+  } catch (error) { $('studioStatus').textContent = error.message || String(error); }
+  finally { updateStudioState(); }
+});
+$('checkCoachButton').addEventListener('click', async () => {
+  $('studioAiStatus').textContent = 'Checking Ollama on localhost...';
+  try {
+    const status = await window.go1.localCoachStatus();
+    $('studioAiStatus').textContent = status.online
+      ? `Ollama online · ${status.models.length} model(s): ${status.models.slice(0, 4).join(', ') || 'none installed'}`
+      : status.message || 'Ollama unavailable.';
+  } catch (error) { $('studioAiStatus').textContent = error.message || String(error); }
+});
+$('generateFeedbackButton').addEventListener('click', async () => {
+  if (coachRunning || state.privacyActive || state.recording || state.busy || !state.result?.text) return;
+  coachRunning = true;
+  const epoch = privacyEpoch;
+  $('feedbackOutput').textContent = '';
+  $('feedbackOutput').hidden = false;
+  $('feedbackStatus').textContent = 'Local AI coaching in progress...';
+  $('cancelFeedbackButton').hidden = false;
+  updateCoachAvailability();
+  try {
+    await saveStudioProfile();
+    if (epoch !== privacyEpoch || state.privacyActive) return;
+    const result = await window.go1.getPracticeFeedback(state.result.text);
+    if (epoch === privacyEpoch && !state.privacyActive) {
+      $('feedbackOutput').textContent = result.feedback;
+      $('feedbackStatus').textContent = 'Practice feedback complete. Review critically; AI can make mistakes.';
+    }
+  } catch (error) { if (epoch === privacyEpoch && !state.privacyActive) $('feedbackStatus').textContent = String(error.message || error); }
+  finally { coachRunning = false; $('cancelFeedbackButton').hidden = true; updateCoachAvailability(); }
+});
+$('cancelFeedbackButton').addEventListener('click', () => {
+  $('feedbackStatus').textContent = 'Cancelling local AI feedback...';
+  window.go1.cancelPracticeFeedback();
+});
+window.go1.onCoachChunk(({ delta }) => {
+  if (!coachRunning || state.privacyActive) return;
+  const output = $('feedbackOutput');
+  if (output.textContent.length < 24000) output.textContent += delta;
+});
+window.go1.loadPracticeProfile().then(populatePracticeProfile).catch(() => {});
+updateStudioState();
+updateCoachAvailability();
 const platformHelp = Object.freeze({
   meet: 'Google Meet: Present now → A tab or A window. Sharing your entire screen may expose any visible app, including GO1.',
   teams: 'Microsoft Teams: Share → Window, or select a window in the macOS sharing picker. Entire-screen sharing may expose GO1.',

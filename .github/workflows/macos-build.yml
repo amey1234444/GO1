@@ -17,19 +17,19 @@ jobs:
           node-version: '22'
       - name: Install app dependencies
         run: npm install --no-audit --no-fund
-      - name: Run syntax checks and tests
+      - name: Run source checks and automated tests
         run: npm run check && npm test
-      - name: Build bundled transcription executables
+      - name: Build bundled transcription tools (ARM64)
         run: bash scripts/build-macos-native.sh
       - name: Build Apple Silicon DMG
         run: npm run make:mac
-      - name: Mount DMG and verify bundled executables
+      - name: Mount DMG and verify app contents and native tools
         env:
           GO1_BUNDLE_NATIVE: '1'
         run: bash scripts/verify-dmg.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: GO1-macOS-arm64-v0.10.0-practice-review-unsigned-DMG
+          name: GO1-macOS-arm64-v0.11.0-practice-review-unsigned-DMG
           path: out/make/**/*.dmg
           if-no-files-found: error
           retention-days: 14

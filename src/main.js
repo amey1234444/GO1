@@ -13,6 +13,8 @@ const { PrivacyGate } = require('./privacy/gate');
 const { PRIVACY_SHORTCUT, registerEmergencyPrivacy } = require('./privacy/shortcut');
 const { analysePractice } = require('./practice/feedback');
 const { prepareReview, reviewAllowed } = require('./practice/review-policy');
+const { normalizeProfile, DEFAULT_PROFILE, validateTranscript } = require('./practice/session');
+const { localModelStatus, generatePracticeFeedback } = require('./practice/local-coach');
 
 app.setName('GO1');
 let mainWindow;
@@ -27,11 +29,15 @@ let selectedModel = 'small';
 let displayPermissionUntil = 0;
 const privacyGate = new PrivacyGate();
 let emergencyShortcutRegistered = false;
+let coachController = null;
+let practiceProfile = { ...DEFAULT_PROFILE };
+const profilePath = () => path.join(app.getPath('userData'), 'practice-profile.json');
 
 // Invoked synchronously by both the main-process hotkey and the UI action.
 // Stop all in-flight work before asking the renderer to mask sensitive text.
 function activatePresentationPrivacy(source = 'button') {
   privacyGate.enter();
+  coachController?.abort();
   if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close();
   reviewWindow = null;
   displayPermissionUntil = 0;
@@ -95,6 +101,10 @@ app.whenReady().then(async () => {
     const prefs = JSON.parse(await fs.readFile(configPath(), 'utf8'));
     if (Object.prototype.hasOwnProperty.call(MODEL_CATALOG, prefs.selectedModel) && prefs.selectedModel !== 'silero') selectedModel = prefs.selectedModel;
   } catch { /* defaults on fresh install */ }
+  try {
+    const file = await fs.readFile(profilePath(), 'utf8');
+    if (file.length <= 16000) practiceProfile = normalizeProfile(JSON.parse(file));
+  } catch { /* A missing or invalid local profile uses safe defaults. */ }
   manager = new ModelManager({ directory: modelDirectory(), onProgress: data => {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:model-progress', data);
   } });
@@ -122,7 +132,7 @@ app.whenReady().then(async () => {
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
-app.on('before-quit', () => { activeController?.abort(); liveController?.abort(); liveSession?.cancel(); manager?.cancel(); resetWorker(); });
+app.on('before-quit', () => { coachController?.abort(); activeController?.abort(); liveController?.abort(); liveSession?.cancel(); manager?.cancel(); resetWorker(); });
 
 function onlyApp(event) { if (!ownWindow(event)) throw new Error('Unrecognized request origin.'); }
 ipcMain.handle('go1:privacy-info', event => { onlyApp(event); return shortcutInfo(); });
@@ -282,7 +292,8 @@ ipcMain.handle('go1:privacy-pause', event => {
 });
 
 
-// Normal, visible post-practice window. It never receives live audio.
+// Deliberately ordinary and visible: not always-on-top, not capture-excluded, no hidden input.
+// Only completed, consent-based practice results may appear in this separate window.
 ipcMain.handle('go1:review-open', async (event, result) => {
   onlyApp(event);
   privacyGate.assertAllowed();
@@ -294,7 +305,9 @@ ipcMain.handle('go1:review-open', async (event, result) => {
   const window = new BrowserWindow({
     title: 'GO1 — Practice review',
     width: 540, height: 650, minWidth: 390, minHeight: 420,
-    parent: mainWindow, modal: false, show: false,
+    parent: mainWindow,
+    modal: false,
+    show: false,
     backgroundColor: '#11182c',
     webPreferences: {
       preload: path.join(__dirname, 'renderer', 'review-preload.js'),
@@ -312,6 +325,56 @@ ipcMain.handle('go1:review-open', async (event, result) => {
   window.on('closed', () => { if (reviewWindow === window) reviewWindow = null; });
   try { await window.loadFile(path.join(__dirname, 'renderer', 'review.html')); }
   catch (error) { if (!window.isDestroyed()) window.close(); throw error; }
+  return true;
+});
+
+// A practice profile is stored only in this user's app data; it is not uploaded.
+ipcMain.handle('go1:practice-profile-get', event => { onlyApp(event); return { ...practiceProfile }; });
+ipcMain.handle('go1:practice-profile-save', async (event, profile) => {
+  onlyApp(event);
+  privacyGate.assertAllowed();
+  if (liveSession || activeController) throw new Error('Finish the recording before changing interview context.');
+  const next = normalizeProfile(profile);
+  const dest = profilePath(), tmp = dest + '.tmp';
+  await fs.writeFile(tmp, JSON.stringify(next), { encoding: 'utf8', mode: 0o600 });
+  await fs.rename(tmp, dest);
+  practiceProfile = next;
+  return { ...next };
+});
+ipcMain.handle('go1:coach-status', async event => {
+  onlyApp(event);
+  privacyGate.assertAllowed();
+  const ticket = privacyGate.ticket();
+  const status = await localModelStatus();
+  privacyGate.validate(ticket);
+  return status;
+});
+ipcMain.handle('go1:coach-feedback', async (event, transcript) => {
+  onlyApp(event);
+  const ticket = privacyGate.ticket();
+  if (liveSession || activeController || coachController) throw new Error('Finish recording and processing before requesting practice feedback.');
+  const text = validateTranscript(transcript);
+  const controller = new AbortController();
+  coachController = controller;
+  const id = randomUUID();
+  try {
+    const feedback = await generatePracticeFeedback({
+      profile: practiceProfile,
+      transcript: text,
+      signal: controller.signal,
+      onChunk: delta => {
+        if (!privacyGate.paused && privacyGate.isCurrent(ticket) && mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('go1:coach-chunk', { id, delta });
+        }
+      }
+    });
+    privacyGate.validate(ticket);
+    return { id, feedback };
+  } finally { if (coachController === controller) coachController = null; }
+});
+ipcMain.handle('go1:coach-cancel', event => {
+  onlyApp(event);
+  coachController?.abort();
   return true;
 });
 

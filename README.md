@@ -1,10 +1,25 @@
-## Mac-first Apple Silicon DMG (v0.8.0)
+## macOS first: testable ARM64 DMG (v0.10.0)
 
-The macOS build now **bundles** `ffmpeg`, `ffprobe`, `whisper-cli`, and a persistent `whisper-server` in `GO1.app/Contents/Resources/native/bin`. Download the language model using GO1's existing model manager. To compile on an Apple Silicon Mac: `npm install && bash scripts/build-macos-native.sh && npm run make:mac`. Verify with `GO1_BUNDLE_NATIVE=1 bash scripts/verify-dmg.sh`. See [macOS first-install checklist](docs/MAC_FIRST_INSTALL_AND_QA.md).
+The **macOS Apple Silicon DMG workflow** now builds and bundles `ffmpeg`, `ffprobe`, `whisper-cli`, and a persistent `whisper-server` in `GO1.app/Contents/Resources/native/bin`. The model is downloaded on the first launch from inside GO1; no per-minute API charges. For local builds, run `bash scripts/build-macos-native.sh && npm run make:mac`, then `GO1_BUNDLE_NATIVE=1 bash scripts/verify-dmg.sh`. Full Mac installation and recording checklist: [docs/MAC_FIRST_INSTALL_AND_QA.md](docs/MAC_FIRST_INSTALL_AND_QA.md).
 
-This is an **unsigned developer preview**, not an Apple-notarized public release. Presentation Privacy stops capture and masks transcripts; it does **not** enable undetectable interview assistance or prevent every screen-sharing application from capturing the window.
+**Privacy boundary:** presentation privacy stops recording and masks transcripts. The app does not offer anti-capture or invisible interview assistance. The preview DMG is unsigned and must be tested on your Mac; macOS will require user permission for microphone or system playback capture.
 
 # GO1 0.6.0 — Private multilingual transcription and measured latency for macOS
+
+## Interview Studio (v0.11.0)
+
+GO1 now has a **visible, consent-based mock-interview studio** with independently designed dark desktop UI.
+
+1. Enter a target role, short role description, job description, practice focus, and spoken language (or automatic recognition).
+2. Click **Save context** to store settings only on this computer in GO1's user-data directory (`practice-profile.json`, mode `0600`). The profile is never submitted to a cloud service by GO1.
+3. Install a multilingual Whisper model in the Model Manager, then choose **Launch mock interview**. GO1 starts explicit microphone recording with local VAD and captioning; Mac permissions still apply.
+4. Stop the recording. The completed transcript appears in the normal GO1 transcript panel.
+5. Optionally run a local AI coach: install [Ollama](https://ollama.com/), run `ollama pull qwen3:4b`, and keep Ollama running. Select your locally installed model in the studio and click **Generate practice feedback** after recording. Answers stream only into the normal visible window.
+
+The app talks to Ollama only on `127.0.0.1:11434`. There is no embedded API key. If Ollama is unavailable, transcription and deterministic practice statistics continue working, and the coach shows a clear error. The coach uses the saved role/JD context and the completed transcript, but may produce incorrect information; review its suggestions. There is **no live hidden answer generation**, no anti-capture invisibility, and Presentation Privacy cancels active work.
+
+On macOS, build the unsigned DMG with `bash scripts/build-macos-native.sh && npm run make:mac`; the existing GitHub macOS workflow performs installation verification of the bundled transcription binaries. Physical microphone tests, speech quality and notarization remain separate requirements.
+
 
 GO1 is a **local-first Electron application for consent-based recording and transcription**. It has two recording sources—microphone and macOS system playback audio—plus file import and exports. No model API key, cloud account, or subscription is required for local speech recognition.
 
@@ -118,7 +133,7 @@ Run `npm test`; then see [MACOS_QA.md](docs/MACOS_QA.md) for the physical-device
 - No covert audio recording, proctoring evasion, process hiding, or guarantees that an overlay is invisible to screen sharing are provided.
 - Test live input and screen-sharing from a second participant on macOS before release.
 
-## GO1 v0.7.0 — Windows MSI and macOS DMG release pipeline
+## GO1 v0.10.0 — Windows MSI and macOS DMG release pipeline
 
 GO1 now has two OS-native unsigned installer builds in `.github/workflows/installers.yml`:
 
@@ -147,6 +162,7 @@ GitHub Actions artifacts are available under the corresponding **Cross-platform 
 - **Real benchmarking:** `node scripts/benchmark-whisper.js /path/to/consented-speech.wav 8`, for repeatable, local, real-model inference numbers. Details and limitations: [docs/LATENCY_RESEARCH_AND_TESTING.md](docs/LATENCY_RESEARCH_AND_TESTING.md).
 - For an intended end-to-end sub-500 ms first-caption target, a *genuine streaming ASR provider* requires future integration and physical Mac measurements. The current persistent Whisper worker is utterance-based.
 
+
 ## Emergency presentation privacy shortcut (v0.9)
 
 On macOS press **Command + Shift + 9**; on Windows use **Ctrl + Shift + 9**.
@@ -156,6 +172,6 @@ This shortcut stops active capture and inference and requests an immediate priva
 
 The main process now independently rejects new microphone, system-audio, and transcription requests while privacy is active. Requests that started before activation cannot restart capture after a later return to the workspace. Transcript results arriving late are ignored by the UI. Read `docs/SHARE_SAFE_ACCEPTANCE.md` for controlled two-device tests.
 
-## Practice review panel (v0.10.0)
+## Detachable review panel (v0.10.0)
 
-After completing a consent-based recording or importing a practice audio file, select **Practice review** next to Copy/Export to open a separate read-only window showing the completed transcript and timeline. It is a normal visible window (not always-on-top or capture-excluded), has no recording functionality and closes when Presentation Privacy begins. See docs/GO_CLIENT_ARCHITECTURE_STUDY.md for the independent binary-based comparison.
+After recording or importing a consented practice clip, use **Practice review** beside Copy/Export to open a separate read-only window containing your completed transcript and timeline. It is a visible standard window, has no microphone or inference controls, and immediately closes on Presentation Privacy activation. It is not designed to remain hidden during meetings. See `docs/GO_CLIENT_ARCHITECTURE_STUDY.md` for the independent architecture comparison.

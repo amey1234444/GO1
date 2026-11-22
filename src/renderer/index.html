@@ -14,16 +14,37 @@
       <div class="logo"><span class="logo-mark">G<span>1</span></span><div><strong>GO1</strong><small>VOICE WORKSPACE</small></div></div>
       <nav class="navigation" aria-label="Main navigation">
         <div class="nav-label">WORKSPACE</div>
-        <div class="nav-item selected"><span class="nav-icon">◎</span><span>Transcription</span><span class="nav-dot"></span></div>
+        <a class="nav-item selected" href="#interviewStudio"><span class="nav-icon">◈</span><span>Interview studio</span><span class="nav-dot"></span></a><a class="nav-item" href="#transcriptionTitle"><span class="nav-icon">◎</span><span>Transcription</span></a>
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.10.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.11.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
       <div class="content">
-        <div class="heading-line"><div><div class="eyebrow">SPEECH INTELLIGENCE</div><h1>Audio to text<span class="gradient-dot">.</span></h1><p class="subtitle">Accurate multilingual transcription, completely on your Mac.</p></div><span class="feature-pill"><span class="dot"></span> 99-language model family</span></div>
+        <div class="heading-line" id="transcriptionTitle"><div><div class="eyebrow">SPEECH INTELLIGENCE</div><h1>Audio to text<span class="gradient-dot">.</span></h1><p class="subtitle">Accurate multilingual transcription, completely on your Mac.</p></div><span class="feature-pill"><span class="dot"></span> 99-language model family</span></div>
+        <section class="studio" id="interviewStudio" aria-labelledby="studioTitle">
+          <div class="studio-hero">
+            <div><div class="studio-tag"><span class="studio-tag-dot"></span> GO1 / INTERVIEW STUDIO</div><h2 id="studioTitle">Prepare for your next <em>conversation.</em></h2><p>Set your role and language, record a consent-based mock interview, and review your answers with optional local AI coaching. Everything stays on your device.</p></div>
+            <div class="studio-orbit" aria-hidden="true"><div class="studio-orbit-inner">G<span>1</span></div></div>
+          </div>
+          <div class="studio-layout">
+            <form id="studioForm" class="studio-form">
+              <div class="studio-form-head"><span>01 / PRACTICE CONTEXT</span><span class="form-note">Saved locally · never uploaded</span></div>
+              <div class="studio-form-grid">
+                <label>Target role <input class="studio-input" id="studioRole" name="role" maxlength="120" required placeholder="e.g. Backend Software Engineer" value="Software Engineer"></label>
+                <label>Interview language <select class="studio-input" id="studioLanguage" name="language"><option value="en">English</option><option value="auto">Auto-detect</option><option value="hi">Hindi</option><option value="mr">Marathi</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="pt">Portuguese</option><option value="ar">Arabic</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="ta">Tamil</option><option value="te">Telugu</option><option value="gu">Gujarati</option><option value="bn">Bengali</option><option value="kn">Kannada</option><option value="ml">Malayalam</option><option value="pa">Punjabi</option><option value="ur">Urdu</option><option value="ne">Nepali</option><option value="nl">Dutch</option><option value="ru">Russian</option><option value="uk">Ukrainian</option><option value="fa">Persian</option><option value="tr">Turkish</option><option value="th">Thai</option><option value="vi">Vietnamese</option><option value="id">Indonesian</option><option value="ms">Malay</option><option value="sw">Swahili</option><option value="he">Hebrew</option><option value="pl">Polish</option><option value="sv">Swedish</option><option value="fi">Finnish</option><option value="el">Greek</option><option value="it">Italian</option></select></label>
+                <label>Practice focus <select class="studio-input" id="studioMode" name="mode"><option value="technical">Technical</option><option value="coding">Coding</option><option value="system-design">System design</option><option value="behavioral">Behavioral</option><option value="general">General</option></select></label>
+                <label>Local AI model <input class="studio-input" id="studioModel" name="model" maxlength="100" value="qwen3:4b" spellcheck="false" placeholder="qwen3:4b"></label>
+                <label class="wide-field">Role description <textarea class="studio-input" id="studioRoleDescription" name="roleDescription" maxlength="1600" rows="2" placeholder="What will you be responsible for in this role?"></textarea></label>
+                <label class="wide-field">Job description <textarea class="studio-input" id="studioJobDescription" name="jobDescription" maxlength="10000" rows="4" placeholder="Paste the job requirements, technologies and responsibilities here..."></textarea></label>
+              </div>
+              <div class="studio-actions"><button id="launchPracticeButton" type="submit" class="studio-launch">Launch mock interview <span aria-hidden="true">↗</span></button><button id="savePracticeButton" type="button" class="studio-save">Save context</button><span id="studioStatus" role="status" aria-live="polite">Ready to configure</span></div>
+            </form>
+            <div class="studio-info"><div class="studio-info-head">02 / SESSION FLOW</div><div class="studio-flow-row"><span>01</span><div><strong>Configure</strong><p>Role, context, language and focus</p></div></div><div class="studio-flow-row"><span>02</span><div><strong>Record your practice</strong><p>Local Whisper captions while you speak</p></div></div><div class="studio-flow-row"><span>03</span><div><strong>Review and improve</strong><p>After recording, use Ollama for personalized feedback</p></div></div><div class="studio-divider"></div><div class="studio-ai-status" id="studioAiStatus">AI coach: not checked</div><button id="checkCoachButton" type="button" class="studio-save">Check local AI</button><div class="studio-small">No covert overlay. No hidden capture. Privacy mode always stops recording.</div></div>
+          </div>
+        </section>
         <section class="meeting-safe" aria-labelledby="meetingSafeTitle">
           <div class="meeting-safe-copy"><div class="meeting-safe-eyebrow">SHARE-SAFE PRESENTATIONS</div><h2 id="meetingSafeTitle">Control what you present</h2><p>For authorized meetings, share a selected window or tab. Use privacy mode to stop recording and mask transcripts before sharing your whole screen. This is not invisibility or proctoring evasion.</p></div>
           <div class="meeting-safe-actions"><label for="meetingPlatform">Meeting app</label><select id="meetingPlatform" class="select"><option value="meet">Google Meet</option><option value="teams">Microsoft Teams</option><option value="zoom">Zoom</option></select><button id="shareSafeButton" class="secondary-button" type="button">Stop capture &amp; mask transcript</button><span id="privacyShortcutStatus" class="shortcut-note" role="status">Checking privacy shortcut...</span></div>
@@ -60,7 +81,7 @@
             <div class="footnote">Powered by the multilingual Whisper model. Recognition accuracy depends on audio quality, language and model size.</div>
           </section>
           <section class="card results-card" aria-labelledby="resultsTitle">
-            <div class="card-heading"><div><span class="card-overline">02 / OUTPUT</span><h2 id="resultsTitle">Your transcript</h2></div><div class="action-group"><button class="small-button" id="openReviewButton" type="button" disabled title="Open completed practice review">Practice review</button><button class="icon-button" id="copyButton" title="Copy transcript" aria-label="Copy transcript" disabled>⧉</button><button class="icon-button" id="exportButton" title="Export transcript" aria-label="Export transcript" disabled>⇩</button></div></div>
+            <div class="card-heading"><div><span class="card-overline">02 / OUTPUT</span><h2 id="resultsTitle">Your transcript</h2></div><div class="action-group"><button class="small-button" id="openReviewButton" type="button" disabled title="Open a separate review of a completed practice session">Practice review</button><button class="icon-button" id="copyButton" title="Copy transcript" aria-label="Copy transcript" disabled>⧉</button><button class="icon-button" id="exportButton" title="Export transcript" aria-label="Export transcript" disabled>⇩</button></div></div>
             <div id="statusLine" class="status-line" role="status" aria-live="polite"><span class="pulse-dot"></span><span id="statusText">Waiting for audio</span></div>
             <div id="emptyResult" class="empty-result"><div class="document-image">≡<span>···</span></div><h3>Words will appear here</h3><p>Record your voice with optional rolling live captions, or upload audio for a timestamped transcript.</p></div>
             <div id="transcriptContent" hidden><div class="result-meta"><span id="resultLanguage" class="meta-chip">Language: —</span><span id="resultDuration" class="meta-chip">Duration: —</span><span id="resultSegments" class="meta-chip">0 segments</span></div><div class="transcript-body" id="transcriptBody" tabindex="0" aria-label="Transcript text"></div><div class="segment-heading">TIMESTAMPED SEGMENTS</div><div id="segmentList" class="segment-list"></div></div>
@@ -94,6 +115,12 @@
             <p class="feedback-observation" id="practiceObservation">Record your own mock-interview answer or transcribe a practice file to review pace and potential filler words.</p>
           </section>
         </div>
+        <section class="card studio-coaching" id="studioCoaching" aria-labelledby="studioCoachTitle">
+          <div class="card-heading"><div><span class="card-overline">05 / AFTER-SESSION STUDY</span><h2 id="studioCoachTitle">Role-aware practice coach</h2></div><span class="studio-local-tag">● Ollama · localhost</span></div>
+          <p class="insight-description">After you finish a practice recording, generate role-aware feedback and an example answer for self-study. No AI model is queried while you're recording.</p>
+          <div class="studio-actions"><button id="generateFeedbackButton" class="studio-launch" type="button" disabled>Generate practice feedback</button><button id="cancelFeedbackButton" class="studio-save" type="button" hidden>Cancel</button><span id="feedbackStatus" role="status" aria-live="polite">Record and finish an answer to begin.</span></div>
+          <div id="feedbackOutput" class="studio-feedback-output" aria-live="polite" hidden></div>
+        </section>
         <footer class="footer"><span>Designed for private, consent-based recording and transcription.</span><span>No API key required</span></footer>
       </div>
     </main>
