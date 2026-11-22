@@ -205,6 +205,16 @@ async function main() {
     }
     return results;
   });
+  await record('Duplicate launch exits while the original protected session stays active', async () => {
+    const duplicate = await launch(path.join(bundle, 'Contents/MacOS/GO1'), [`--user-data-dir=${path.join(temp, 'profile')}`], 'go1-duplicate');
+    await until(() => duplicate.exitCode !== null, 20000);
+    assert.equal(duplicate.exitCode, 0);
+    const state = await api('window.go1.captureProtectionInfo()');
+    assert.equal(state.activity.liveSession, true); assert.equal(state.activity.aiEnabled, true); assert.equal(state.allApplied, true);
+    assert.equal(app.exitCode, null);
+    await api('window.go1.showCompanion()');
+    return { duplicateExitCode: duplicate.exitCode, originalSessionActive: true };
+  });
   await record('Real streaming speech recognition while protected', async () => {
     await api(`(() => { const bytes=Uint8Array.from(atob(${JSON.stringify(pcmBase64)}), c=>c.charCodeAt(0)); const pcm=new Int16Array(bytes.buffer); for(let offset=0;offset<pcm.length;offset+=3200) window.go1.sendLiveChunk(${JSON.stringify(id)},pcm.slice(offset,offset+3200)); window.go1.sendLiveChunk(${JSON.stringify(id)},new Int16Array(16000)); return true; })()`);
     const result = await until(async () => {
@@ -275,6 +285,27 @@ async function main() {
     await api('window.close(); true').catch(error => { if (!/closed|context/i.test(error.message)) throw error; });
     await until(async () => (await processes()).length === 0, 10000);
     return { nativeWorkerStopped: true };
+  });
+  await record('Actual app restart restores appearance without automatically recording', async () => {
+    const saved = JSON.parse(await fs.readFile(path.join(temp, 'profile/settings.json'), 'utf8'));
+    assert.equal(saved.companion.compact, true); assert.equal(saved.companion.surfaceOpacity, .7);
+    assert.ok(saved.companion.bounds.width > 0);
+    assert.equal(JSON.stringify(saved).includes('speech recognition'), false);
+    app.kill('SIGTERM');
+    await until(() => app.exitCode !== null || app.signalCode !== null, 20000);
+    const restarted = await launch(path.join(bundle, 'Contents/MacOS/GO1'), [`--remote-debugging-port=${port}`, '--remote-debugging-address=127.0.0.1', `--user-data-dir=${path.join(temp, 'profile')}`], 'go1-restarted');
+    const next = await connect(await until(async () => (await targets()).find(t => t.type === 'page' && t.url.endsWith('/index.html')), 60000));
+    await until(() => next.evaluate('Boolean(window.go1)'));
+    const idle = await next.evaluate('window.go1.captureProtectionInfo()'); assert.equal(idle.activity.liveSession, false);
+    const sessionId = await next.evaluate("window.go1.startLive({language:'en', audioSource:'microphone'})");
+    const panel = await connect(await until(async () => (await targets()).find(t => t.url.endsWith('/companion.html'))));
+    const restored = await until(async () => {
+      const state = await panel.evaluate("({compact:document.getElementById('companionApp').classList.contains('compact'),opacity:document.getElementById('opacity').value})");
+      return state.compact && state.opacity === '70' ? state : null;
+    });
+    assert.equal(restarted.exitCode, null);
+    await next.evaluate(`window.go1.cancelLive(${JSON.stringify(sessionId)})`);
+    return { savedAppearance: saved.companion, restored, automaticRecording: idle.activity.liveSession };
   });
   report.status = 'passed';
 }

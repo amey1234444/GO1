@@ -2,7 +2,7 @@
 
 const path = require('node:path');
 const fs = require('node:fs/promises');
-const { app, BrowserWindow, ipcMain, session, systemPreferences, dialog, clipboard, desktopCapturer, globalShortcut, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, session, systemPreferences, dialog, clipboard, desktopCapturer, globalShortcut, screen, powerMonitor } = require('electron');
 const { randomUUID } = require('node:crypto');
 const { getSetup, transcribe } = require('./transcription/engine');
 const { VadLiveSession } = require('./transcription/vad-live');
@@ -13,7 +13,7 @@ const { cancelPrivateProcessing } = require('./privacy/presentation');
 const { PrivacyGate } = require('./privacy/gate');
 const { ContentProtection } = require('./privacy/content-protection');
 const { LiveDock } = require('./privacy/live-dock');
-const { companionWindowOptions, configureCompanionWindow } = require('./privacy/companion-window');
+const { companionWindowOptions, configureCompanionWindow, refreshCompanionWindow } = require('./privacy/companion-window');
 const { PRIVACY_SHORTCUT, registerEmergencyPrivacy } = require('./privacy/shortcut');
 const { analysePractice } = require('./practice/feedback');
 const { prepareReview, reviewAllowed } = require('./practice/review-policy');
@@ -21,15 +21,22 @@ const { normalizeProfile, DEFAULT_PROFILE, validateTranscript } = require('./pra
 const { localModelStatus, generatePracticeFeedback } = require('./practice/local-coach');
 const { generateLiveGuidance } = require('./practice/live-assist');
 const { freshCompanionState, updateTranscript, updateQuestion, addGuidance, opacityFromInput } = require('./companion/state');
-const { companionBounds } = require('./companion/layout');
+const { companionBounds, companionPreferences } = require('./companion/layout');
 
 app.setName('GO1');
+const ownsInstance = app.requestSingleInstanceLock();
+if (!ownsInstance) app.quit();
+let workspaceReady = false;
+let quitAfterSettings = false;
+app.on('second-instance', () => revealWorkspace());
 let mainWindow;
 let reviewWindow = null;
 let companionWindow = null;
 let companionState = null;
 let companionCompact = false;
 let companionOpacity = 0.86;
+let companionPlacement = null;
+let placementSaveTimer = null;
 let activeController;
 let liveController;
 let liveSession;
@@ -76,6 +83,34 @@ function publishProtection() {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:content-protection-changed', protectionInfo());
   publishCompanion();
 }
+function rememberCompanionPlacement(window, immediate = false) {
+  if (window.isDestroyed()) return;
+  companionPlacement = window.getBounds();
+  clearTimeout(placementSaveTimer);
+  const save = () => { placementSaveTimer = null; void saveSettings().catch(() => console.warn('Could not save companion placement.')); };
+  if (immediate) save();
+  else { placementSaveTimer = setTimeout(save, 250); placementSaveTimer.unref?.(); }
+}
+function recoverPresentation() {
+  // Reassert only the user's existing preference; never start audio or exit Stop & mask.
+  contentProtection.setEnabled(contentProtection.enabled);
+  if (companionWindow && !companionWindow.isDestroyed() && !privacyGate.paused) {
+    const current = companionWindow.getBounds();
+    const next = companionBounds(screen.getDisplayMatching(current).workArea, companionCompact, current);
+    if (Object.keys(next).some(key => next[key] !== current[key])) companionWindow.setBounds(next);
+    refreshCompanionWindow(companionWindow, process.platform);
+    rememberCompanionPlacement(companionWindow);
+  }
+  void liveDock.refresh();
+  publishProtection();
+}
+function revealWorkspace() {
+  if (!workspaceReady) return;
+  void liveDock.showWorkspace().then(() => {
+    if (!mainWindow || mainWindow.isDestroyed()) createWindow();
+    else { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.show(); mainWindow.focus(); }
+  });
+}
 async function openCompanion() {
   privacyGate.assertAllowed();
   if (!liveSession || !liveId) throw new Error('Start a live session first.');
@@ -86,7 +121,7 @@ async function openCompanion() {
   }
   const window = new BrowserWindow({
     title: 'GO1 — Live Companion',
-    ...companionBounds(screen.getPrimaryDisplay().workArea, companionCompact),
+    ...companionBounds((companionPlacement ? screen.getDisplayMatching(companionPlacement) : screen.getPrimaryDisplay()).workArea, companionCompact, companionPlacement),
     show: false, opacity: 1, backgroundColor: '#00000000',
     ...companionWindowOptions(process.platform),
     // Capture protection is applied below before the first show.
@@ -99,6 +134,8 @@ async function openCompanion() {
   contentProtection.register(window, 'companion');
   configureCompanionWindow(window, process.platform);
   companionWindow = window;
+  window.on('move', () => rememberCompanionPlacement(window));
+  window.on('close', () => rememberCompanionPlacement(window, true));
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', event => event.preventDefault());
   window.webContents.once('did-finish-load', () => {
@@ -134,18 +171,21 @@ ipcMain.handle('go1:companion-focus-main', async event => {
   if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus(); }
   return true;
 });
-ipcMain.handle('go1:companion-opacity', (event, value) => {
+ipcMain.handle('go1:companion-opacity', async (event, value) => {
   companionOnly(event);
   const opacity = opacityFromInput(value);
   companionOpacity = opacity; publishCompanion(); // Surface alpha only; text stays opaque.
+  await saveSettings();
   return opacity;
 });
-ipcMain.handle('go1:companion-compact', (event, compact) => {
+ipcMain.handle('go1:companion-compact', async (event, compact) => {
   companionOnly(event);
   if (typeof compact !== 'boolean') throw new Error('Expected compact boolean.');
   const bounds = companionWindow.getBounds();
   companionCompact = compact;
   companionWindow.setBounds(companionBounds(screen.getDisplayMatching(bounds).workArea, compact, bounds));
+  companionPlacement = companionWindow.getBounds();
+  await saveSettings();
   publishCompanion(); return compact;
 });
 ipcMain.handle('go1:companion-assist', (event, question) => {
@@ -191,7 +231,8 @@ const modelDirectory = () => path.join(app.getPath('userData'), 'models');
 const configPath = () => path.join(app.getPath('userData'), 'settings.json');
 let settingsWrite = Promise.resolve();
 function saveSettings() {
-  const settings = JSON.stringify({ selectedModel, captureProtection: contentProtection.enabled, hideDockDuringLive: liveDock.enabled });
+  const settings = JSON.stringify({ selectedModel, captureProtection: contentProtection.enabled, hideDockDuringLive: liveDock.enabled,
+    companion: { compact: companionCompact, surfaceOpacity: companionOpacity, bounds: companionPlacement } });
   settingsWrite = settingsWrite.catch(() => {}).then(async () => {
     const file = configPath();
     const temp = file + '.tmp';
@@ -254,12 +295,14 @@ function createWindow() {
   mainWindow.on('closed', () => { closeWorkspaceSession(); mainWindow = null; });
 }
 
-app.whenReady().then(async () => {
+if (ownsInstance) app.whenReady().then(async () => {
   try {
     const prefs = JSON.parse(await fs.readFile(configPath(), 'utf8'));
     if (Object.prototype.hasOwnProperty.call(MODEL_CATALOG, prefs.selectedModel) && prefs.selectedModel !== 'silero') selectedModel = prefs.selectedModel;
     if (typeof prefs.captureProtection === 'boolean') contentProtection.setEnabled(prefs.captureProtection);
     if (typeof prefs.hideDockDuringLive === 'boolean') liveDock.enabled = prefs.hideDockDuringLive;
+    const saved = companionPreferences(prefs.companion);
+    companionCompact = saved.compact; companionOpacity = saved.surfaceOpacity; companionPlacement = saved.bounds;
   } catch { /* defaults on fresh install */ }
   try {
     const file = await fs.readFile(profilePath(), 'utf8');
@@ -286,19 +329,24 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionCheckHandler((contents, permission, origin, details) => {
     return !privacyGate.paused && permission === 'media' && contents === mainWindow?.webContents && !details.mediaType?.includes('video');
   });
+  workspaceReady = true;
   createWindow();
   emergencyShortcutRegistered = registerEmergencyPrivacy(globalShortcut, activatePresentationPrivacy);
-  app.on('activate', () => {
-    void liveDock.showWorkspace().then(() => {
-      if (!mainWindow || mainWindow.isDestroyed()) createWindow();
-      else { mainWindow.show(); mainWindow.focus(); }
-    });
-  });
+  app.on('activate', revealWorkspace);
   app.on('did-become-active', () => { if (liveDock.requestedHidden) void liveDock.refresh(); });
+  for (const event of ['display-added', 'display-removed', 'display-metrics-changed']) screen.on(event, recoverPresentation);
+  for (const event of ['resume', 'unlock-screen']) powerMonitor.on(event, recoverPresentation);
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
-app.on('before-quit', () => { closeWorkspaceSession(); manager?.cancel(); });
+app.on('before-quit', event => {
+  closeWorkspaceSession(); manager?.cancel();
+  clearTimeout(placementSaveTimer);
+  if (ownsInstance && !quitAfterSettings) {
+    event.preventDefault(); quitAfterSettings = true;
+    void saveSettings().catch(() => console.warn('Could not save settings before quit.')).finally(() => app.quit());
+  }
+});
 
 function onlyApp(event) { if (!ownWindow(event)) throw new Error('Unrecognized request origin.'); }
 ipcMain.handle('go1:content-protection-info', event => { onlyApp(event); return protectionInfo(); });
@@ -425,7 +473,6 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
     onStatus: status => { if (liveId === sessionId && !privacyGate.paused && mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-status', { id: sessionId, status }); }
   });
   companionState = freshCompanionState({ role: practiceProfile.role, language, sessionId: liveId, assistancePermitted: assistPermitted });
-  companionCompact = false;
   try { await openCompanion(); } catch (error) { console.warn('Companion window unavailable:', error.message); }
   publishProtection();
   if (liveId !== sessionId || privacyGate.paused) throw new Error('Session startup cancelled.');

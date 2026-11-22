@@ -24,23 +24,27 @@ async function boot(preferences = {}, overrides = {}) {
     setContentProtection(value) { this.events.push(['protect', value]); this.protected = value; }
     isContentProtected() { return this.protected; }
     show() { this.events.push(['show']); this.emit('show'); }
-    focus() {}
+    focus() { this.events.push(['focus']); }
+    isMinimized() { return this.minimized === true; }
+    restore() { this.minimized = false; this.emit('restore'); }
     getBounds() { return { x: this.options.x || 0, y: this.options.y || 0, width: this.options.width, height: this.options.height }; }
     setBounds(bounds) { Object.assign(this.options, bounds); }
     showInactive() { this.show(); }
     setAlwaysOnTop() {}
     setVisibleOnAllWorkspaces() {}
-    close() { this.dead = true; this.emit('closed'); }
+    close() { this.emit('close'); this.dead = true; this.emit('closed'); }
     async loadFile() { this.events.push(['load']); this.webContents.emit('did-finish-load'); this.emit('ready-to-show'); }
   }
   const app = new EventEmitter();
   let dockVisible = true;
   app.setActivationPolicy = policy => { app.policy = policy; };
   app.dock = { hide: () => { dockVisible = false; }, show: async () => { dockVisible = true; }, isVisible: () => dockVisible };
-  Object.assign(app, { setName() {}, getPath: () => '/test-user-data', whenReady: () => ({ then: fn => { ready = fn; } }), quit() {} });
+  Object.assign(app, { setName() {}, requestSingleInstanceLock: () => overrides.instanceLock !== false, getPath: () => '/test-user-data', whenReady: () => ({ then: fn => { ready = fn; } }), quit() { app.quitRequested = true; } });
   const fakeSession = { setDisplayMediaRequestHandler() {}, setPermissionRequestHandler() {}, setPermissionCheckHandler() {} };
   const area = { x: 0, y: 0, width: 1440, height: 900 };
-  const electron = { screen: { getPrimaryDisplay: () => ({ workArea: area }), getDisplayMatching: () => ({ workArea: area }) }, app, BrowserWindow: Window, ipcMain: { handle: (name, fn) => handlers.set(name, fn), on: (name, fn) => listeners.set(name, fn) }, session: { defaultSession: fakeSession }, globalShortcut: { register: () => true }, systemPreferences: {}, clipboard: {}, desktopCapturer: {}, dialog: {} };
+  const screen = Object.assign(new EventEmitter(), { getPrimaryDisplay: () => ({ workArea: area }), getDisplayMatching: () => ({ workArea: area }) });
+  const powerMonitor = new EventEmitter();
+  const electron = { screen, powerMonitor, app, BrowserWindow: Window, ipcMain: { handle: (name, fn) => handlers.set(name, fn), on: (name, fn) => listeners.set(name, fn) }, session: { defaultSession: fakeSession }, globalShortcut: { register: () => true }, systemPreferences: {}, clipboard: {}, desktopCapturer: {}, dialog: {} };
   const nodeRequire = createRequire(mainPath);
   const requireMock = name => {
     if (Object.hasOwn(overrides, name)) return overrides[name];
@@ -59,9 +63,9 @@ async function boot(preferences = {}, overrides = {}) {
     require: requireMock, __dirname: path.dirname(mainPath), process: { platform: 'darwin', env: {} },
     console, AbortController, setTimeout, clearTimeout
   }, { filename: mainPath });
-  await ready();
+  if (ready) await ready();
   const invoke = (channel, payload, sender = windows[0].webContents) => handlers.get(channel)({ sender }, payload);
-  return { app, windows, writes, invoke, sent, send: (channel, payload) => listeners.get(channel)({ sender: windows[0].webContents }, payload) };
+  return { app, screen, powerMonitor, area, windows, writes, invoke, sent, send: (channel, payload) => listeners.get(channel)({ sender: windows[0].webContents }, payload) };
 }
 test('real main process protects workspace, review and companion before loading/showing them', async () => {
   const { windows, invoke } = await boot();
@@ -102,12 +106,12 @@ test('companion collapses without ending the session and reopens with its sessio
   const panel = windows[1];
   assert.equal(panel.options.opacity, 1);
   invoke('go1:companion-question', 'Keep this question after reopening');
-  assert.equal(invoke('go1:companion-compact', true, panel.webContents), true);
+  assert.equal(await invoke('go1:companion-compact', true, panel.webContents), true);
   assert.equal(panel.getBounds().height, 76);
   assert.equal(invoke('go1:content-protection-info').activity.liveSession, true);
-  assert.equal(invoke('go1:companion-opacity', .7, panel.webContents), .7);
+  assert.equal(await invoke('go1:companion-opacity', .7, panel.webContents), .7);
   assert.equal(panel.options.opacity, 1); // Text never becomes transparent with the surface.
-  assert.throws(() => invoke('go1:companion-compact', true, windows[0].webContents), /Unrecognized/);
+  await assert.rejects(invoke('go1:companion-compact', true, windows[0].webContents), /Unrecognized/);
   assert.throws(() => invoke('go1:companion-assist', 'Hello?', windows[0].webContents), /Unrecognized/);
   invoke('go1:companion-close', null, panel.webContents);
   await invoke('go1:companion-open');
@@ -278,4 +282,58 @@ test('Dock preference is wired to live lifecycle without changing capture protec
   assert.equal(app.dock.isVisible(), true);
   const next = await boot({ hideDockDuringLive: false });
   await next.invoke('go1:live-start'); assert.equal(next.app.dock.isVisible(), true);
+});
+
+test('appearance and placement survive restart without persisting private session text', async () => {
+  const { windows, invoke, writes } = await boot();
+  await invoke('go1:live-start');
+  const panel = windows[1];
+  panel.setBounds({ x: 200, y: 160, width: 780, height: 540 }); panel.emit('move');
+  invoke('go1:companion-question', 'Private question must never enter settings');
+  await invoke('go1:companion-opacity', .7, panel.webContents);
+  await invoke('go1:companion-compact', true, panel.webContents);
+  invoke('go1:companion-close', null, panel.webContents);
+  await new Promise(resolve => setImmediate(resolve));
+  const saved = writes.at(-1);
+  assert.equal(JSON.stringify(saved).includes('Private question'), false);
+  const next = await boot(saved);
+  assert.equal(next.invoke('go1:content-protection-info').activity.liveSession, false);
+  await next.invoke('go1:live-start');
+  const bounds = next.windows[1].getBounds();
+  assert.equal(bounds.x, 200); assert.equal(bounds.y, 160); assert.equal(bounds.height, 76);
+  const snapshot = next.sent.filter(s => s.channel === 'go1:companion-snapshot').at(-1).data;
+  assert.equal(snapshot.surfaceOpacity, .7); assert.equal(snapshot.compact, true);
+  assert.equal(snapshot.question, '');
+});
+
+test('monitor removal and resume recover placement without enabling opted-out protection or restarting audio', async () => {
+  const { windows, invoke, screen, powerMonitor, area } = await boot({ captureProtection: false,
+    companion: { compact: false, surfaceOpacity: .75, bounds: { x: -1400, y: 200, width: 780, height: 540 } } });
+  await invoke('go1:live-start', { assistancePermitted: true });
+  const panel = windows[1]; panel.setBounds({ x: -1400, y: 800, width: 780, height: 540 });
+  Object.assign(area, { width: 900, height: 600 });
+  screen.emit('display-removed'); powerMonitor.emit('resume');
+  const b = panel.getBounds();
+  assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.width <= 900 && b.y + b.height <= 600);
+  let info = invoke('go1:content-protection-info');
+  assert.equal(info.enabled, false); assert.equal(info.activity.liveSession, true); assert.equal(info.activity.aiEnabled, true);
+  await invoke('go1:content-protection-set', true);
+  windows.forEach(w => { w.protected = false; }); powerMonitor.emit('unlock-screen');
+  assert.equal(invoke('go1:content-protection-info').allApplied, true);
+  invoke('go1:privacy-pause'); powerMonitor.emit('resume'); screen.emit('display-metrics-changed');
+  info = invoke('go1:content-protection-info');
+  assert.equal(info.activity.paused, true); assert.equal(info.activity.liveSession, false);
+  assert.equal(panel.dead, true); assert.equal(windows.length, 2);
+});
+
+test('second launch restores the existing workspace; rejected instance never initializes windows', async () => {
+  const primary = await boot();
+  await primary.invoke('go1:live-start', { assistancePermitted: true });
+  primary.windows[0].minimized = true; primary.app.emit('second-instance');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(primary.windows.length, 2); assert.equal(primary.windows[0].minimized, false);
+  assert.equal(primary.app.dock.isVisible(), true);
+  assert.equal(primary.invoke('go1:content-protection-info').activity.aiEnabled, true);
+  const duplicate = await boot({}, { instanceLock: false });
+  assert.equal(duplicate.app.quitRequested, true); assert.equal(duplicate.windows.length, 0);
 });

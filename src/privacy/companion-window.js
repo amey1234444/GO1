@@ -12,16 +12,17 @@ function companionWindowOptions(platform = process.platform) {
   };
 }
 
+function refreshCompanionWindow(window, platform = process.platform) {
+  if (platform !== 'darwin' || window.isDestroyed()) return;
+  window.setAlwaysOnTop(true, 'screen-saver');
+  window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
+}
 function configureCompanionWindow(window, platform = process.platform) {
   if (platform !== 'darwin') return;
-  const apply = () => {
-    if (window.isDestroyed()) return;
-    window.setAlwaysOnTop(true, 'screen-saver');
-    window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
-  };
+  const apply = () => refreshCompanionWindow(window, platform);
   apply();
   window.on('show', apply);
   window.on('restore', apply);
 }
 
-module.exports = { companionWindowOptions, configureCompanionWindow };
+module.exports = { companionWindowOptions, configureCompanionWindow, refreshCompanionWindow };
