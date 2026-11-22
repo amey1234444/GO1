@@ -12,7 +12,7 @@ GO1 now has a **visible, consent-based mock-interview studio** with independentl
 
 1. Enter a target role, short role description, job description, practice focus, and spoken language (or automatic recognition).
 2. Click **Save context** to store settings only on this computer in GO1's user-data directory (`practice-profile.json`, mode `0600`). The profile is never submitted to a cloud service by GO1.
-3. Install a multilingual Whisper model in the Model Manager, then choose **Launch mock interview**. GO1 starts explicit microphone recording with local VAD and captioning; Mac permissions still apply.
+3. Install a multilingual Whisper model in the Model Manager, then choose **Launch consented live session**. GO1 starts explicit microphone recording with local VAD and captioning; Mac permissions still apply.
 4. Stop the recording. The completed transcript appears in the normal GO1 transcript panel.
 5. Optionally run a local AI coach: install [Ollama](https://ollama.com/), run `ollama pull qwen3:4b`, and keep Ollama running. Select your locally installed model in the studio and click **Generate practice feedback** after recording. Answers stream only into the normal visible window.
 
@@ -175,3 +175,17 @@ The main process now independently rejects new microphone, system-audio, and tra
 ## Detachable review panel (v0.10.0)
 
 After recording or importing a consented practice clip, use **Practice review** beside Copy/Export to open a separate read-only window containing your completed transcript and timeline. It is a visible standard window, has no microphone or inference controls, and immediately closes on Presentation Privacy activation. It is not designed to remain hidden during meetings. See `docs/GO_CLIENT_ARCHITECTURE_STUDY.md` for the independent architecture comparison.
+
+## GO1 Live Assist (v0.12.0): permitted meetings only
+
+GO1 now supports a visible, **user-triggered** guidance panel during a live recording, for interviews or technical discussions where recording and AI assistance are explicitly authorized. This is not an invisible meeting overlay and does not evade monitoring or proctoring. The core of the feature is in `src/practice/live-assist.js` and `src/main.js`.
+
+1. Install/select a local Whisper model and run Ollama with the selected model (for example `ollama pull qwen3:4b`).
+2. In Interview Studio, enter the target role, role description, job description, spoken language, and discussion focus.
+3. Confirm the **I have permission** checkbox, then select **Launch consented live session**. This uses a visible microphone capture and local live captions. System audio is never intercepted automatically.
+4. GO1 identifies *possible* questions from finalized live-caption text. Review/edit the question, then choose **Suggest talking points**. The Ollama response streams into the visible panel. This is not automatic answering.
+5. Press **Cancel** to end an AI response or press the emergency Presentation Privacy shortcut to stop recording, AI generation and transcript display. Recording does not restart automatically.
+
+The question detector is a heuristic, not a guarantee. It currently recognizes question marks and common English/Hindi/Marathi question cues. The Whisper speech model has much broader language support; you can type or edit a question in any language Ollama supports. Response quality and latency depend on hardware and the chosen Ollama model. **No sub-500 ms performance guarantee is made.**
+
+The original Practice Review after completion remains available for self-study. No audio or transcript is uploaded to GreatOffer AI or to a hosted AI provider; the Ollama and Whisper services run locally. Avoid using this feature where AI assistance or recording is prohibited.

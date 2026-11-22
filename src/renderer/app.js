@@ -8,6 +8,38 @@ let displayedLatency = null;
 let privacyEpoch = 0;
 const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false, starting: false };
 let coachRunning = false;
+let assistRunning = false;
+let assistRequestEpoch = 0;
+let assistQuestionEdited = false;
+
+function updateAssistAvailability() {
+  const live = !state.privacyActive && Boolean(state.liveId) && state.recording && !state.stopping;
+  const permitted = $('assistConsent').checked;
+  $('assistConsent').disabled = state.recording || state.starting || state.privacyActive;
+  $('assistQuestion').disabled = !live || state.privacyActive;
+  $('assistGenerate').disabled = !live || !permitted || assistRunning || $('assistQuestion').value.trim().length < 4;
+  $('assistCancel').hidden = !assistRunning;
+}
+function resetLiveAssist(reason = 'Start a live session and enable permitted guidance.') {
+  assistRequestEpoch++;
+  assistRunning = false;
+  assistQuestionEdited = false;
+  $('assistQuestion').value = '';
+  $('assistOutput').textContent = '';
+  $('assistOutput').hidden = true;
+  $('assistStatus').textContent = reason;
+  updateAssistAvailability();
+}
+function updateAssistCandidate(result) {
+  if (!state.liveId || state.privacyActive || assistQuestionEdited) return;
+  const candidate = window.GO1Question.suggestQuestion(result);
+  if (candidate.text && candidate.detected) {
+    $('assistQuestion').value = candidate.text;
+    $('assistStatus').textContent = 'Possible question recognized. Review it and request help only if authorized.';
+  }
+  updateAssistAvailability();
+}
+
 const languageNames = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', zh: 'Chinese', ja: 'Japanese', ko: 'Korean' };
 
 function setStatus(message, kind = '') {
@@ -172,6 +204,7 @@ function renderResult(result, live = false) {
   $('openReviewButton').disabled = live || !result.text || state.recording;
   setStatus(live ? 'Recording • live captions may lag behind speech' : result.text ? 'Transcription completed' : 'No speech detected', live ? 'active' : 'success');
   if (result.latency?.count) renderLatency(result.latency);
+  if (live) updateAssistCandidate(result);
   if (!live) {
     void reviewPractice(result);
     updateCoachAvailability();
@@ -204,12 +237,13 @@ async function startLive(stream) {
   if (state.privacyActive) throw new Error('Exit presentation privacy mode before recording.');
   if (!window.AudioWorkletNode) throw new Error('AudioWorklet is not available; turn off Live captions to record first.');
   clearInsights();
-  const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked, latencyMode: $('latencyMode').value });
+  const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked, latencyMode: $('latencyMode').value, assistancePermitted: $('assistConsent').checked });
   if (state.privacyActive) {
     await window.go1.cancelLive(id).catch(() => {});
     throw new Error('Presentation privacy mode is active; recording is disabled.');
   }
   state.liveId = id;
+  resetLiveAssist('Listening for a question... AI guidance requires a separate click.');
   try {
     const context = new AudioContext();
     state.audioContext = context;
@@ -372,6 +406,7 @@ async function startRecording() {
   finally {
     state.starting = false;
     updateStudioState();
+    updateAssistAvailability();
     if (!state.recording && !state.privacyActive) $('recordButton').disabled = !setup.ready || !setup.whisperServer;
     else if (state.recording) $('recordButton').disabled = false;
     renderCaptureState();
@@ -381,6 +416,8 @@ async function stopRecording() {
   if (state.liveId) {
     if (state.stopping) return;
     state.stopping = true;
+    void window.go1.cancelLiveGuidance();
+    resetLiveAssist('Live session finishing. Guidance stopped.');
     stopClock();
     setStatus('Finalizing live transcript...', 'active');
     $('recordMessage').textContent = 'Finishing transcription...';
@@ -397,6 +434,7 @@ async function stopRecording() {
       state.liveId = null; state.stopping = false; state.recording = false;
       updateStudioState();
       updateCoachAvailability();
+      updateAssistAvailability();
       renderCaptureState(); renderAudioLevel();
       $('micCircle').classList.remove('recording');
       $('recordButton').textContent = 'Start recording';
@@ -431,6 +469,8 @@ async function enablePresentationPrivacy() {
   if (state.privacyActive || state.privacyTransition) return;
   state.privacyActive = true; // synchronous guard against late microphone permissions and UI updates
   coachRunning = false;
+  void window.go1.cancelLiveGuidance();
+  resetLiveAssist('Presentation privacy active; guidance and capture stopped.');
   $('feedbackOutput').textContent = '';
   $('feedbackOutput').hidden = true;
   $('generateFeedbackButton').disabled = true;
@@ -519,6 +559,7 @@ async function disablePresentationPrivacy() {
     $('emptyResult').hidden = false;
     await checkSetup();
     updateStudioState();
+    updateAssistAvailability();
   } catch (error) {
     $('privacyCurtainStatus').textContent = 'Could not exit privacy mode: ' + String(error.message || error);
   } finally {
@@ -549,7 +590,8 @@ function updateStudioState() {
   $('launchPracticeButton').disabled = locked;
   $('savePracticeButton').disabled = locked;
   for (const field of $('studioForm').querySelectorAll('input,textarea,select')) field.disabled = locked;
-  if (state.recording) $('studioStatus').textContent = 'Practice session live · stop recording when your answer is complete.';
+  if (state.recording) $('studioStatus').textContent = 'Live captions active · stop recording when your discussion ends.';
+  updateAssistAvailability();
 }
 function updateCoachAvailability() {
   $('generateFeedbackButton').disabled = coachRunning || state.privacyActive || state.recording || state.starting || state.busy || state.stopping || !state.result || state.result.isLive || !(state.result.text || '').trim();
@@ -561,6 +603,44 @@ async function saveStudioProfile() {
   $('studioStatus').textContent = `Saved ${result.role} context locally.`;
   return result;
 }
+$('assistConsent').addEventListener('change', updateAssistAvailability);
+$('assistQuestion').addEventListener('input', () => { assistQuestionEdited = true; updateAssistAvailability(); });
+$('assistGenerate').addEventListener('click', async () => {
+  if (assistRunning || !state.liveId || !state.recording || state.privacyActive || !$('assistConsent').checked) return;
+  const question = $('assistQuestion').value.trim();
+  if (question.length < 4) return;
+  assistRunning = true;
+  const epoch = ++assistRequestEpoch;
+  const privacyAtRequest = privacyEpoch;
+  $('assistOutput').hidden = false;
+  $('assistOutput').textContent = '';
+  $('assistStatus').textContent = 'Requesting local Ollama talking points...';
+  updateAssistAvailability();
+  try {
+    const answer = await window.go1.generateLiveGuidance({question, context: state.result?.text?.slice(-10000) || ''});
+    if (epoch === assistRequestEpoch && privacyAtRequest === privacyEpoch && !state.privacyActive) {
+      $('assistOutput').textContent = answer.guidance;
+      $('assistStatus').textContent = 'Guidance ready. Verify accuracy before relying on it.';
+    }
+  } catch (error) {
+    if (epoch === assistRequestEpoch && !state.privacyActive) $('assistStatus').textContent = String(error.message || error);
+  } finally {
+    if (epoch === assistRequestEpoch) { assistRunning = false; updateAssistAvailability(); }
+  }
+});
+$('assistCancel').addEventListener('click', () => {
+  assistRequestEpoch++;
+  assistRunning = false;
+  void window.go1.cancelLiveGuidance();
+  $('assistStatus').textContent = 'Guidance canceled.';
+  updateAssistAvailability();
+});
+window.go1.onAssistChunk(({delta}) => {
+  if (!assistRunning || state.privacyActive) return;
+  const output = $('assistOutput');
+  if (output.textContent.length < 14000) output.textContent += delta;
+});
+
 $('savePracticeButton').addEventListener('click', async () => {
   try { await saveStudioProfile(); } catch (error) { $('studioStatus').textContent = error.message || String(error); }
 });
@@ -572,7 +652,8 @@ $('studioForm').addEventListener('submit', async event => {
     const saved = await saveStudioProfile();
     if (!setup.ready || !setup.whisperServer) throw new Error('Install a multilingual Whisper model before launching.');
     chooseMode('record');
-    $('sourceSelect').value = 'microphone'; // No automatic system-call interception.
+    // Preserve an explicitly selected audio source; never switch to call audio automatically.
+    if (!['microphone','system'].includes($('sourceSelect').value)) $('sourceSelect').value = 'microphone';
     $('languageSelect').value = saved.language;
     $('liveToggle').checked = true;
     $('translateToggle').checked = false;
@@ -582,7 +663,7 @@ $('studioForm').addEventListener('submit', async event => {
     $('feedbackStatus').textContent = 'Finish your practice recording to enable feedback.';
     await startRecording();
     if (state.recording) {
-      $('studioStatus').textContent = 'Recording your mock interview. Use Stop live recording to finish.';
+      $('studioStatus').textContent = 'Live session active. You can request guidance where assistance is permitted.';
       $('recordPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else $('studioStatus').textContent = 'Recording did not start. Check microphone permissions and local model setup.';
   } catch (error) { $('studioStatus').textContent = error.message || String(error); }
@@ -696,6 +777,7 @@ window.go1.onLiveStatus(({ id, status }) => {
   if (status.type === 'latency') renderLatency(status.stats);
 });
 clearInsights();
+updateAssistAvailability();
 checkSetup();
 
 // Model installation is a user-driven action; never download anything on launch.

@@ -6,6 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'" />
   <title>GO1 — Live Speech &amp; Practice Studio</title>
   <link rel="stylesheet" href="./styles.css" />
+  <script src="../practice/question.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 <body>
@@ -18,7 +19,7 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.11.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Enable presentation privacy</button><div class="version">GO1 • version 0.12.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
@@ -26,7 +27,7 @@
         <div class="heading-line" id="transcriptionTitle"><div><div class="eyebrow">SPEECH INTELLIGENCE</div><h1>Audio to text<span class="gradient-dot">.</span></h1><p class="subtitle">Accurate multilingual transcription, completely on your Mac.</p></div><span class="feature-pill"><span class="dot"></span> 99-language model family</span></div>
         <section class="studio" id="interviewStudio" aria-labelledby="studioTitle">
           <div class="studio-hero">
-            <div><div class="studio-tag"><span class="studio-tag-dot"></span> GO1 / INTERVIEW STUDIO</div><h2 id="studioTitle">Prepare for your next <em>conversation.</em></h2><p>Set your role and language, record a consent-based mock interview, and review your answers with optional local AI coaching. Everything stays on your device.</p></div>
+            <div><div class="studio-tag"><span class="studio-tag-dot"></span> GO1 / INTERVIEW STUDIO</div><h2 id="studioTitle">Prepare for your next <em>conversation.</em></h2><p>Set your role and language, record a permitted discussion, view live captions, and request on-screen talking points using optional local AI. Everything stays on your device.</p></div>
             <div class="studio-orbit" aria-hidden="true"><div class="studio-orbit-inner">G<span>1</span></div></div>
           </div>
           <div class="studio-layout">
@@ -35,14 +36,14 @@
               <div class="studio-form-grid">
                 <label>Target role <input class="studio-input" id="studioRole" name="role" maxlength="120" required placeholder="e.g. Backend Software Engineer" value="Software Engineer"></label>
                 <label>Interview language <select class="studio-input" id="studioLanguage" name="language"><option value="en">English</option><option value="auto">Auto-detect</option><option value="hi">Hindi</option><option value="mr">Marathi</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="pt">Portuguese</option><option value="ar">Arabic</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="ta">Tamil</option><option value="te">Telugu</option><option value="gu">Gujarati</option><option value="bn">Bengali</option><option value="kn">Kannada</option><option value="ml">Malayalam</option><option value="pa">Punjabi</option><option value="ur">Urdu</option><option value="ne">Nepali</option><option value="nl">Dutch</option><option value="ru">Russian</option><option value="uk">Ukrainian</option><option value="fa">Persian</option><option value="tr">Turkish</option><option value="th">Thai</option><option value="vi">Vietnamese</option><option value="id">Indonesian</option><option value="ms">Malay</option><option value="sw">Swahili</option><option value="he">Hebrew</option><option value="pl">Polish</option><option value="sv">Swedish</option><option value="fi">Finnish</option><option value="el">Greek</option><option value="it">Italian</option></select></label>
-                <label>Practice focus <select class="studio-input" id="studioMode" name="mode"><option value="technical">Technical</option><option value="coding">Coding</option><option value="system-design">System design</option><option value="behavioral">Behavioral</option><option value="general">General</option></select></label>
+                <label>Discussion focus <select class="studio-input" id="studioMode" name="mode"><option value="technical">Technical</option><option value="coding">Coding</option><option value="system-design">System design</option><option value="behavioral">Behavioral</option><option value="general">General</option></select></label>
                 <label>Local AI model <input class="studio-input" id="studioModel" name="model" maxlength="100" value="qwen3:4b" spellcheck="false" placeholder="qwen3:4b"></label>
                 <label class="wide-field">Role description <textarea class="studio-input" id="studioRoleDescription" name="roleDescription" maxlength="1600" rows="2" placeholder="What will you be responsible for in this role?"></textarea></label>
                 <label class="wide-field">Job description <textarea class="studio-input" id="studioJobDescription" name="jobDescription" maxlength="10000" rows="4" placeholder="Paste the job requirements, technologies and responsibilities here..."></textarea></label>
               </div>
-              <div class="studio-actions"><button id="launchPracticeButton" type="submit" class="studio-launch">Launch mock interview <span aria-hidden="true">↗</span></button><button id="savePracticeButton" type="button" class="studio-save">Save context</button><span id="studioStatus" role="status" aria-live="polite">Ready to configure</span></div>
+              <div class="studio-actions"><button id="launchPracticeButton" type="submit" class="studio-launch">Launch consented live session <span aria-hidden="true">↗</span></button><button id="savePracticeButton" type="button" class="studio-save">Save context</button><span id="studioStatus" role="status" aria-live="polite">Ready to configure</span></div>
             </form>
-            <div class="studio-info"><div class="studio-info-head">02 / SESSION FLOW</div><div class="studio-flow-row"><span>01</span><div><strong>Configure</strong><p>Role, context, language and focus</p></div></div><div class="studio-flow-row"><span>02</span><div><strong>Record your practice</strong><p>Local Whisper captions while you speak</p></div></div><div class="studio-flow-row"><span>03</span><div><strong>Review and improve</strong><p>After recording, use Ollama for personalized feedback</p></div></div><div class="studio-divider"></div><div class="studio-ai-status" id="studioAiStatus">AI coach: not checked</div><button id="checkCoachButton" type="button" class="studio-save">Check local AI</button><div class="studio-small">No covert overlay. No hidden capture. Privacy mode always stops recording.</div></div>
+            <div class="studio-info"><div class="studio-info-head">02 / SESSION FLOW</div><div class="studio-flow-row"><span>01</span><div><strong>Configure</strong><p>Role, context, language and focus</p></div></div><div class="studio-flow-row"><span>02</span><div><strong>Capture a permitted session</strong><p>Local Whisper captions while you speak</p></div></div><div class="studio-flow-row"><span>03</span><div><strong>Review and improve</strong><p>Use local Ollama for optional guidance and post-session review</p></div></div><div class="studio-divider"></div><div class="studio-ai-status" id="studioAiStatus">AI coach: not checked</div><button id="checkCoachButton" type="button" class="studio-save">Check local AI</button><div class="studio-small">No covert overlay. No hidden capture. Privacy mode always stops recording.</div></div>
           </div>
         </section>
         <section class="meeting-safe" aria-labelledby="meetingSafeTitle">
@@ -115,8 +116,17 @@
             <p class="feedback-observation" id="practiceObservation">Record your own mock-interview answer or transcribe a practice file to review pace and potential filler words.</p>
           </section>
         </div>
+        <section class="card live-assist" id="liveAssist" aria-labelledby="liveAssistTitle">
+          <div class="card-heading"><div><span class="card-overline">05 / CONSENT-BASED LIVE ASSIST</span><h2 id="liveAssistTitle">Live meeting guidance</h2></div><span class="studio-local-tag">● Local Ollama · Visible UI</span></div>
+          <p class="insight-description">For meetings or interviews where AI assistance and recording are authorized. GO1 identifies possible questions from live captions. Suggestions require your click; they are not guaranteed correct.</p>
+          <label class="assist-consent"><input type="checkbox" id="assistConsent" /> I have permission to record this discussion and use an AI assistant.</label>
+          <label class="setting-label" for="assistQuestion">Possible question · edit before requesting guidance</label>
+          <textarea class="studio-input" id="assistQuestion" rows="2" maxlength="2000" placeholder="A recognized question will appear here. You can also type it manually."></textarea>
+          <div class="studio-actions"><button class="studio-launch" id="assistGenerate" type="button" disabled>Suggest talking points</button><button class="studio-save" id="assistCancel" type="button" hidden>Cancel</button><span id="assistStatus" role="status" aria-live="polite">Start a live session and enable permitted guidance.</span></div>
+          <div class="studio-feedback-output" id="assistOutput" hidden aria-live="polite"></div>
+        </section>
         <section class="card studio-coaching" id="studioCoaching" aria-labelledby="studioCoachTitle">
-          <div class="card-heading"><div><span class="card-overline">05 / AFTER-SESSION STUDY</span><h2 id="studioCoachTitle">Role-aware practice coach</h2></div><span class="studio-local-tag">● Ollama · localhost</span></div>
+          <div class="card-heading"><div><span class="card-overline">06 / AFTER-SESSION STUDY</span><h2 id="studioCoachTitle">Role-aware practice coach</h2></div><span class="studio-local-tag">● Ollama · localhost</span></div>
           <p class="insight-description">After you finish a practice recording, generate role-aware feedback and an example answer for self-study. No AI model is queried while you're recording.</p>
           <div class="studio-actions"><button id="generateFeedbackButton" class="studio-launch" type="button" disabled>Generate practice feedback</button><button id="cancelFeedbackButton" class="studio-save" type="button" hidden>Cancel</button><span id="feedbackStatus" role="status" aria-live="polite">Record and finish an answer to begin.</span></div>
           <div id="feedbackOutput" class="studio-feedback-output" aria-live="polite" hidden></div>

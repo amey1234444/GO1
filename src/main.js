@@ -15,6 +15,7 @@ const { analysePractice } = require('./practice/feedback');
 const { prepareReview, reviewAllowed } = require('./practice/review-policy');
 const { normalizeProfile, DEFAULT_PROFILE, validateTranscript } = require('./practice/session');
 const { localModelStatus, generatePracticeFeedback } = require('./practice/local-coach');
+const { generateLiveGuidance } = require('./practice/live-assist');
 
 app.setName('GO1');
 let mainWindow;
@@ -30,6 +31,8 @@ let displayPermissionUntil = 0;
 const privacyGate = new PrivacyGate();
 let emergencyShortcutRegistered = false;
 let coachController = null;
+let assistController = null;
+let assistPermitted = false;
 let practiceProfile = { ...DEFAULT_PROFILE };
 const profilePath = () => path.join(app.getPath('userData'), 'practice-profile.json');
 
@@ -38,6 +41,8 @@ const profilePath = () => path.join(app.getPath('userData'), 'practice-profile.j
 function activatePresentationPrivacy(source = 'button') {
   privacyGate.enter();
   coachController?.abort();
+  assistController?.abort();
+  assistPermitted = false;
   if (reviewWindow && !reviewWindow.isDestroyed()) reviewWindow.close();
   reviewWindow = null;
   displayPermissionUntil = 0;
@@ -210,6 +215,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:stage', 'Loading Whisper model in persistent worker...');
   await getWorker().ensureReady();
   privacyGate.validate(privacyTicket);
+  assistPermitted = options.assistancePermitted === true;
   liveController = new AbortController();
   liveId = randomUUID();
   liveSession = new VadLiveSession({
@@ -236,6 +242,7 @@ ipcMain.on('go1:live-frame', (event, { id, pcm } = {}) => {
 
 ipcMain.handle('go1:live-stop', async (event, id) => {
   onlyApp(event);
+  assistController?.abort(); assistPermitted = false;
   if (!liveSession || id !== liveId) throw new Error('No matching live session.');
   const sessionToStop = liveSession;
   try { return await sessionToStop.stop(); }
@@ -249,6 +256,7 @@ ipcMain.handle('go1:live-stop', async (event, id) => {
 });
 ipcMain.handle('go1:live-cancel', (event, id) => {
   onlyApp(event);
+  assistController?.abort(); assistPermitted = false;
   if (liveSession && id === liveId) {
     liveController?.abort();
     liveSession.cancel();
@@ -376,6 +384,37 @@ ipcMain.handle('go1:coach-cancel', event => {
   onlyApp(event);
   coachController?.abort();
   return true;
+});
+
+// Explicitly triggered and visible: authorized AI assistance during a consented meeting.
+// Never automatically answer incoming audio or run while presentation privacy is active.
+ipcMain.handle('go1:assist-generate', async (event, { question, context } = {}) => {
+  onlyApp(event);
+  const ticket = privacyGate.ticket();
+  if (!liveSession || !assistPermitted) throw new Error('Start a permitted live session and enable AI guidance first.');
+  if (assistController || coachController) throw new Error('A local AI request is already running.');
+  if (typeof question !== 'string' || question.length < 4 || question.length > 2000) throw new Error('Invalid question.');
+  if (typeof context !== 'string' || context.length > 12000) throw new Error('Invalid live transcript context.');
+  const controller = new AbortController();
+  assistController = controller;
+  const id = randomUUID();
+  try {
+    const guidance = await generateLiveGuidance({
+      profile: practiceProfile, question, context,
+      signal: controller.signal,
+      onChunk: delta => {
+        if (!controller.signal.aborted && !privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('go1:assist-chunk', { id, delta });
+        }
+      }
+    });
+    privacyGate.validate(ticket);
+    if (!liveSession || !assistPermitted) throw new Error('Session stopped before guidance completed.');
+    return { id, guidance };
+  } finally { if (assistController === controller) assistController = null; }
+});
+ipcMain.handle('go1:assist-cancel', event => {
+  onlyApp(event); assistController?.abort(); return true;
 });
 
 // Local-only deterministic practice statistics; no model provider or external service.
