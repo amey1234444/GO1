@@ -31,3 +31,11 @@ The DMG is generated under `out/make/`. Build needs Node 22+, CMake, Git and int
 
 ## Limits before commercial distribution
 The GitHub runner can verify the mounted DMG, binary architecture, and bundled executables, but cannot validate your physical microphone or meeting app. The preview has no Apple Developer ID signature or notarization. Review FFmpeg LGPL/GPL licensing and supply applicable notices/source before commercial release. No sub-500ms inference SLA is claimed; use actual benchmarks on your Mac.
+
+## v0.9 privacy acceptance
+
+- Verify Command+Shift+9 from a different foreground application; it must stop transcription in GO1 and mask the UI.
+- Verify the emergency shortcut cannot resume recording.
+- Verify entering privacy during the macOS microphone permission prompt does not start late capture.
+- Verify selecting Return to workspace does not restore previous transcript text or automatically resume a stream.
+- Follow `docs/SHARE_SAFE_ACCEPTANCE.md` with two participating devices for each meeting product.

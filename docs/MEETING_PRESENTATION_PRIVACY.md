@@ -38,3 +38,13 @@ No stealth overlay, anti-detection trick, hidden continued recording, meeting-ap
 GO1 includes a visible capture-status indicator, input level meter and a sharing guide for Google Meet, Microsoft Teams and Zoom. Select a specific window or tab when presenting rather than an entire desktop. Do not rely on window masking APIs to guarantee confidentiality. The **Stop capture & mask transcript** action invokes the existing privacy process, stops recording, and requires the user to restart audio manually.
 
 This does not conceal GO1 from monitoring, proctoring utilities, or full-desktop sharing. Verify the recipient view from a second participant account.
+
+## v0.9 emergency global shortcut and fail-closed gate
+
+- **macOS:** Command+Shift+9, **Windows:** Ctrl+Shift+9 (when operating system permits registration). This is **stop only**, never a visibility toggle.
+- Main process enters privacy before it notifies the renderer. It aborts live and batch work and revokes pending system-playback requests.
+- Renderer stops browser media tracks, discards unprocessed recording chunks and clears transcript elements before waiting for IPC.
+- A monotonic privacy epoch invalidates permission, model-load and transcript responses that were pending during a privacy-mode transition.
+- Exiting privacy requires explicit UI action and an acknowledgment from the main process; it never restarts recording.
+- If the shortcut is reserved by another app, use the visible button.
+- Meet, Teams, and Zoom receiver-view tests are **manual acceptance tests**, not automated guarantees. See `docs/SHARE_SAFE_ACCEPTANCE.md`.

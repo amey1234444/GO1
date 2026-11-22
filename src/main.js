@@ -2,13 +2,15 @@
 
 const path = require('node:path');
 const fs = require('node:fs/promises');
-const { app, BrowserWindow, ipcMain, session, systemPreferences, dialog, clipboard, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain, session, systemPreferences, dialog, clipboard, desktopCapturer, globalShortcut } = require('electron');
 const { randomUUID } = require('node:crypto');
 const { getSetup, transcribe } = require('./transcription/engine');
 const { VadLiveSession } = require('./transcription/vad-live');
 const { createWorker } = require('./transcription/worker');
 const { ModelManager, MODEL_CATALOG, modelState } = require('./transcription/models');
 const { cancelPrivateProcessing } = require('./privacy/presentation');
+const { PrivacyGate } = require('./privacy/gate');
+const { PRIVACY_SHORTCUT, registerEmergencyPrivacy } = require('./privacy/shortcut');
 const { analysePractice } = require('./practice/feedback');
 
 app.setName('GO1');
@@ -21,6 +23,28 @@ let worker = null;
 let manager = null;
 let selectedModel = 'small';
 let displayPermissionUntil = 0;
+const privacyGate = new PrivacyGate();
+let emergencyShortcutRegistered = false;
+
+// Invoked synchronously by both the main-process hotkey and the UI action.
+// Stop all in-flight work before asking the renderer to mask sensitive text.
+function activatePresentationPrivacy(source = 'button') {
+  privacyGate.enter();
+  displayPermissionUntil = 0;
+  cancelPrivateProcessing({ activeController, liveController, liveSession });
+  liveSession = null;
+  liveController = null;
+  liveId = null;
+  if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+    mainWindow.webContents.send('go1:privacy-activate', { source });
+  }
+  return privacyGate.snapshot();
+}
+
+function shortcutInfo() {
+  return { shortcut: PRIVACY_SHORTCUT, registered: emergencyShortcutRegistered, ...privacyGate.snapshot() };
+}
+
 const modelDirectory = () => path.join(app.getPath('userData'), 'models');
 const configPath = () => path.join(app.getPath('userData'), 'settings.json');
 async function saveSettings() {
@@ -56,6 +80,9 @@ function createWindow() {
   });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (privacyGate.paused) mainWindow.webContents.send('go1:privacy-activate', { source: 'restored' });
+  });
   mainWindow.on('closed', () => { activeController?.abort(); liveController?.abort(); liveSession?.cancel(); liveSession = null; mainWindow = null; });
 }
 
@@ -69,29 +96,38 @@ app.whenReady().then(async () => {
   } });
   session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
     if (request.securityOrigin && !request.securityOrigin.startsWith('file://')) return callback(null);
-    if (Date.now() > displayPermissionUntil || (request.frame !== mainWindow?.webContents.mainFrame && request.frame?.top !== mainWindow?.webContents.mainFrame)) return callback(null);
+    if (privacyGate.paused || Date.now() > displayPermissionUntil || (request.frame !== mainWindow?.webContents.mainFrame && request.frame?.top !== mainWindow?.webContents.mainFrame)) return callback(null);
     displayPermissionUntil = 0; // one user action authorizes one prompt
     try {
       const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } });
-      if (!sources.length) return callback(null);
+      if (privacyGate.paused || !sources.length) return callback(null);
       return callback({ video: sources[0], audio: 'loopback' });
     } catch { callback(null); }
   }, { useSystemPicker: false });
 
   session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => {
     const types = details.mediaTypes || [];
-    callback(permission === 'media' && contents === mainWindow?.webContents && !types.includes('video'));
+    callback(!privacyGate.paused && permission === 'media' && contents === mainWindow?.webContents && !types.includes('video'));
   });
   session.defaultSession.setPermissionCheckHandler((contents, permission, origin, details) => {
-    return permission === 'media' && contents === mainWindow?.webContents && !details.mediaType?.includes('video');
+    return !privacyGate.paused && permission === 'media' && contents === mainWindow?.webContents && !details.mediaType?.includes('video');
   });
   createWindow();
+  emergencyShortcutRegistered = registerEmergencyPrivacy(globalShortcut, activatePresentationPrivacy);
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('before-quit', () => { activeController?.abort(); liveController?.abort(); liveSession?.cancel(); manager?.cancel(); resetWorker(); });
 
 function onlyApp(event) { if (!ownWindow(event)) throw new Error('Unrecognized request origin.'); }
+ipcMain.handle('go1:privacy-info', event => { onlyApp(event); return shortcutInfo(); });
+ipcMain.handle('go1:privacy-resume', event => {
+  onlyApp(event);
+  privacyGate.exit();
+  return shortcutInfo();
+});
+
 ipcMain.handle('go1:setup', event => {
   onlyApp(event);
   return setup();
@@ -99,15 +135,19 @@ ipcMain.handle('go1:setup', event => {
 
 ipcMain.handle('go1:microphone', async event => {
   onlyApp(event);
+  const ticket = privacyGate.ticket();
   if (process.platform !== 'darwin') return true;
   const existing = systemPreferences.getMediaAccessStatus('microphone');
   if (existing === 'granted') return true;
   if (existing === 'denied' || existing === 'restricted') return false;
-  return systemPreferences.askForMediaAccess('microphone');
+  const granted = await systemPreferences.askForMediaAccess('microphone');
+  privacyGate.validate(ticket);
+  return granted;
 });
 
 ipcMain.handle('go1:transcribe', async (event, payload) => {
   onlyApp(event);
+  privacyGate.assertAllowed();
   if (activeController) throw new Error('A transcription is already in progress.');
   const controller = new AbortController();
   activeController = controller;
@@ -147,6 +187,7 @@ ipcMain.handle('go1:save', async (event, { format, content }) => {
 
 ipcMain.handle('go1:live-start', async (event, options = {}) => {
   onlyApp(event);
+  const privacyTicket = privacyGate.ticket();
   if (liveSession || activeController) throw new Error('Finish the current session first.');
   const language = String(options.language || 'auto').toLowerCase();
   const latencyMode = options.latencyMode === 'fast' ? 'fast' : 'balanced';
@@ -154,6 +195,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   if (!setup().modelFound || !setup().whisperServer) throw new Error('Install whisper-server and the selected multilingual model first.');
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:stage', 'Loading Whisper model in persistent worker...');
   await getWorker().ensureReady();
+  privacyGate.validate(privacyTicket);
   liveController = new AbortController();
   liveId = randomUUID();
   liveSession = new VadLiveSession({
@@ -169,7 +211,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
 });
 
 ipcMain.on('go1:live-frame', (event, { id, pcm } = {}) => {
-  if (!ownWindow(event) || !liveSession || id !== liveId) return;
+  if (!ownWindow(event) || privacyGate.paused || !liveSession || id !== liveId) return;
   try {
     liveSession.append(pcm);
   } catch (error) {
@@ -223,21 +265,16 @@ ipcMain.handle('go1:model-select', async (event, id) => {
 });
 ipcMain.handle('go1:prepare-system-audio', event => {
   onlyApp(event);
+  privacyGate.assertAllowed();
   if (process.platform !== 'darwin') throw new Error('System audio capture is only supported on macOS in GO1.');
   displayPermissionUntil = Date.now() + 15000;
   return true;
 });
 
-// Presentation privacy does not attempt to bypass screen sharing or meeting monitoring.
-// A renderer action cancels background inference before sensitive UI is masked.
+// A single fail-closed main-process gate is shared by button and global shortcut.
 ipcMain.handle('go1:privacy-pause', event => {
   onlyApp(event);
-  displayPermissionUntil = 0;
-  cancelPrivateProcessing({ activeController, liveController, liveSession });
-  liveSession = null;
-  liveController = null;
-  liveId = null;
-  return true;
+  return activatePresentationPrivacy('button');
 });
 
 // Local-only deterministic practice statistics; no model provider or external service.

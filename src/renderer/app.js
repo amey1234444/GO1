@@ -4,6 +4,8 @@ const $ = id => document.getElementById(id);
 const MAX_BYTES = 80 * 1024 * 1024;
 const MAX_RECORD_MS = 30 * 60 * 1000;
 let displayedLatency = null;
+// Incremented whenever privacy state changes; stale async replies cannot resurface.
+let privacyEpoch = 0;
 const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false, starting: false };
 const languageNames = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', zh: 'Chinese', ja: 'Japanese', ko: 'Korean' };
 
@@ -107,7 +109,7 @@ async function checkSetup() {
   catch (error) { showError(error); }
 }
 function chooseMode(mode) {
-  if (state.busy || state.recording) return;
+  if (state.privacyActive || state.busy || state.recording) return;
   state.mode = mode;
   const record = mode === 'record';
   $('recordPanel').hidden = !record;
@@ -118,6 +120,7 @@ function chooseMode(mode) {
   $('uploadTab').setAttribute('aria-selected', String(!record));
 }
 function selectFile(file) {
+  if (state.privacyActive) return;
   hideError();
   if (!file) return;
   if (file.size <= 0 || file.size > MAX_BYTES) return showError('Files must be between 1 byte and 80 MB.');
@@ -132,10 +135,10 @@ function stopTracks() { state.stream?.getTracks().forEach(track => track.stop())
 function stopClock() { clearInterval(state.timer); state.timer = null; }
 function setBusy(busy) {
   state.busy = busy;
-  $('recordButton').disabled = busy || !setup.ready || !setup.whisperServer;
-  $('transcribeFileButton').disabled = busy || !setup.ready || !state.file;
-  $('recordTab').disabled = busy;
-  $('uploadTab').disabled = busy;
+  $('recordButton').disabled = state.privacyActive || busy || !setup.ready || !setup.whisperServer;
+  $('transcribeFileButton').disabled = state.privacyActive || busy || !setup.ready || !state.file;
+  $('recordTab').disabled = busy || state.privacyActive;
+  $('uploadTab').disabled = busy || state.privacyActive;
   $('languageSelect').disabled = busy;
   $('liveToggle').disabled = busy || state.recording;
   $('latencyMode').disabled = busy || state.recording;
@@ -173,14 +176,16 @@ async function processBytes(bytes) {
   if (state.privacyActive || !setup.ready || state.busy) return;
   hideError(); clearInsights(); resetResults(); setBusy(true); setStatus('Processing locally...', 'active');
   $('processingMessage').textContent = 'Preparing transcription...';
+  const epoch = privacyEpoch;
   try {
     const result = await window.go1.transcribe({
       bytes,
       language: $('languageSelect').value,
       translate: $('translateToggle').checked
     });
-    renderResult(result);
+    if (epoch === privacyEpoch && !state.privacyActive) renderResult(result);
   } catch (error) {
+    if (state.privacyActive || epoch !== privacyEpoch) return;
     $('emptyResult').hidden = false;
     showError(error);
   } finally { setBusy(false); }
@@ -372,11 +377,12 @@ async function stopRecording() {
     $('recordMessage').textContent = 'Finishing transcription...';
     $('recordButton').disabled = true;
     const id = state.liveId;
+    const epoch = privacyEpoch;
     try {
       await flushLiveAudio();
       await cleanupLive();
       const result = await window.go1.stopLive(id);
-      renderResult(result);
+      if (epoch === privacyEpoch && !state.privacyActive) renderResult(result);
     } catch (error) { showError(error); }
     finally {
       state.liveId = null; state.stopping = false; state.recording = false;
@@ -413,12 +419,22 @@ function getExportContent(format, result) {
 async function enablePresentationPrivacy() {
   if (state.privacyActive || state.privacyTransition) return;
   state.privacyActive = true; // synchronous guard against late microphone permissions and UI updates
+  privacyEpoch += 1;
   state.privacyTransition = true;
+  // Call the main-process privacy gate immediately, before the first await.
+  const backendPause = window.go1.pauseForPresentation();
   renderCaptureState(); renderAudioLevel();
   const button = $('privacyButton');
   button.disabled = true;
   $('privacyCurtain').hidden = false;
   $('privacyCurtainStatus').textContent = 'Stopping capture and clearing private content...';
+  // Remove visible private content before any asynchronous IPC, audio, or model work.
+  state.result = null;
+  $('transcriptBody').textContent = '';
+  $('segmentList').replaceChildren();
+  $('transcriptContent').hidden = true;
+  $('exportMenu').hidden = true;
+  clearInsights();
   try {
     stopClock();
     state.stopping = true;
@@ -434,7 +450,7 @@ async function enablePresentationPrivacy() {
       await cleanupLive();
       await window.go1.cancelLive(id).catch(() => {});
     }
-    await window.go1.pauseForPresentation();
+    await backendPause;
     state.recording = false;
     renderCaptureState(); renderAudioLevel();
     state.stopping = false;
@@ -469,15 +485,27 @@ async function enablePresentationPrivacy() {
     $('exitPrivacyButton').focus();
   }
 }
-function disablePresentationPrivacy() {
+async function disablePresentationPrivacy() {
   if (state.privacyTransition || !state.privacyActive) return;
-  state.privacyActive = false;
-  renderCaptureState(); renderAudioLevel();
-  $('privacyCurtain').hidden = true;
-  $('privacyButton').disabled = false;
-  setStatus('Presentation privacy ended — recording remains off');
-  $('emptyResult').hidden = false;
-  checkSetup();
+  state.privacyTransition = true;
+  $('exitPrivacyButton').disabled = true;
+  try {
+    // Resume must be acknowledged by the main process before capture can start.
+    await window.go1.resumeFromPresentation();
+    privacyEpoch += 1;
+    state.privacyActive = false;
+    renderCaptureState(); renderAudioLevel();
+    $('privacyCurtain').hidden = true;
+    $('privacyButton').disabled = false;
+    setStatus('Presentation privacy ended — recording remains off');
+    $('emptyResult').hidden = false;
+    await checkSetup();
+  } catch (error) {
+    $('privacyCurtainStatus').textContent = 'Could not exit privacy mode: ' + String(error.message || error);
+  } finally {
+    state.privacyTransition = false;
+    $('exitPrivacyButton').disabled = false;
+  }
 }
 const platformHelp = Object.freeze({
   meet: 'Google Meet: Present now → A tab or A window. Sharing your entire screen may expose any visible app, including GO1.',
@@ -491,6 +519,22 @@ updatePlatformHelp();
 renderCaptureState(); renderAudioLevel();
 $('privacyButton').addEventListener('click', enablePresentationPrivacy);
 $('exitPrivacyButton').addEventListener('click', disablePresentationPrivacy);
+// Main process remains able to stop capture even if GO1 is not the foreground window.
+window.go1.onPrivacyActivated(() => { enablePresentationPrivacy(); });
+// In-window fallback for systems where the OS has reserved the global shortcut.
+document.addEventListener('keydown', event => {
+  if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.code === 'Digit9') {
+    event.preventDefault();
+    enablePresentationPrivacy();
+  }
+});
+window.go1.privacyInfo().then(info => {
+  const label = $('privacyShortcutStatus');
+  if (label) label.textContent = info.registered
+    ? 'Emergency shortcut: ⌘⇧9 on Mac / Ctrl+Shift+9 on Windows. Immediately stops capture.'
+    : 'Global shortcut was unavailable (possibly used by another app). Use the Stop capture button.';
+  if (info.paused) enablePresentationPrivacy();
+}).catch(() => { if ($('privacyShortcutStatus')) $('privacyShortcutStatus').textContent = 'Use Stop capture & mask transcript before presenting.'; });
 
 $('recordTab').addEventListener('click', () => chooseMode('record'));
 $('uploadTab').addEventListener('click', () => chooseMode('upload'));

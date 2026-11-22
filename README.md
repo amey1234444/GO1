@@ -146,3 +146,12 @@ GitHub Actions artifacts are available under the corresponding **Cross-platform 
 - **Practice Review:** At the end of a consented recording or imported practice audio file, the app reports local word count, overall pace and a conservative list of possible filler expressions. These heuristic observations are not AI grading and do not establish answer quality.
 - **Real benchmarking:** `node scripts/benchmark-whisper.js /path/to/consented-speech.wav 8`, for repeatable, local, real-model inference numbers. Details and limitations: [docs/LATENCY_RESEARCH_AND_TESTING.md](docs/LATENCY_RESEARCH_AND_TESTING.md).
 - For an intended end-to-end sub-500 ms first-caption target, a *genuine streaming ASR provider* requires future integration and physical Mac measurements. The current persistent Whisper worker is utterance-based.
+
+## Emergency presentation privacy shortcut (v0.9)
+
+On macOS press **Command + Shift + 9**; on Windows use **Ctrl + Shift + 9**.
+This shortcut stops active capture and inference and requests an immediate privacy curtain; it does **not** toggle recording back on. If another application reserves the system-wide shortcut, GO1 reports the failure and the **Stop capture & mask transcript** button remains available. The shortcut is implemented with Electron `globalShortcut` (the app must be running).
+
+**Before presenting:** activate privacy, wait until GO1 confirms capture has stopped, then select the *specific window or tab* in the meeting app. GO1 does not detect when external applications start screen sharing and does not hide a live assistant from participants or proctoring software.
+
+The main process now independently rejects new microphone, system-audio, and transcription requests while privacy is active. Requests that started before activation cannot restart capture after a later return to the workspace. Transcript results arriving late are ignored by the UI. Read `docs/SHARE_SAFE_ACCEPTANCE.md` for controlled two-device tests.

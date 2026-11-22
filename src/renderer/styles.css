@@ -44,3 +44,9 @@
 .feedback-observation{padding:14px 15px;background:#1c2440;border-radius:10px;border:1px solid #38466b;color:#d0d9f0;font-size:12px;line-height:1.65;margin-top:20px}
 @media(max-width:1030px){.insights-grid{grid-template-columns:1fr}.insight-description{min-height:0}}
 @media(max-width:600px){.metric{padding:10px 8px}.metric strong{font-size:20px}}
+
+/* Privacy controls are visible, not covert. */
+.shortcut-note{font-size:10px;line-height:1.5;color:#b7c4dc;padding:5px 2px;}
+.receiver-check{grid-column:1/-1;margin-top:12px;border-top:1px solid #33405b;padding-top:10px;color:#c1cce6;font-size:11px;line-height:1.6;}
+.receiver-check summary{cursor:pointer;color:#d6d3ff;font-weight:650;}
+.receiver-check p{margin:8px 0;color:#adbad4;}
