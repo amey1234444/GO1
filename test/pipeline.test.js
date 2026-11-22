@@ -7,9 +7,8 @@ const path = require('node:path');
 const { execute, transcribe } = require('../src/transcription/engine');
 
 async function fakeBinary(dir, name, source) {
-  const filepath = path.join(dir, name);
-  await fs.writeFile(filepath, `#!/usr/bin/env node\n${source}\n`, { mode: 0o755 });
-  await fs.chmod(filepath, 0o755);
+  const filepath = path.join(dir, name + '.cjs');
+  await fs.writeFile(filepath, `${source}\n`);
   return filepath;
 }
 
@@ -29,6 +28,9 @@ test('end-to-end orchestration: decode, transcribe, parse detected language', as
     const stages = [];
     const result = await transcribe({ bytes: new Uint8Array([1, 2, 3, 4]), language: 'auto' }, {
       modelDirectory: directory,
+      // Invoke JS fixtures through Node on every OS; Windows cannot execute shebang files.
+      // Still exercise real child processes, arguments, output parsing and temporary files.
+      executeCommand: (script, args, options) => execute(process.execPath, [script, ...args], options),
       onStage: stage => stages.push(stage),
       binaries: { ffmpeg, ffprobe, whisper, model: path.join(directory, 'fake.bin'), ready: true }
     });

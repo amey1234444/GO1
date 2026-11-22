@@ -113,6 +113,10 @@ The feature does not identify Zoom/Meet/Teams or detect that a presentation star
 - Linux native Electron GUI attempts failed in the execution environment (headless runtime/IPC/graphics failure). No GUI screenshot or operating-system capture success is fabricated from those attempts.
 - Automated test output is evidence about code behavior under tests. The native smoke result, when available in Actions, is evidence about API state. Neither is a Zoom/Meet/Teams certificate.
 
+## CI follow-up
+
+The first Windows CI run on implementation commit `bd3a1f4d1856dbc0b8b4f3f4aa3b9b44b7721737` exposed an existing portability bug in the transcription integration fixture: Windows cannot directly spawn Unix shebang scripts. The test now invokes its synthetic executables through Node using an injected command runner; production execution still defaults to the existing shell-free `execute` function. The test continues to use real subprocesses and does not skip Windows. On that same commit, the macOS native capture API smoke step passed. These are API/test results, not receiver capture results.
+
 ## Receiver acceptance procedure
 
 Use synthetic test text and two consenting devices/accounts. Record OS version, Electron version, GO1 commit/build, meeting/browser version, share source, hardware/display arrangement and a timestamp.

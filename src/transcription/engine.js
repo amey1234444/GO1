@@ -95,7 +95,7 @@ function validatePayload(payload) {
   return { bytes, language, translate: payload.translate === true };
 }
 
-async function transcribe(payload, { modelDirectory, selectedModel = 'small', signal, onStage, binaries = {} } = {}) {
+async function transcribe(payload, { modelDirectory, selectedModel = 'small', signal, onStage, binaries = {}, executeCommand = execute } = {}) {
   const { bytes, language, translate } = validatePayload(payload);
   const setup = { ...getSetup({ modelDirectory, selectedModel }), ...binaries };
   if (!setup.ready && !binaries.ready) throw new Error('Setup incomplete: install ffmpeg, ffprobe, whisper-cli and a multilingual model. See README.');
@@ -110,15 +110,15 @@ async function transcribe(payload, { modelDirectory, selectedModel = 'small', si
     await fsp.writeFile(input, bytes, { mode: 0o600 });
     onStage?.('Converting audio to 16 kHz mono PCM...');
     if (setup.ffprobe) {
-      const probe = await execute(setup.ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', input], { signal, timeoutMs: 15000 });
+      const probe = await executeCommand(setup.ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', input], { signal, timeoutMs: 15000 });
       const duration = Number(probe.stdout.trim());
       if (Number.isFinite(duration) && duration > MAX_SECONDS) throw new Error('Audio is longer than 30 minutes. Split it into smaller recordings.');
     }
-    await execute(setup.ffmpeg, ['-nostdin', '-v', 'error', '-y', '-i', input, '-map', '0:a:0', '-t', String(MAX_SECONDS), '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', wav], { signal, timeoutMs: 180000 });
+    await executeCommand(setup.ffmpeg, ['-nostdin', '-v', 'error', '-y', '-i', input, '-map', '0:a:0', '-t', String(MAX_SECONDS), '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', wav], { signal, timeoutMs: 180000 });
     onStage?.('Transcribing speech locally...');
     const args = ['-m', setup.model, '-f', wav, '-l', language, '-oj', '-of', outputPrefix, '-np'];
     if (translate) args.push('-tr');
-    await execute(setup.whisper, args, { signal, timeoutMs: 20 * 60 * 1000 });
+    await executeCommand(setup.whisper, args, { signal, timeoutMs: 20 * 60 * 1000 });
     const raw = JSON.parse(await fsp.readFile(`${outputPrefix}.json`, 'utf8'));
     return { ...normalizeWhisperJson(raw), translatedToEnglish: translate };
   } finally {

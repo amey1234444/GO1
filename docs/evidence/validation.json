@@ -45,6 +45,15 @@
       "Zoom": "not_run",
       "Google Meet": "not_run",
       "Microsoft Teams": "not_run"
+    },
+    "ciFollowup": {
+      "implementationCommit": "bd3a1f4d1856dbc0b8b4f3f4aa3b9b44b7721737",
+      "linuxChecks": "pass",
+      "macOSNativeApiSmoke": "pass",
+      "macOSRun": "https://github.com/amey1234444/GO1/actions/runs/44977420744",
+      "initialWindowsTests": "85 passed; one pre-existing Unix shebang fixture failed to spawn on Windows",
+      "initialWindowsRun": "https://github.com/amey1234444/GO1/actions/runs/44977420660",
+      "fix": "Use Node to execute integration fixtures via injected command runner; production defaults unchanged. Windows rerun pending."
     }
   },
   "guaranteedCaptureExclusion": false,
@@ -53,7 +62,7 @@
     ".github/workflows/installers.yml": "799db490d84aba1717875b125ae7bfa2b477d64495acf1dd560b53dc5692e524",
     ".github/workflows/macos-build.yml": "65bba4f6b60a5dc86bd1d52eaca417d1577b2a00d412ffc3563cdac3eff3400d",
     "README.md": "cc114cd03f49946e342959c98bacd17b881a14d5d0e35d7ac2e3dcb6829e103c",
-    "docs/CAPTURE_PROTECTION_STUDY.md": "ae39064773837f9763283a8a44965d98da15835dd38fb87396186c383e338db8",
+    "docs/CAPTURE_PROTECTION_STUDY.md": "7fdfba2298cf3cbf74258bbcc8273c6fbfb55a090eaec3adf6c2cf48f40328ad",
     "docs/GO_CLIENT_ARCHITECTURE_STUDY.md": "21579ba87bf56af8c375dd91c81940f4df648f3c964effc7e406af2cf9d2b053",
     "docs/GO_CLIENT_AUDIO_COMPARISON_V014.md": "010a8b0d92f559e2b24b841eb2a9657c844c0c409d40f4ce2fedab03fe11d09a",
     "docs/LIVE_ASSIST.md": "4f6e38747effd630db7e55d5b1b1453ba275be47475f24fe7a5113cde8101a2d",
@@ -61,7 +70,7 @@
     "docs/MEETING_PRESENTATION_PRIVACY.md": "5503c5c9f010620be09d8151e0f01b02f3af79e10fec34c5b293d552808a2a1e",
     "docs/RELEASE_AND_PRIVACY_QA.md": "7c3b1ed7901a6acdcb10289727c47d8ba26aea96c6f4be7dbdb4081a16f52516",
     "docs/SHARE_SAFE_ACCEPTANCE.md": "603a2697234fe87215a52b5ae495ff0d1fc89bf7fabafe3d4ffba4b00eeeb867",
-    "docs/evidence/automated-tests.txt": "6620511afb1ef6c3a6bb7a3a84cd6da05405e898f6d72429ebcf44eafb4be622",
+    "docs/evidence/automated-tests.txt": "0552dd22ac9f6231a086d354c8fb22e070717fd5b8925e98c81adbec78dcc81b",
     "docs/evidence/go-client-2.0.11-static.json": "d6d39e96448ada8274f6728d03e980b622df897f7b39e92c829744a59971c2ef",
     "docs/evidence/source-check.txt": "2fdbdef5ba9e6fd5d3bd4f09a6ba42c1fbbb985d69ddda7e03edb10822d3ec5a",
     "package.json": "ddd0c2ef315ba63aff3dd93c28c04a67301f7d2b765b5e6792b0c9e8faf2e3ad",
@@ -76,6 +85,8 @@
     "src/renderer/styles.css": "0c229a071be25ad1ed446ab4667fea43299882bee79d269be2f5067665e6ff0a",
     "test/companion.test.js": "e6f41072c26a7caae9b90c6144aeee32ba634d644a233e6dfe40cec211b1c61f",
     "test/content-protection.test.js": "8b134c5f79b09f2873e3bc1189b5ff62b21808b743ea16f0eba3a6d2b8118cb4",
-    "test/window-protection-integration.test.js": "ecca257b57f9726ffa9ba3c51ff1b280f5231ded20a0c13f1af2f1b4e42d9cb3"
+    "test/window-protection-integration.test.js": "ecca257b57f9726ffa9ba3c51ff1b280f5231ded20a0c13f1af2f1b4e42d9cb3",
+    "src/transcription/engine.js": "1e096b211e8d8372f71be81f59ce8468aa9cdc9f0ee67568e2c6be849837f511",
+    "test/pipeline.test.js": "f5362fe94d6fbfc3e278229124acbec164473f9977330fa4dd5f07f7fc5b85ed"
   }
 }
