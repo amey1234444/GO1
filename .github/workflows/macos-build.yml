@@ -18,6 +18,8 @@ jobs:
           node-version: '22'
       - name: Install app dependencies
         run: npm install --no-audit --no-fund
+      - name: Resolve and install Electron runtime before static inspection
+        run: node -e "console.log(require('electron'))"
       - name: Compare official Electron framework with GO Client static fingerprints
         run: python3 scripts/research/compare-electron.py --reference docs/evidence/go-client-native-audit-v020.json --framework node_modules/electron/dist --output out/release-evidence/framework-comparison.json
       - name: Run source checks and automated tests
