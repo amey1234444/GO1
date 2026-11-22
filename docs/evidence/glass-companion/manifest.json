@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "testedCommit": "6d47f59019003e8216be067fbfb0b4037a7d05a9",
+  "captureRun": "https://github.com/amey1234444/GO1/actions/runs/44983604658",
+  "buildRun": "https://github.com/amey1234444/GO1/actions/runs/44983604667",
+  "captureArtifacts": [
+    {
+      "id": 14738687989,
+      "name": "GO1-capture-evidence-macos-26",
+      "size_in_bytes": 541880,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14738687989",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14738687989/zip",
+      "expired": false,
+      "created_at": "2026-11-22T04:08:33Z",
+      "expires_at": "2026-12-06T04:08:31Z",
+      "updated_at": "2026-11-22T04:08:33Z",
+      "digest": "sha256:f021cc93f2f54574cff5b5850fbe3ad6d69c61d24abfc7e3fea2d222348e8449",
+      "workflow_run": {
+        "id": 44983604658,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "6d47f59019003e8216be067fbfb0b4037a7d05a9"
+      }
+    },
+    {
+      "id": 14738353058,
+      "name": "GO1-capture-evidence-macos-15",
+      "size_in_bytes": 540760,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14738353058",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14738353058/zip",
+      "expired": false,
+      "created_at": "2026-11-22T04:08:40Z",
+      "expires_at": "2026-12-06T04:08:39Z",
+      "updated_at": "2026-11-22T04:08:40Z",
+      "digest": "sha256:0fc6a78e9f47522cf8247fc494e190235961ee1acb6008467d7129a7f5e8fd58",
+      "workflow_run": {
+        "id": 44983604658,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "6d47f59019003e8216be067fbfb0b4037a7d05a9"
+      }
+    }
+  ],
+  "buildArtifacts": [
+    {
+      "id": 14739096904,
+      "name": "GO1-macOS-arm64-v0.18.0-glass-companion-unsigned-DMG",
+      "size_in_bytes": 167282219,
+      "url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14739096904",
+      "archive_download_url": "https://api.github.com/repos/amey1234444/GO1/actions/artifacts/14739096904/zip",
+      "expired": false,
+      "created_at": "2026-11-22T04:09:16Z",
+      "expires_at": "2026-12-06T04:09:09Z",
+      "updated_at": "2026-11-22T04:09:16Z",
+      "digest": "sha256:c6092cfc9f4efbc0c27bf0d909b39bd2cc9cdbe14138517c1603abd56c7cea85",
+      "workflow_run": {
+        "id": 44983604667,
+        "repository_id": 1466998983,
+        "head_repository_id": 1466998983,
+        "head_branch": "main",
+        "head_sha": "6d47f59019003e8216be067fbfb0b4037a7d05a9"
+      }
+    }
+  ],
+  "tests": {
+    "passed": 99,
+    "failed": 0
+  },
+  "googleMeetReceiverVerified": false,
+  "originalGOClientRuntimeVerified": false,
+  "source": "Unmodified files extracted from workflow ZIPs after SHA-256 verification against GitHub metadata. UI data is synthetic. Sender images capture app content; observer images capture a fixture rectangle through ScreenCaptureKit. Unsigned provenance, not independent certification.",
+  "surfaceSamples": [
+    {
+      "file": "macos-15/companion-live/sender-panel.png",
+      "coordinate": [
+        40,
+        100
+      ],
+      "rgba": [
+        17,
+        22,
+        34,
+        219
+      ]
+    },
+    {
+      "file": "macos-15/companion-live/sender-translucent.png",
+      "coordinate": [
+        40,
+        100
+      ],
+      "rgba": [
+        17,
+        21,
+        34,
+        179
+      ]
+    },
+    {
+      "file": "macos-26/companion-live/sender-panel.png",
+      "coordinate": [
+        40,
+        100
+      ],
+      "rgba": [
+        17,
+        22,
+        34,
+        219
+      ]
+    },
+    {
+      "file": "macos-26/companion-live/sender-translucent.png",
+      "coordinate": [
+        40,
+        100
+      ],
+      "rgba": [
+        17,
+        21,
+        34,
+        179
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "macos-15/companion-live/protected-display/screenshot.png",
+      "bytes": 16098,
+      "sha256": "bd884d2f7ed26a5dfc275946591be0832fa0246ce942c928a4259d7f702b0e04"
+    },
+    {
+      "path": "macos-15/companion-live/protected-display/streamInitial.png",
+      "bytes": 16124,
+      "sha256": "b0447c466cf459e16c7f8918c382b04a349ea47df8accb82f394f58bf688b7ba"
+    },
+    {
+      "path": "macos-15/companion-live/protected-display/streamRefreshed.png",
+      "bytes": 16114,
+      "sha256": "1dc533db91d17d80467b4ba367883d54bee4ef454139e16d79658e8f07b25a3b"
+    },
+    {
+      "path": "macos-15/companion-live/sender-compact.png",
+      "bytes": 7446,
+      "sha256": "5caf17924f53eccc597e15df28b71c389935c2204e3fe6ffedaf1e1301e2a6f4"
+    },
+    {
+      "path": "macos-15/companion-live/sender-guidance.png",
+      "bytes": 70674,
+      "sha256": "9f22dbff376ef564455e7ffb4defc9eb5cec5a8bc9c56aa4039db7509fa8d198"
+    },
+    {
+      "path": "macos-15/companion-live/sender-panel.png",
+      "bytes": 70674,
+      "sha256": "9f22dbff376ef564455e7ffb4defc9eb5cec5a8bc9c56aa4039db7509fa8d198"
+    },
+    {
+      "path": "macos-15/companion-live/sender-translucent.png",
+      "bytes": 72116,
+      "sha256": "e8431a926c04557c189bc6f2a44ac6ae86608612efdadbb91ea2d6f03852286e"
+    },
+    {
+      "path": "macos-15/companion-live/unprotected-display/screenshot.png",
+      "bytes": 16129,
+      "sha256": "f3e5f04220b29cfd2201d44852387478e7656397473908af485f8477b7144e19"
+    },
+    {
+      "path": "macos-15/companion-live/unprotected-display/streamInitial.png",
+      "bytes": 15435,
+      "sha256": "79bea9b2625102b9652f95012d6661a827ef8607a2ed5842f6034dbbfed47968"
+    },
+    {
+      "path": "macos-15/companion-live/unprotected-display/streamRefreshed.png",
+      "bytes": 58636,
+      "sha256": "ea1e207da200b0daf7b88886bd2a8d4ab709ecf315396b4563b754c54318416a"
+    },
+    {
+      "path": "macos-15/report.json",
+      "bytes": 57772,
+      "sha256": "b60845a911bdf8de8c6db8b20f0f6f203775e8ebfdf052fa917a8f8b1d205d5e"
+    },
+    {
+      "path": "macos-26/companion-live/protected-display/screenshot.png",
+      "bytes": 18350,
+      "sha256": "8f915cfe385b40e8efe02e9dad8eed119b54f209fc1c64a92cc19ae660a32610"
+    },
+    {
+      "path": "macos-26/companion-live/protected-display/streamInitial.png",
+      "bytes": 15960,
+      "sha256": "5012a3a19620b979c59342e0254a57cde9f54a9c05ded2811054abf8ba603837"
+    },
+    {
+      "path": "macos-26/companion-live/protected-display/streamRefreshed.png",
+      "bytes": 15308,
+      "sha256": "e7af73a93f625813e10702d4e0ddc50431469a9f55091125b68a0a53d008c270"
+    },
+    {
+      "path": "macos-26/companion-live/sender-compact.png",
+      "bytes": 7438,
+      "sha256": "a71d57a9daa92e9670780c92bf852fdf59078fa2d6737e6fa56a3a005c88729c"
+    },
+    {
+      "path": "macos-26/companion-live/sender-guidance.png",
+      "bytes": 70685,
+      "sha256": "46cc1dc6a20d3380222dcd09032ff3feaf6e30afc1ebdd5fb4a6e3086d7a67c5"
+    },
+    {
+      "path": "macos-26/companion-live/sender-panel.png",
+      "bytes": 70685,
+      "sha256": "46cc1dc6a20d3380222dcd09032ff3feaf6e30afc1ebdd5fb4a6e3086d7a67c5"
+    },
+    {
+      "path": "macos-26/companion-live/sender-translucent.png",
+      "bytes": 72113,
+      "sha256": "d7ea7cc73b163003820df3952e0e17df1495ec9ff2a03f9d4680ded042f19e13"
+    },
+    {
+      "path": "macos-26/companion-live/unprotected-display/screenshot.png",
+      "bytes": 18152,
+      "sha256": "fd7212ee44848d0144c8f52a7814eaed2ca72e443cde2db97253a1aae61098ca"
+    },
+    {
+      "path": "macos-26/companion-live/unprotected-display/streamInitial.png",
+      "bytes": 15302,
+      "sha256": "cb8fab5447e3ef922f0e14ff0fc6e5fe89d0d940e66d668b64c64f0176fa64c9"
+    },
+    {
+      "path": "macos-26/companion-live/unprotected-display/streamRefreshed.png",
+      "bytes": 59005,
+      "sha256": "4a38c3d1592c4df66349530c95eac355635cda27b65a3ddbe643bcef836bf670"
+    },
+    {
+      "path": "macos-26/report.json",
+      "bytes": 55716,
+      "sha256": "3053c2e1b85826f552f6a6d8794c2231ca9e882207305b57a5cbe22b43094750"
+    },
+    {
+      "path": "source-check.txt",
+      "bytes": 1576,
+      "sha256": "e43bd1bb31d3974cf4de95497362383952a773e1b34749add4c11bee02d643ad"
+    },
+    {
+      "path": "tests.txt",
+      "bytes": 8004,
+      "sha256": "024919a8ad45047d5219da9f6aa7c6b670619141df99cdfe90ee06d469529845"
+    }
+  ]
+}

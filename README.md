@@ -4,6 +4,8 @@
 
 Launch a frameless companion with readable opaque text, adjustable translucent surfaces, transcript and AI notes side by side, a compact toolbar and direct local AI questions. [Design, GO Client findings and verification](docs/FLOATING_COMPANION.md). Capture protection remains independent from appearance and from Stop & mask.
 
+[Download unsigned Apple Silicon v0.18.0 DMG](https://github.com/amey1234444/GO1/actions/runs/44983604667/artifacts/14739096904) · [Actual UI screenshots](docs/FLOATING_COMPANION.md#actual-ui-screenshots). 99 automated tests and both Mac native renderer/capture experiments passed. Meeting receiver tests remain outstanding.
+
 ## v0.17 — live protection keeps processing active
 
 **Live capture protection (stealth)** leaves transcription and enabled AI running. **Stop & mask** deliberately stops both. Workspace and companion windows disable background throttling, and the UI reports live session/AI status separately from capture protection. [Live mode behavior and Google Meet verification](docs/LIVE_PROTECTION_AND_MEET.md).

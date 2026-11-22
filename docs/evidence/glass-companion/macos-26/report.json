@@ -1,0 +1,2176 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-22T04:07:44.237Z",
+  "electron": "39.8.10",
+  "os": "25.6.0",
+  "platform": "darwin",
+  "trials": [
+    {
+      "scenario": {
+        "name": "unprotected-control",
+        "protected": false,
+        "panel": false
+      },
+      "windowState": {
+        "visible": true,
+        "alwaysOnTop": false,
+        "allWorkspaces": false,
+        "bounds": {
+          "x": 180,
+          "y": 200,
+          "width": 320,
+          "height": 180
+        }
+      },
+      "protection": {
+        "enabled": false,
+        "supported": true,
+        "platform": "darwin",
+        "allApplied": false,
+        "receiverVerified": false,
+        "guaranteedCaptureExclusion": false,
+        "windows": [
+          {
+            "role": "synthetic-companion",
+            "applied": false,
+            "error": null
+          }
+        ],
+        "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device."
+      },
+      "capture": {
+        "captureAPI": "ScreenCaptureKit",
+        "displayID": 1,
+        "markerLayer": 0,
+        "markerOnScreen": true,
+        "os": "Version 26.7.2 (Build 25G332)",
+        "receiverVerified": false,
+        "scope": "display-region",
+        "screenshot": {
+          "cyan": 339011,
+          "magenta": 54005,
+          "pixels": 400000
+        },
+        "status": "captured",
+        "stream": {
+          "streamInitial": {
+            "frames": 21,
+            "maxMagenta": 53807,
+            "minCyan": 337666,
+            "samples": [
+              {
+                "cyan": 337666,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53807,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53807,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53807,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53711,
+                "pixels": 400000
+              }
+            ]
+          },
+          "streamRefreshed": {
+            "frames": 21,
+            "maxMagenta": 53783,
+            "minCyan": 337650,
+            "samples": [
+              {
+                "cyan": 337674,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337674,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337650,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337650,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337650,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337650,
+                "magenta": 53783,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337690,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53783,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337666,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337674,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337674,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337650,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337650,
+                "magenta": 53735,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337650,
+                "magenta": 53711,
+                "pixels": 400000
+              },
+              {
+                "cyan": 337650,
+                "magenta": 53735,
+                "pixels": 400000
+              }
+            ]
+          }
+        }
+      },
+      "verdict": {
+        "result": "exposed",
+        "baseline": {
+          "screenshot": "visible",
+          "streamInitial": "visible",
+          "streamRefreshed": "visible"
+        },
+        "phases": {
+          "screenshot": "visible",
+          "streamInitial": "visible",
+          "streamRefreshed": "visible"
+        },
+        "receiverVerified": false
+      }
+    },
+    {
+      "scenario": {
+        "name": "protected-ordinary",
+        "protected": true,
+        "panel": false
+      },
+      "windowState": {
+        "visible": true,
+        "alwaysOnTop": false,
+        "allWorkspaces": false,
+        "bounds": {
+          "x": 180,
+          "y": 200,
+          "width": 320,
+          "height": 180
+        }
+      },
+      "protection": {
+        "enabled": true,
+        "supported": true,
+        "platform": "darwin",
+        "allApplied": true,
+        "receiverVerified": false,
+        "guaranteedCaptureExclusion": false,
+        "windows": [
+          {
+            "role": "synthetic-companion",
+            "applied": true,
+            "error": null
+          }
+        ],
+        "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device."
+      },
+      "capture": {
+        "captureAPI": "ScreenCaptureKit",
+        "displayID": 1,
+        "markerLayer": 0,
+        "markerOnScreen": true,
+        "os": "Version 26.7.2 (Build 25G332)",
+        "receiverVerified": false,
+        "scope": "display-region",
+        "screenshot": {
+          "cyan": 396389,
+          "magenta": 0,
+          "pixels": 400000
+        },
+        "status": "captured",
+        "stream": {
+          "streamInitial": {
+            "frames": 16,
+            "maxMagenta": 0,
+            "minCyan": 395643,
+            "samples": [
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              }
+            ]
+          },
+          "streamRefreshed": {
+            "frames": 17,
+            "maxMagenta": 0,
+            "minCyan": 395643,
+            "samples": [
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              }
+            ]
+          }
+        }
+      },
+      "verdict": {
+        "result": "excluded-in-tested-paths",
+        "baseline": {
+          "screenshot": "visible",
+          "streamInitial": "visible",
+          "streamRefreshed": "visible"
+        },
+        "phases": {
+          "screenshot": "absent",
+          "streamInitial": "absent",
+          "streamRefreshed": "absent"
+        },
+        "receiverVerified": false
+      }
+    },
+    {
+      "scenario": {
+        "name": "panel-unprotected-control",
+        "protected": false,
+        "panel": true
+      },
+      "windowState": {
+        "visible": true,
+        "alwaysOnTop": true,
+        "allWorkspaces": true,
+        "bounds": {
+          "x": 180,
+          "y": 200,
+          "width": 320,
+          "height": 180
+        }
+      },
+      "protection": {
+        "enabled": false,
+        "supported": true,
+        "platform": "darwin",
+        "allApplied": false,
+        "receiverVerified": false,
+        "guaranteedCaptureExclusion": false,
+        "windows": [
+          {
+            "role": "synthetic-companion",
+            "applied": false,
+            "error": null
+          }
+        ],
+        "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device."
+      },
+      "capture": {
+        "captureAPI": "ScreenCaptureKit",
+        "displayID": 1,
+        "markerLayer": 1000,
+        "markerOnScreen": true,
+        "os": "Version 26.7.2 (Build 25G332)",
+        "receiverVerified": false,
+        "scope": "display-region",
+        "screenshot": {
+          "cyan": 338981,
+          "magenta": 53890,
+          "pixels": 400000
+        },
+        "status": "captured",
+        "stream": {
+          "streamInitial": {
+            "frames": 21,
+            "maxMagenta": 54010,
+            "minCyan": 338235,
+            "samples": [
+              {
+                "cyan": 338259,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 54010,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 54010,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 54010,
+                "pixels": 400000
+              }
+            ]
+          },
+          "streamRefreshed": {
+            "frames": 21,
+            "maxMagenta": 54010,
+            "minCyan": 338219,
+            "samples": [
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53986,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338219,
+                "magenta": 53886,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 54010,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338259,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53890,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              },
+              {
+                "cyan": 338235,
+                "magenta": 53914,
+                "pixels": 400000
+              }
+            ]
+          }
+        }
+      },
+      "verdict": {
+        "result": "exposed",
+        "baseline": {
+          "screenshot": "visible",
+          "streamInitial": "visible",
+          "streamRefreshed": "visible"
+        },
+        "phases": {
+          "screenshot": "visible",
+          "streamInitial": "visible",
+          "streamRefreshed": "visible"
+        },
+        "receiverVerified": false
+      }
+    },
+    {
+      "scenario": {
+        "name": "go1-mac-panel",
+        "protected": true,
+        "panel": true
+      },
+      "windowState": {
+        "visible": true,
+        "alwaysOnTop": true,
+        "allWorkspaces": true,
+        "bounds": {
+          "x": 180,
+          "y": 200,
+          "width": 320,
+          "height": 180
+        }
+      },
+      "protection": {
+        "enabled": true,
+        "supported": true,
+        "platform": "darwin",
+        "allApplied": true,
+        "receiverVerified": false,
+        "guaranteedCaptureExclusion": false,
+        "windows": [
+          {
+            "role": "synthetic-companion",
+            "applied": true,
+            "error": null
+          }
+        ],
+        "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device."
+      },
+      "capture": {
+        "captureAPI": "ScreenCaptureKit",
+        "displayID": 1,
+        "markerLayer": 1000,
+        "markerOnScreen": true,
+        "os": "Version 26.7.2 (Build 25G332)",
+        "receiverVerified": false,
+        "scope": "display-region",
+        "screenshot": {
+          "cyan": 396389,
+          "magenta": 0,
+          "pixels": 400000
+        },
+        "status": "captured",
+        "stream": {
+          "streamInitial": {
+            "frames": 21,
+            "maxMagenta": 0,
+            "minCyan": 395643,
+            "samples": [
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              }
+            ]
+          },
+          "streamRefreshed": {
+            "frames": 21,
+            "maxMagenta": 0,
+            "minCyan": 395643,
+            "samples": [
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              }
+            ]
+          }
+        }
+      },
+      "verdict": {
+        "result": "excluded-in-tested-paths",
+        "baseline": {
+          "screenshot": "visible",
+          "streamInitial": "visible",
+          "streamRefreshed": "visible"
+        },
+        "phases": {
+          "screenshot": "absent",
+          "streamInitial": "absent",
+          "streamRefreshed": "absent"
+        },
+        "receiverVerified": false
+      }
+    },
+    {
+      "scenario": {
+        "name": "panel-accessory-policy",
+        "protected": true,
+        "panel": true,
+        "accessory": true
+      },
+      "windowState": {
+        "visible": true,
+        "alwaysOnTop": true,
+        "allWorkspaces": true,
+        "bounds": {
+          "x": 180,
+          "y": 200,
+          "width": 320,
+          "height": 180
+        }
+      },
+      "protection": {
+        "enabled": true,
+        "supported": true,
+        "platform": "darwin",
+        "allApplied": true,
+        "receiverVerified": false,
+        "guaranteedCaptureExclusion": false,
+        "windows": [
+          {
+            "role": "synthetic-companion",
+            "applied": true,
+            "error": null
+          }
+        ],
+        "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device."
+      },
+      "capture": {
+        "captureAPI": "ScreenCaptureKit",
+        "displayID": 1,
+        "markerLayer": 1000,
+        "markerOnScreen": true,
+        "os": "Version 26.7.2 (Build 25G332)",
+        "receiverVerified": false,
+        "scope": "display-region",
+        "screenshot": {
+          "cyan": 396389,
+          "magenta": 0,
+          "pixels": 400000
+        },
+        "status": "captured",
+        "stream": {
+          "streamInitial": {
+            "frames": 20,
+            "maxMagenta": 0,
+            "minCyan": 395643,
+            "samples": [
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              }
+            ]
+          },
+          "streamRefreshed": {
+            "frames": 21,
+            "maxMagenta": 0,
+            "minCyan": 395643,
+            "samples": [
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395667,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 395643,
+                "magenta": 0,
+                "pixels": 400000
+              }
+            ]
+          }
+        }
+      },
+      "verdict": {
+        "result": "excluded-in-tested-paths",
+        "baseline": {
+          "screenshot": "visible",
+          "streamInitial": "visible",
+          "streamRefreshed": "visible"
+        },
+        "phases": {
+          "screenshot": "absent",
+          "streamInitial": "absent",
+          "streamRefreshed": "absent"
+        },
+        "receiverVerified": false
+      }
+    },
+    {
+      "scenario": {
+        "name": "selected-other-window",
+        "protected": true,
+        "panel": true,
+        "selectedWindow": true
+      },
+      "windowState": {
+        "visible": true,
+        "alwaysOnTop": true,
+        "allWorkspaces": true,
+        "bounds": {
+          "x": 180,
+          "y": 200,
+          "width": 320,
+          "height": 180
+        }
+      },
+      "protection": {
+        "enabled": true,
+        "supported": true,
+        "platform": "darwin",
+        "allApplied": true,
+        "receiverVerified": false,
+        "guaranteedCaptureExclusion": false,
+        "windows": [
+          {
+            "role": "synthetic-companion",
+            "applied": true,
+            "error": null
+          }
+        ],
+        "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device."
+      },
+      "capture": {
+        "captureAPI": "ScreenCaptureKit",
+        "displayID": 1,
+        "markerLayer": 1000,
+        "markerOnScreen": true,
+        "os": "Version 26.7.2 (Build 25G332)",
+        "receiverVerified": false,
+        "scope": "selected-window",
+        "screenshot": {
+          "cyan": 396389,
+          "magenta": 0,
+          "pixels": 400000
+        },
+        "status": "captured",
+        "stream": {
+          "streamInitial": {
+            "frames": 21,
+            "maxMagenta": 0,
+            "minCyan": 396389,
+            "samples": [
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              }
+            ]
+          },
+          "streamRefreshed": {
+            "frames": 21,
+            "maxMagenta": 0,
+            "minCyan": 396389,
+            "samples": [
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396413,
+                "magenta": 0,
+                "pixels": 400000
+              },
+              {
+                "cyan": 396389,
+                "magenta": 0,
+                "pixels": 400000
+              }
+            ]
+          }
+        }
+      },
+      "verdict": {
+        "result": "excluded-in-tested-paths",
+        "baseline": {
+          "screenshot": "visible",
+          "streamInitial": "visible",
+          "streamRefreshed": "visible"
+        },
+        "phases": {
+          "screenshot": "absent",
+          "streamInitial": "absent",
+          "streamRefreshed": "absent"
+        },
+        "receiverVerified": false
+      }
+    }
+  ],
+  "receiverVerified": false,
+  "note": "Synthetic local ScreenCaptureKit evidence. This is not a Zoom/Meet/Teams receiving-device test.",
+  "result": "excluded-in-tested-paths",
+  "companion": {
+    "status": "collected",
+    "rendered": {
+      "transcript": "Sample transcript updated while protected: the release health check passed.",
+      "guidance": "Sample AI text updated while protected:\n1. Check service health.\n2. Roll out gradually.\n3. Keep rollback ready.",
+      "protection": "Protection requested · check receiver"
+    },
+    "backgroundThrottling": false,
+    "glass": {
+      "html": "rgba(0, 0, 0, 0)",
+      "body": "rgba(0, 0, 0, 0)",
+      "surface": "rgba(17, 22, 34, 0.7)",
+      "textOpacity": "1",
+      "noHorizontalOverflow": true,
+      "compact": false
+    },
+    "compactControlVerified": true,
+    "protection": {
+      "enabled": true,
+      "supported": true,
+      "platform": "darwin",
+      "allApplied": true,
+      "receiverVerified": false,
+      "guaranteedCaptureExclusion": false,
+      "windows": [
+        {
+          "role": "companion",
+          "applied": true,
+          "error": null
+        }
+      ],
+      "limitation": "macOS ScreenCaptureKit can still capture GO1. Share a specific other window or tab, and check a second device."
+    },
+    "unprotected": {
+      "captureAPI": "ScreenCaptureKit",
+      "displayID": 1,
+      "markerLayer": 1000,
+      "markerOnScreen": true,
+      "os": "Version 26.7.2 (Build 25G332)",
+      "receiverVerified": false,
+      "scope": "display-region",
+      "screenshot": {
+        "cyan": 396389,
+        "magenta": 0,
+        "pixels": 400000
+      },
+      "status": "captured",
+      "stream": {
+        "streamInitial": {
+          "frames": 13,
+          "maxMagenta": 0,
+          "minCyan": 40347,
+          "samples": [
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40406,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40406,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40347,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40406,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40406,
+              "magenta": 0,
+              "pixels": 400000
+            }
+          ]
+        },
+        "streamRefreshed": {
+          "frames": 21,
+          "maxMagenta": 0,
+          "minCyan": 39971,
+          "samples": [
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40087,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40406,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40107,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40406,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40406,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 39971,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40402,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 40406,
+              "magenta": 0,
+              "pixels": 400000
+            }
+          ]
+        }
+      }
+    },
+    "protectedDisplay": {
+      "captureAPI": "ScreenCaptureKit",
+      "displayID": 1,
+      "markerLayer": 1000,
+      "markerOnScreen": true,
+      "os": "Version 26.7.2 (Build 25G332)",
+      "receiverVerified": false,
+      "scope": "display-region",
+      "screenshot": {
+        "cyan": 396389,
+        "magenta": 0,
+        "pixels": 400000
+      },
+      "status": "captured",
+      "stream": {
+        "streamInitial": {
+          "frames": 21,
+          "maxMagenta": 0,
+          "minCyan": 395643,
+          "samples": [
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            }
+          ]
+        },
+        "streamRefreshed": {
+          "frames": 21,
+          "maxMagenta": 0,
+          "minCyan": 395643,
+          "samples": [
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395667,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            },
+            {
+              "cyan": 395643,
+              "magenta": 0,
+              "pixels": 400000
+            }
+          ]
+        }
+      }
+    },
+    "receiverVerified": false,
+    "note": "Real companion HTML/preload, synthetic text. Sender images use capturePage (app content, not desktop). Observer images use independent ScreenCaptureKit. No Google Meet or actual speech/AI inference."
+  }
+}

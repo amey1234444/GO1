@@ -12,7 +12,7 @@ The input is GO Client 2.0.11 ARM64, with DMG SHA-256 `059ff75f28b7604966a800493
 | Frameless transparent window, no shadow | 18613–18622 | Removes normal window chrome and permits translucent/transparent rendering |
 | Mac `panel`, always on top | 18620–18623; 18712 | Produces a floating Mac panel; the screen-saver window level controls stacking |
 | All workspaces/fullscreen visibility | 18713–18716 | Keeps the panel available across Spaces/fullscreen contexts |
-| `backgroundThrottling: false` | 18632 | Avoids deliberately throttling renderer timers/animations when backgrounded |
+| `backgroundThrottling: false` | 18629 | Avoids deliberately throttling renderer timers/animations when backgrounded |
 | Focused show versus `showInactive()` | 17949–17965 | Separates explicit interaction from showing without taking focus |
 | Accessory activation policy and Dock hiding | 27503–27515 | Changes app/Dock presentation; separate from capture exclusion |
 | Mouse passthrough | 19083–19096 | Routes pointer input through the window; separate from capture exclusion |
@@ -43,6 +43,36 @@ On narrow displays the panel prioritizes AI notes; the full transcript remains a
 
 ## Verification scope
 
+Tested commit: [`6d47f59019003e8216be067fbfb0b4037a7d05a9`](https://github.com/amey1234444/GO1/commit/6d47f59019003e8216be067fbfb0b4037a7d05a9). [Native capture/renderer workflow](https://github.com/amey1234444/GO1/actions/runs/44983604658). [Download the unsigned Apple Silicon v0.18.0 DMG](https://github.com/amey1234444/GO1/actions/runs/44983604667/artifacts/14739096904), available until 6 December 2026.
+
+Both macOS 15.8.2 and 26.7.2 completed the expanded/compact controls and transparency checks with Electron 39.8.10. Computed HTML/body backgrounds were transparent; the 70% surface was `rgba(17, 22, 34, 0.7)`; text opacity was `1`. The PNG surface sample at (40, 100) had alpha 219/255 at the default 86%, and 179/255 at 70%. This verifies real surface alpha, not merely a darker solid colour. Both controlled marker experiments returned `excluded-in-tested-paths`; that is scoped to the tested ScreenCaptureKit paths, not all meeting apps.
+
+## Actual UI screenshots
+
+These unmodified macOS 26 images come from the real companion renderer, with explicitly labelled synthetic transcript/AI text. They are not design mockups, real model inference, or Google Meet receiver screenshots. Transparent PNGs may look opaque when a viewer composites them onto a dark background.
+
+Expanded companion, default 86% surface opacity:
+
+![GO1 expanded translucent companion with transcript and direct AI composer](evidence/glass-companion/macos-26/companion-live/sender-panel.png)
+
+Compact toolbar, after clicking its collapse control:
+
+![GO1 compact floating toolbar](evidence/glass-companion/macos-26/companion-live/sender-compact.png)
+
+[70% surface PNG](evidence/glass-companion/macos-26/companion-live/sender-translucent.png). To show actual desktop compositing, the following **unprotected control** captures the panel over a cyan presentation fixture; the cyan is visible through the surface. It is deliberately labelled unprotected and does not demonstrate receiver invisibility:
+
+![Unprotected GO1 panel with the cyan fixture visible through its translucent background](evidence/glass-companion/macos-26/companion-live/unprotected-display/streamRefreshed.png)
+
+With protection enabled, the observer's refreshed stream captured the presentation rectangle without the panel:
+
+![Independent ScreenCaptureKit capture with GO1 protection enabled](evidence/glass-companion/macos-26/companion-live/protected-display/streamRefreshed.png)
+
+Complete reports: [macOS 26](evidence/glass-companion/macos-26/report.json), [macOS 15](evidence/glass-companion/macos-15/report.json). [SHA-256 provenance manifest](evidence/glass-companion/manifest.json). The reports retain all trials, including the unprotected controls and screenshot/stream differences. This is an unsigned evidence record, not independent certification.
+
+## Limits of the checks
+
 99 automated tests pass, including protection-independent processing, direct companion AI routing, restricted IPC origins, close/reopen state, opacity bounds and display geometry. The Mac renderer experiment additionally clicks the real compact/expand and surface controls through the restricted preload, checks transparent body/70% surface/opaque text, and saves real app-content images.
+
+The screenshot host supplies fixture IPC handlers; the production main-process handlers are exercised by the integration tests. These checks complement each other and do not represent an end-to-end meeting with real speech recognition and model inference.
 
 Capture checks use an independent ScreenCaptureKit observer with synthetic fixture content. They do not establish actual Google Meet/Teams/Zoom receiver invisibility. The [two-device meeting procedure](LIVE_PROTECTION_AND_MEET.md#google-meet-actual-two-device-acceptance-test) remains required for that claim.
