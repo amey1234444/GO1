@@ -7,10 +7,10 @@ $database = $installer.OpenDatabase($msi[0].FullName, 0)
 function Get-MsiProperty([string]$key) {
     $query = 'SELECT `Value` FROM `Property` WHERE `Property` = ''{0}''' -f $key
     $view = $database.OpenView($query)
-    $view.Execute()
+    [void]$view.Execute()
     $record = $view.Fetch()
-    $result = if ($null -eq $record) { $null } else { $record.StringData(1) }
-    $view.Close()
+    $result = if ($null -eq $record) { '' } else { ([string]$record.StringData(1)).Trim() }
+    [void]$view.Close()
     return $result
 }
 # electron-wix-msi's template adds this suffix to the internal MSI ProductName.
