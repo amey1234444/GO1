@@ -4,6 +4,8 @@
 
 **Live capture protection (stealth)** leaves transcription and enabled AI running. **Stop & mask** deliberately stops both. Workspace and companion windows disable background throttling, and the UI reports live session/AI status separately from capture protection. [Live mode behavior and Google Meet verification](docs/LIVE_PROTECTION_AND_MEET.md).
 
+[Download unsigned Apple Silicon v0.17.0 DMG](https://github.com/amey1234444/GO1/actions/runs/44982275234/artifacts/14738054082). [Actual companion/capture screenshots and provenance](docs/LIVE_PROTECTION_AND_MEET.md#recorded-app-and-capture-screenshots--22-november-2026) are embedded in the documentation. Both Mac renderer experiments and 96 automated tests passed. Actual Google Meet receiver verification remains outstanding.
+
 ## v0.16 — macOS panel and pixel capture validation
 
 The Mac companion now uses a frameless nonactivating panel, the screen-saver window level, all Spaces/fullscreen visibility and inactive initial display. Capture protection remains a separate best-effort request.

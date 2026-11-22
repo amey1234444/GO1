@@ -27,9 +27,37 @@ The Mac capture experiment also loads the **real companion HTML, CSS and restric
 
 The images contain synthetic test data. They are **not Google Meet screenshots**, and no image has a fabricated Meet interface. The companion probe checks rendering continuity; the separate marker probe checks measurable capture exclusion. Neither is a meeting receiver certification.
 
+## Recorded app and capture screenshots — 22 November 2026
+
+[Download GO1 v0.17.0 Apple Silicon DMG](https://github.com/amey1234444/GO1/actions/runs/44982275234/artifacts/14738054082). This is an unsigned build; the artifact expires 6 December 2026. The successful second build attempt passed the 96 tests, native protection API checks and mounted-DMG verification. The first attempt failed during the DMG maker's mount-detach cleanup; it is retained in the workflow history.
+
+Tested commit: [`ad334687783f987a5e3e237e464640bf1341e57c`](https://github.com/amey1234444/GO1/commit/ad334687783f987a5e3e237e464640bf1341e57c). [Capture workflow](https://github.com/amey1234444/GO1/actions/runs/44982275304). The 96 automated tests passed. On both macOS 15.8.2 and 26.7.2, Electron 39.8.10 rendered the updated transcript and AI fixture text after protection was enabled and the panel was hidden/reopened. Native background throttling read back as false.
+
+The pictures below are **unmodified images from the macOS 26 workflow artifact**. The left image shows the real companion's rendering. The right image is a frame from the independent ScreenCaptureKit stream after its filter was refreshed, covering the cyan presentation rectangle. They are different capture surfaces, not two screenshots from a Google Meet call.
+
+| Local companion content, protection enabled | Independent presentation capture, protection enabled |
+| --- | --- |
+| ![Actual GO1 companion rendering with updated synthetic transcript and AI text](evidence/live-protection/macos-26/companion-live/sender-panel.png) | ![ScreenCaptureKit stream shows the cyan presentation without the protected GO1 companion](evidence/live-protection/macos-26/companion-live/protected-display/streamRefreshed.png) |
+
+For comparison, the same observer's refreshed stream **with protection disabled** included the real GO1 companion:
+
+![Unprotected companion appears in the independent display stream](evidence/live-protection/macos-26/companion-live/unprotected-display/streamRefreshed.png)
+
+The protected companion trial sampled 21 initial and 21 refreshed stream frames per OS. Native metadata reported the window onscreen. The protected capture retained more than 395,000 cyan background pixels out of 400,000, while the unprotected streams fell to about 179,000 because the visible panel covered the background. These counts support the visual comparison; they do not identify every possible private pixel or certify a remote meeting.
+
+**A useful counterexample:** the first unprotected still screenshot omitted the panel, but subsequent unprotected stream frames showed it. We preserve both. A single screenshot would have produced a misleading conclusion; live/refreshed stream controls matter.
+
+Evidence files:
+
+- [macOS 26 complete report](evidence/live-protection/macos-26/report.json), [scrolled local guidance view](evidence/live-protection/macos-26/companion-live/sender-guidance.png).
+- [macOS 15 complete report](evidence/live-protection/macos-15/report.json), [local companion view](evidence/live-protection/macos-15/companion-live/sender-panel.png), [protected stream frame](evidence/live-protection/macos-15/companion-live/protected-display/streamRefreshed.png).
+- [Provenance and file hashes](evidence/live-protection/manifest.json). Original downloaded artifact ZIP hashes were checked against GitHub's digests. This is an unsigned evidence record, not an independent certification.
+
 ## Google Meet: actual two-device acceptance test
 
 **Current status: not run.** There is no connected MacBook/Google Meet sender plus second receiving device in this execution environment. The existing [Mac pixel evidence](MACOS_CAPTURE_VALIDATION.md) cannot be relabelled as a meeting result.
+
+Google documents three separate presentation sources: a browser tab, a window, or the entire screen. Follow [Google's presentation instructions](https://support.google.com/meet/answer/9308856?hl=en) and record which source was selected; a successful tab-sharing check does not establish full-screen exclusion.
 
 1. On the sender Mac, record the GO1 commit/version, macOS version, browser version, speech model and Ollama model. Check microphone/system-audio permissions and local AI readiness.
 2. Join a private test Meet from that Mac and from a second device. Mute the receiver microphone/speakers to avoid feedback; use benign sample content.
