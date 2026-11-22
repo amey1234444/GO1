@@ -70,7 +70,22 @@ function renderAudioLevel(value = 0) {
   fill.style.width = `${Math.round(Math.pow(level, 0.6) * 100)}%`;
   label.textContent = !state.recording ? 'Input inactive' : level < 0.004 ? 'Quiet / silence' : level < 0.045 ? 'Low input level' : 'Receiving audio';
 }
+function renderAudioHealth(health) {
+  const source = $('audioHealthSource'), frames = $('audioHealthFrames');
+  const signal = $('audioHealthSignal'), gaps = $('audioHealthGaps');
+  if (!source || !frames || !signal || !gaps) return;
+  if (!health || state.privacyActive) {
+    source.textContent = 'Capture off';
+    frames.textContent = '—'; signal.textContent = '—'; gaps.textContent = '—';
+    return;
+  }
+  source.textContent = health.source === 'system' ? 'System playback · 16 kHz' : 'Microphone · 16 kHz';
+  frames.textContent = `${health.frames} frames · ${(health.audioDurationMs / 1000).toFixed(1)}s`;
+  signal.textContent = `RMS ${health.rms} · clipping ${health.clippedPercent}%`;
+  gaps.textContent = health.longArrivalGaps ? `${health.longArrivalGaps} possible transport stalls` : 'No long arrival gaps';
+}
 function clearInsights() {
+  renderAudioHealth(null);
   displayedLatency = null;
   for (const id of ['latencyP50', 'latencyP95', 'practiceWords', 'practicePace', 'practiceFillers']) $(id).textContent = '—';
   $('latencyCount').textContent = '0';
@@ -239,7 +254,7 @@ async function startLive(stream) {
   if (state.privacyActive) throw new Error('Exit presentation privacy mode before recording.');
   if (!window.AudioWorkletNode) throw new Error('AudioWorklet is not available; turn off Live captions to record first.');
   clearInsights();
-  const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked, latencyMode: $('latencyMode').value, assistancePermitted: $('assistConsent').checked });
+  const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked, latencyMode: $('latencyMode').value, audioSource: $('sourceSelect').value, assistancePermitted: $('assistConsent').checked });
   if (state.privacyActive) {
     await window.go1.cancelLive(id).catch(() => {});
     throw new Error('Presentation privacy mode is active; recording is disabled.');
@@ -376,7 +391,7 @@ async function startRecording() {
     recorder.addEventListener('stop', async () => {
       if (recorder.go1Discard) return;
       stopClock(); stopTracks(); state.recording = false; $('sourceSelect').disabled = false;
-      renderCaptureState(); renderAudioLevel();
+      renderCaptureState(); renderAudioLevel(); renderAudioHealth(null);
       $('micCircle').classList.remove('recording');
       $('recordButton').textContent = 'Start recording';
       $('recordButton').classList.remove('danger');
@@ -640,6 +655,10 @@ $('assistCancel').addEventListener('click', () => {
   void window.go1.cancelLiveGuidance();
   $('assistStatus').textContent = 'Guidance canceled.';
   updateAssistAvailability();
+});
+window.go1.onAudioHealth(({ id, health }) => {
+  if (state.privacyActive || !state.liveId || id !== state.liveId) return;
+  renderAudioHealth(health);
 });
 window.go1.onAssistChunk(({delta}) => {
   if (!assistRunning || state.privacyActive) return;

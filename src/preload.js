@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('go1', Object.freeze({
   sendLiveChunk: (id, pcm) => ipcRenderer.send('go1:live-frame', { id, pcm }),
   stopLive: id => ipcRenderer.invoke('go1:live-stop', id),
   cancelLive: id => ipcRenderer.invoke('go1:live-cancel', id),
+  onAudioHealth: callback => { const cb = (_event, data) => callback(data); ipcRenderer.on('go1:audio-health', cb); return () => ipcRenderer.removeListener('go1:audio-health', cb); },
   onLiveUpdate: callback => { const cb = (_event, data) => callback(data); ipcRenderer.on('go1:live-update', cb); return () => ipcRenderer.removeListener('go1:live-update', cb); },
   onLiveStatus: callback => { const cb = (_event, data) => callback(data); ipcRenderer.on('go1:live-status', cb); return () => ipcRenderer.removeListener('go1:live-status', cb); },
   copy: text => ipcRenderer.invoke('go1:copy', text),

@@ -6,6 +6,7 @@ const { app, BrowserWindow, ipcMain, session, systemPreferences, dialog, clipboa
 const { randomUUID } = require('node:crypto');
 const { getSetup, transcribe } = require('./transcription/engine');
 const { VadLiveSession } = require('./transcription/vad-live');
+const { CaptureDiagnostics } = require('./audio/diagnostics');
 const { createWorker } = require('./transcription/worker');
 const { ModelManager, MODEL_CATALOG, modelState } = require('./transcription/models');
 const { cancelPrivateProcessing } = require('./privacy/presentation');
@@ -27,6 +28,7 @@ let activeController;
 let liveController;
 let liveSession;
 let liveId;
+let captureDiagnostics = null;
 let worker = null;
 let manager = null;
 let selectedModel = 'small';
@@ -126,6 +128,7 @@ function activatePresentationPrivacy(source = 'button') {
   liveSession = null;
   liveController = null;
   liveId = null;
+  captureDiagnostics = null;
   if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
     mainWindow.webContents.send('go1:privacy-activate', { source });
   }
@@ -285,6 +288,8 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   const privacyTicket = privacyGate.ticket();
   if (liveSession || activeController) throw new Error('Finish the current session first.');
   const language = String(options.language || 'auto').toLowerCase();
+  const audioSource = options.audioSource || 'microphone';
+  if (!['microphone', 'system'].includes(audioSource)) throw new Error('Invalid audio source.');
   const latencyMode = options.latencyMode === 'fast' ? 'fast' : 'balanced';
   if (!/^(auto|[a-z]{2,3})$/.test(language)) throw new Error('Invalid language code.');
   if (!setup().modelFound || !setup().whisperServer) throw new Error('Install whisper-server and the selected multilingual model first.');
@@ -294,6 +299,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   assistPermitted = options.assistancePermitted === true;
   liveController = new AbortController();
   liveId = randomUUID();
+  captureDiagnostics = new CaptureDiagnostics({ source: audioSource });
   liveSession = new VadLiveSession({
     language,
     latencyMode,
@@ -314,7 +320,12 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
 ipcMain.on('go1:live-frame', (event, { id, pcm } = {}) => {
   if (!ownWindow(event) || privacyGate.paused || !liveSession || id !== liveId) return;
   try {
-    liveSession.append(pcm);
+    // Normalize Int16Array from AudioWorklet to PCM16 bytes required by VAD.
+    const bytes = captureDiagnostics.ingest(pcm);
+    liveSession.append(bytes);
+    if (captureDiagnostics.shouldPublish() && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('go1:audio-health', { id, health: captureDiagnostics.snapshot() });
+    }
   } catch (error) {
     liveSession.cancel();
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-status', { id, status: { type: 'error', message: error.message } });
@@ -325,6 +336,7 @@ ipcMain.handle('go1:live-stop', async (event, id) => {
   onlyApp(event);
   assistController?.abort(); assistPermitted = false;
   closeCompanion();
+  captureDiagnostics = null;
   if (!liveSession || id !== liveId) throw new Error('No matching live session.');
   const sessionToStop = liveSession;
   try { return await sessionToStop.stop(); }
@@ -340,6 +352,7 @@ ipcMain.handle('go1:live-cancel', (event, id) => {
   onlyApp(event);
   assistController?.abort(); assistPermitted = false;
   closeCompanion();
+  captureDiagnostics = null;
   if (liveSession && id === liveId) {
     liveController?.abort();
     liveSession.cancel();

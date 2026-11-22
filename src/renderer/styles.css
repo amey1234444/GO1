@@ -65,3 +65,11 @@
 .assist-consent input{accent-color:#a8a0ff;width:17px;height:17px;flex-shrink:0}
 .live-assist .studio-actions{margin-top:14px;flex-wrap:wrap}
 .live-assist .studio-feedback-output{margin-top:20px;max-height:440px;overflow:auto;white-space:pre-wrap}
+
+/* Live audio capture telemetry is visible only in the normal GO1 workspace. */
+.audio-health{padding:14px 16px;margin:12px 0 16px;background:#121b30;border:1px solid #303d59;border-radius:12px}
+.audio-health-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:#e8edfa}
+.audio-health-heading span{font-size:11px;color:#b1bde0}
+.audio-health-values{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.audio-health-values span{display:inline-flex;padding:6px 9px;border:1px solid #344362;border-radius:8px;color:#d6deee;font-size:11px}
+.audio-health p{font-size:11px;color:#9aa8c0;line-height:1.5;margin:0}

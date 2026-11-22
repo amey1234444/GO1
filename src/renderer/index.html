@@ -95,6 +95,11 @@
           <section class="card performance-card" aria-labelledby="performanceTitle">
             <span class="card-overline">03 / MEASURED PERFORMANCE</span>
             <h2 id="performanceTitle">Latency lab <span class="lab-icon" aria-hidden="true">↗</span></h2>
+            <div class="audio-health" aria-label="Live audio transport health">
+              <div class="audio-health-heading"><strong>Audio capture diagnostics</strong><span id="audioHealthSource">Capture off</span></div>
+              <div class="audio-health-values"><span id="audioHealthFrames">—</span><span id="audioHealthSignal">—</span><span id="audioHealthGaps">—</span></div>
+              <p>Signal metrics describe PCM received by GO1. Arrival gaps are possible scheduler or IPC stalls, not confirmed lost audio.</p>
+            </div>
             <p class="insight-description">Actual completed utterances only. Values measure from VAD segment dispatch to local transcript availability, not the full speech-to-AI-answer latency.</p>
             <div class="metric-row">
               <div class="metric"><span>Median post-VAD</span><strong id="latencyP50">—</strong><small>p50 · milliseconds</small></div>

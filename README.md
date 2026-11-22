@@ -1,3 +1,7 @@
+## GO1 v0.14 — Audio transport health from GO Client architecture study
+
+This version repairs a live PCM16 sample/byte mismatch between AudioWorklet and VAD; adds source-labelled audio diagnostics (RMS, clipping, received duration, possible arrival stalls); retains emergency privacy shutdown; and adds independent comparison documentation at `docs/GO_CLIENT_AUDIO_COMPARISON_V014.md`. It does **not** copy the proprietary GO Client native module or add covert capture evasion. The diagnostics panel is in the normal workspace's Latency Lab. Real Apple Silicon microphone/system-audio validation is still required.
+
 ## GO1 v0.13 — Visible Live Companion
 
 Launching a consent-based live session opens a compact 94%-opacity **ordinary macOS/Windows app window** with latest live transcript, selected role/language and manually requested local Ollama talking points. The panel can be reopened from **Show companion**, adjusted to 82–100% opacity, closed, or used to trigger **Stop & mask**. Stopping a session or engaging Presentation Privacy closes the companion and clears in-memory text. It does **not** evade screen-sharing or proctoring: the panel may be visible to other participants when sharing a desktop. No capture exclusion, click-through, process hiding, automatic AI answers, or stealth behavior is implemented.
