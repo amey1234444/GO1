@@ -17,6 +17,11 @@ window.go1Companion.onSnapshot(snapshot => {
   if (!snapshot || typeof snapshot !== 'object') return;
   if (currentSessionId && snapshot.sessionId !== currentSessionId) return;
   currentSessionId = snapshot.sessionId;
+  const input = snapshot.inputState || 'ready';
+  const inputLabels = { starting: 'Starting', muted: 'Input muted', disconnected: 'Input lost', suspended: 'Audio paused' };
+  el('inputStateLabel').textContent = inputLabels[input] || (snapshot.audioLevel > 0.004 ? 'Hearing audio' : 'Waiting for audio');
+  const notices = { starting: 'Preparing audio input…', muted: 'Input is muted. The session stays open.', disconnected: 'Input disconnected. Open the workspace ↗ and reconnect audio.', suspended: 'Audio paused by the system. Open the workspace ↗ to reconnect.' };
+  el('audioStatus').textContent = notices[input] || snapshot.transcriptionWarning || 'Silence is normal. Your session stays open.';
   const protection = snapshot.captureProtection;
   el('protectionState').textContent = protection?.enabled
     ? protection.allApplied ? 'Protection requested · check receiver' : 'Protection needs attention'

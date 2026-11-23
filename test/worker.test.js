@@ -71,3 +71,24 @@ test('worker does not publish a response decoded after cancellation', async () =
   worker.ensureReady = async () => 'http://127.0.0.1:8765';
   await assert.rejects(worker.infer(sample(), { signal: controller.signal }), /cancelled/);
 });
+
+test('transport loss restarts the owned worker once and retries the same utterance', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(),'go1-retry-'));
+  const binary=path.join(dir,'server'), model=path.join(dir,'model');
+  await fs.writeFile(binary,'stub');await fs.writeFile(model,'stub');
+  const children=[];let calls=0;
+  const worker=new WhisperWorker({binary,model,getPort:async()=>8765,
+    spawnFn:()=>{const child=Object.assign(new EventEmitter(),{exitCode:null,killed:false,stderr:new EventEmitter()});
+      child.kill=()=>{child.killed=true;child.exitCode=0;child.emit('exit',0);};children.push(child);return child;},
+    fetchFn:async(url,req)=>{if(!req?.method)return {status:200};if(++calls===1)throw new TypeError('fetch failed');return {ok:true,json:async()=>({text:'Recovered',language:'en'})};}});
+  try {assert.equal((await worker.infer(sample())).text,'Recovered');assert.equal(children.length,2);assert.equal(children[0].killed,true);assert.equal(calls,2);}
+  finally {worker.close();await fs.rm(dir,{recursive:true,force:true});}
+});
+test('repeated transport failure is bounded and does not retry after cancellation', async () => {
+  const worker=new WhisperWorker({fetchFn:async()=>{throw new TypeError('fetch failed');}});
+  worker.ensureReady=async()=>'http://127.0.0.1:8765';let resets=0;
+  worker.retireProcess=async()=>{resets++;};
+  await assert.rejects(worker.infer(sample()),/could not reconnect/);assert.equal(resets,1);
+  const controller=new AbortController();controller.abort();
+  await assert.rejects(worker.infer(sample(),{signal:controller.signal}),/cancelled/);assert.equal(resets,1);
+});

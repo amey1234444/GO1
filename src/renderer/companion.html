@@ -10,7 +10,7 @@
 <div class="app" id="companionApp">
  <header class="toolbar">
   <div class="brand" title="Drag to move"><span class="brandmark">g<span>1</span></span><strong>GO1</strong><span class="brand-divider"></span><span class="session-label">Live companion</span></div>
-  <span id="liveDot" class="live-pill"><i></i> Listening</span>
+  <span id="liveDot" class="live-pill"><i></i> <span id="inputStateLabel">Starting</span></span>
   <div class="toolbar-actions">
    <button id="focusMain" class="toolbar-button" title="Open workspace" aria-label="Open GO1 workspace">↗</button>
    <button id="compact" class="toolbar-button" title="Collapse to toolbar" aria-label="Collapse to toolbar" aria-expanded="true">−</button>
@@ -22,7 +22,7 @@
   <div class="panes">
    <section class="transcript-pane" aria-labelledby="transcriptTitle">
     <div class="section-heading"><h2 id="transcriptTitle">Live transcript</h2><span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
-    <p class="section-hint">The latest from your conversation</p>
+    <p id="audioStatus" class="section-hint" role="status">Preparing audio input…</p>
     <div class="transcript" id="transcript" aria-live="polite">Listening for your first words…</div>
     <div class="local-note"><span></span> Processed on your device</div>
    </section>

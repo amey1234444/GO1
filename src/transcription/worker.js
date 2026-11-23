@@ -7,6 +7,10 @@ const { Blob } = require('node:buffer');
 const { normalizeServerResponse } = require('./formats');
 const { wavFromPCM16, resolveExecutable } = require('./engine');
 
+function transportFailure(error) {
+  return error?.retryable === true || ['ECONNREFUSED', 'ECONNRESET', 'EPIPE', 'UND_ERR_SOCKET'].includes(error?.cause?.code) ||
+    (error instanceof TypeError && /fetch|network/i.test(error.message));
+}
 const delay = ms => new Promise(r => setTimeout(r, ms));
 async function freePort() {
   return new Promise((resolve, reject) => {
@@ -18,7 +22,7 @@ async function freePort() {
     });
   });
 }
-function isLive(child) { return child && child.exitCode === null && !child.killed; }
+function isLive(child) { return child && child.exitCode === null && !child.signalCode && !child.killed; }
 
 class WhisperWorker {
   constructor({ binary, model, vadModel, spawnFn = spawn, fetchFn = fetch, getPort = freePort, startupMs = 90000 } = {}) {
@@ -39,7 +43,7 @@ class WhisperWorker {
   async ensureReady() {
     if (this.stopped) throw new Error('Whisper worker is closed.');
     if (this.url && isLive(this.child)) return this.url;
-    if (!this.startPromise) this.startPromise = this._start().finally(() => { this.startPromise = null; });
+    if (!this.startPromise) this.startPromise = this._start().catch(async error => { await this.retireProcess(); throw error; }).finally(() => { this.startPromise = null; });
     return this.startPromise;
   }
   async _start() {
@@ -53,7 +57,7 @@ class WhisperWorker {
     this.logs = '';
     const child = this.spawnFn(this.binary, args, { shell: false, stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
     this.child = child;
-    child.stderr?.on('data', chunk => { this.logs = (this.logs + String(chunk)).slice(-3000); });
+    child.stderr?.on('data', chunk => { if (this.child === child) this.logs = (this.logs + String(chunk)).slice(-3000); });
     let failed = null;
     child.once('error', error => { failed = error; });
     child.once('exit', (code, signal) => {
@@ -78,12 +82,24 @@ class WhisperWorker {
       } catch { /* Model may still be loading. */ }
       await delay(220);
     }
-    this.close();
     throw new Error(`Whisper server did not start within ${this.startupMs / 1000}s. ${this.logs}`);
   }
   async infer(pcm, { language = 'auto', translate = false, signal } = {}) {
     // Serialize inference calls to avoid exhausting RAM during overlapping sessions.
-    const work = () => this._infer(pcm, { language, translate, signal });
+    const work = async () => {
+      try { return await this._infer(pcm, { language, translate, signal }); }
+      catch (error) {
+        if (signal?.aborted || this.stopped || !transportFailure(error)) throw error;
+        // Retry this utterance once after restarting our own local server.
+        await this.retireProcess();
+        if (signal?.aborted || this.stopped) throw new Error('Transcription cancelled.');
+        try { return await this._infer(pcm, { language, translate, signal }); }
+        catch (retryError) {
+          if (signal?.aborted || this.stopped) throw new Error('Transcription cancelled.');
+          throw new Error(`Local speech engine could not reconnect. The session is still open; check the selected model or restart audio. ${retryError.message}`);
+        }
+      }
+    };
     const result = this.queue.then(work, work);
     this.queue = result.catch(() => {});
     return result;
@@ -104,7 +120,11 @@ class WhisperWorker {
     signal?.addEventListener('abort', forwardAbort, { once: true });
     try {
       const response = await this.fetchFn(url + '/inference', { method: 'POST', body: form, signal: timeout.signal });
-      if (!response.ok) throw new Error(`Whisper inference failed (HTTP ${response.status}): ${(await response.text()).slice(0,400)}`);
+      if (!response.ok) {
+        const error = new Error(`Local speech engine returned HTTP ${response.status}: ${(await response.text()).slice(0,400)}`);
+        error.retryable = [502, 503, 504].includes(response.status);
+        throw error;
+      }
       const body = await response.json();
       if (signal?.aborted || this.stopped) throw new Error('Transcription cancelled.');
       return normalizeServerResponse(body);
@@ -113,10 +133,21 @@ class WhisperWorker {
       signal?.removeEventListener('abort', forwardAbort);
     }
   }
+  async retireProcess() {
+    const child = this.child;
+    this.child = null; this.url = null;
+    if (!child || child.exitCode !== null || child.signalCode) return;
+    child.kill('SIGTERM');
+    if (child.exitCode !== null) return;
+    await new Promise(resolve => {
+      const finish = () => { clearTimeout(timer); child.removeListener('exit', finish); resolve(); };
+      const timer = setTimeout(() => { if (child.exitCode === null) child.kill('SIGKILL'); finish(); }, 1500);
+      child.once('exit', finish);
+    });
+  }
   close() {
     this.stopped = true;
-    this.url = null;
-    if (isLive(this.child)) this.child.kill('SIGTERM');
+    void this.retireProcess().catch(() => {});
   }
 }
 function createWorker({ modelDirectory, selectedModel = 'small', vadModel } = {}) {

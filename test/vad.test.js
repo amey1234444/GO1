@@ -75,3 +75,45 @@ test('a cancelled VAD session discards inference that ignores abort', async () =
   assert.equal(updates.length, 0);
   assert.equal(session.snapshot().text, '');
 });
+
+test('a quiet live session stays open and accepts speech after a minute without inference', async () => {
+  let calls = 0;
+  const session = new VadLiveSession({ transcribeWindow: async () => { calls++; return { text: 'Still here', language: 'en' }; } });
+  for (let i = 0; i < 60; i++) session.append(samples(1));
+  assert.equal(calls, 0); assert.equal(session.snapshot().isLive, true);
+  session.append(samples(.6, .4)); session.append(samples(.8)); await session.queue;
+  assert.equal(calls, 1); assert.match(session.snapshot().text, /Still here/);
+  await session.stop();
+});
+test('failed recognition preserves the session and earlier transcript, then accepts the next utterance', async () => {
+  let calls = 0; const statuses = [];
+  const session = new VadLiveSession({ onStatus: s => statuses.push(s), transcribeWindow: async () => {
+    calls++; if (calls === 2) throw new TypeError('fetch failed');
+    return { text: calls === 1 ? 'Before' : 'After', language: 'en' };
+  } });
+  for (let i = 0; i < 3; i++) { session.append(samples(.6,.5)); session.append(samples(.8)); await session.queue; }
+  assert.equal(session.snapshot().isLive, true); assert.match(session.snapshot().text, /Before.*After/);
+  assert.equal(session.snapshot().gaps.length, 1); assert.ok(session.snapshot().droppedAudioMs > 0);
+  assert.ok(statuses.some(s => s.type === 'warning' && s.recoverable));
+  assert.ok(!statuses.some(s => s.type === 'error'));
+  await session.stop();
+});
+test('backpressure keeps bounded queued audio without permanently failing the session', async () => {
+  let release; const blocked = new Promise(resolve => { release = resolve; });
+  const session = new VadLiveSession({ transcribeWindow: async () => { await blocked; return { text: 'Kept', language:'en' }; } });
+  for (let i=0;i<5;i++) { session.append(samples(.4,.5)); session.append(samples(.8)); }
+  assert.equal(session.pendingJobs,3); assert.equal(session.gaps.length,2); assert.equal(session.failed,null);
+  release(); await session.queue;
+  session.append(samples(.4,.5)); session.append(samples(.8)); await session.queue;
+  assert.equal(session.pendingJobs,0); assert.equal(session.snapshot().isLive,true);
+  await session.stop();
+});
+test('quiet sensitivity admits a soft voiced fixture that balanced rejects', async () => {
+  const calls = {};
+  for (const sensitivity of ['balanced','quiet']) {
+    calls[sensitivity]=0;
+    const session = new VadLiveSession({ sensitivity, transcribeWindow:async()=>{calls[sensitivity]++;return {text:'Soft',language:'en'};} });
+    session.append(samples(.8,.007)); session.append(samples(.8)); await session.stop();
+  }
+  assert.equal(calls.balanced,0); assert.equal(calls.quiet,1);
+});

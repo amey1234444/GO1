@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('go1', Object.freeze({
   requestMicrophone: () => ipcRenderer.invoke('go1:microphone'),
   transcribe: payload => ipcRenderer.invoke('go1:transcribe', payload),
   cancel: () => ipcRenderer.invoke('go1:cancel'),
+  readyLive: id => ipcRenderer.invoke('go1:live-ready', id),
+  reportLiveInput: (id, state) => ipcRenderer.send('go1:live-input-state', { id, state }),
   startLive: options => ipcRenderer.invoke('go1:live-start', options),
   reviewPractice: result => ipcRenderer.invoke('go1:practice-review', result),
   loadPracticeProfile: () => ipcRenderer.invoke('go1:practice-profile-get'),

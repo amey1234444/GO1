@@ -4,7 +4,7 @@ const { appendText } = require('./live');
 const { LatencyTracker } = require('./latency');
 const { performance } = require('node:perf_hooks');
 class VadLiveSession {
-  constructor({ transcribeWindow, language = 'auto', translate = false, signal, onUpdate = () => {}, onStatus = () => {}, latencyMode = 'balanced', clock = () => performance.now() }) {
+  constructor({ transcribeWindow, language = 'auto', translate = false, signal, onUpdate = () => {}, onStatus = () => {}, latencyMode = 'balanced', sensitivity = 'balanced', clock = () => performance.now() }) {
     this.language = language; this.detectedLanguage = language; this.translate = translate; this.signal = signal;
     this.transcribeWindow = transcribeWindow;
     this.onUpdate = onUpdate; this.onStatus = onStatus;
@@ -12,10 +12,12 @@ class VadLiveSession {
     this.latencyMode = latencyMode; this.clock = clock; this.latency = new LatencyTracker();
     this.vadHoldbackMs = latencyMode === 'fast' ? 260 : 550;
     this.segments = []; this.queue = Promise.resolve(); this.stopped = false;
+    this.gaps = []; this.droppedAudioMs = 0;
     this.failed = null; this.durationMs = 0; this.pendingJobs = 0;
     this.detector = new SpeechSegmenter({
       onSegment: segment => this._submit(segment),
       onState: status => this.onStatus(status),
+      floor: sensitivity === 'quiet' ? 0.003 : 0.008,
       minSilenceMs: this.vadHoldbackMs,
       maxSpeechMs: latencyMode === 'fast' ? 7500 : 11000
     });
@@ -27,10 +29,12 @@ class VadLiveSession {
   }
   _submit({ pcm, startMs, endMs }) {
     const queuedAt = this.clock();
+    if (this.pendingJobs >= 3) {
+      this.warnGap(startMs, endMs, 'Recognition is falling behind. This segment was skipped; choose Base/Tiny or Balanced responsiveness.');
+      return;
+    }
     this.pendingJobs++;
     this.onStatus({ type: 'transcribing', throughMs: endMs, backlog: this.pendingJobs });
-    // Queue is limited to 3 utterances; fail fast rather than accumulating unbounded RAM.
-    if (this.pendingJobs > 3) { this.failed = new Error('The model is falling behind. Choose a faster model.'); this.onStatus({ type: 'error', message: this.failed.message }); this.pendingJobs--; return; }
     this.queue = this.queue.then(async () => {
       if (this.failed || this.signal?.aborted) throw this.failed || new Error('Transcription cancelled.');
       const inferenceAt = this.clock();
@@ -54,12 +58,22 @@ class VadLiveSession {
       });
       this.onUpdate(this.snapshot());
       this.onStatus({ type: 'latency', measurement: stats.samples.at(-1), stats, definition: 'post-VAD queue and inference only' });
-    }).catch(error => { this.failed = error; this.onStatus({ type: 'error', message: error.message }); })
+    }).catch(error => {
+      if (this.signal?.aborted || this.failed) return;
+      this.warnGap(startMs, endMs, `This speech segment could not be transcribed. ${error.message}`);
+    })
       .finally(() => { this.pendingJobs--; });
+  }
+  warnGap(startMs, endMs, message) {
+    this.droppedAudioMs += Math.max(0, endMs - startMs);
+    this.gaps.push({ startMs, endMs, message });
+    this.gaps = this.gaps.slice(-20);
+    this.onUpdate(this.snapshot());
+    this.onStatus({ type: 'warning', recoverable: true, message });
   }
   snapshot() {
     const text = this.segments.reduce((output, s) => appendText(output, s.text, this.detectedLanguage), '');
-    return { text, segments: this.segments.map(s => ({ ...s })), language: this.detectedLanguage, durationMs: this.durationMs, translatedToEnglish: this.translate, latency: this.latency.snapshot(), isLive: !this.stopped };
+    return { text, segments: this.segments.map(s => ({ ...s })), language: this.detectedLanguage, durationMs: this.durationMs, translatedToEnglish: this.translate, latency: this.latency.snapshot(), gaps: this.gaps.map(gap => ({ ...gap })), droppedAudioMs: this.droppedAudioMs, isLive: !this.stopped };
   }
   async stop() {
     if (this.stopped) return this.snapshot();

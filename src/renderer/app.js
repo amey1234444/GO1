@@ -6,7 +6,7 @@ const MAX_RECORD_MS = 30 * 60 * 1000;
 let displayedLatency = null;
 // Incremented whenever privacy state changes; stale async replies cannot resurface.
 let privacyEpoch = 0;
-const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false, starting: false };
+const state = { mode: 'record', recording: false, busy: false, chunks: [], stream: null, recorder: null, timer: null, startTime: 0, file: null, result: null, liveId: null, audioContext: null, worklet: null, workletSource: null, silenceGain: null, stopping: false, privacyActive: false, privacyTransition: false, starting: false, reconnecting: false, inputState: 'ready' };
 let coachRunning = false;
 let assistRunning = false;
 let assistRequestEpoch = 0;
@@ -194,6 +194,7 @@ function setBusy(busy) {
   $('languageSelect').disabled = busy;
   $('liveToggle').disabled = busy || state.recording;
   $('latencyMode').disabled = busy || state.recording;
+  $('sensitivitySelect').disabled = busy || state.recording;
   $('sourceSelect').disabled = busy || state.recording;
   $('translateToggle').disabled = busy;
   $('processingPane').hidden = !busy;
@@ -221,7 +222,7 @@ function renderResult(result, live = false) {
   $('copyButton').disabled = !result.text;
   $('exportButton').disabled = live;
   $('openReviewButton').disabled = live || !result.text || state.recording;
-  setStatus(live ? 'Recording • live captions may lag behind speech' : result.text ? 'Transcription completed' : 'No speech detected', live ? 'active' : 'success');
+  setStatus((live ? 'Recording • live captions may lag behind speech' : result.text ? 'Transcription completed' : 'No speech detected') + (result.droppedAudioMs > 0 ? ' · some audio could not be transcribed' : ''), live ? 'active' : 'success');
   if (result.latency?.count) renderLatency(result.latency);
   if (live) updateAssistCandidate(result);
   if (!live) {
@@ -256,7 +257,7 @@ async function startLive(stream) {
   if (state.privacyActive) throw new Error('Exit presentation privacy mode before recording.');
   if (!window.AudioWorkletNode) throw new Error('AudioWorklet is not available; turn off Live captions to record first.');
   clearInsights();
-  const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked, latencyMode: $('latencyMode').value, audioSource: $('sourceSelect').value, assistancePermitted: $('assistConsent').checked });
+  const id = await window.go1.startLive({ language: $('languageSelect').value, translate: $('translateToggle').checked, latencyMode: $('latencyMode').value, sensitivity: $('sensitivitySelect').value, audioSource: $('sourceSelect').value, assistancePermitted: $('assistConsent').checked });
   if (state.privacyActive) {
     await window.go1.cancelLive(id).catch(() => {});
     throw new Error('Presentation privacy mode is active; recording is disabled.');
@@ -280,7 +281,14 @@ async function startLive(stream) {
       if (event.data?.type === 'level') { renderAudioLevel(event.data.rms); return; }
       if (event.data?.type === 'pcm') window.go1.sendLiveChunk(id, event.data.bytes);
     };
+    watchLiveInput(state.stream, id);
+    context.onstatechange = () => {
+      if (state.liveId !== id || state.stopping || state.privacyActive) return;
+      notifyInput(context.state === 'running' ? currentInputState() : 'suspended');
+    };
     await context.resume();
+    await window.go1.readyLive(id);
+    notifyInput(currentInputState());
     resetResults();
     $('emptyResult').hidden = false;
   } catch (error) {
@@ -307,6 +315,8 @@ async function flushLiveAudio() {
 }
 
 async function cleanupLive() {
+  $('reconnectAudioButton').hidden = true;
+  if (state.audioContext) state.audioContext.onstatechange = null;
   state.workletSource?.disconnect();
   state.worklet?.disconnect();
   state.silenceGain?.disconnect();
@@ -318,6 +328,83 @@ async function cleanupLive() {
   stopTracks();
   renderAudioLevel();
 }
+
+async function acquireCaptureStream() {
+    const system = $('sourceSelect').value === 'system';
+    let stream;
+    if (system) {
+      await window.go1.prepareSystemAudio();
+      if (state.privacyActive) throw new Error('Recording was cancelled.');
+      stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
+      const audioTrack = stream.getAudioTracks()[0];
+      if (!audioTrack || audioTrack.readyState !== 'live') {
+        stream.getTracks().forEach(t => t.stop());
+        throw new Error('System audio unavailable. Grant System Audio Recording permission in macOS Privacy & Security, then restart GO1.');
+      }
+      // Display video is not used, rendered or saved; disable frames immediately.
+      stream.getVideoTracks().forEach(t => { t.enabled = false; });
+    } else {
+      if (!await window.go1.requestMicrophone()) throw new Error('Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone.');
+      if (state.privacyActive) throw new Error('Recording was cancelled.');
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }, video: false });
+    }
+    if (state.privacyActive) { stream.getTracks().forEach(track => track.stop()); throw new Error('Recording was cancelled.'); }
+    return stream;
+}
+function currentInputState() {
+  const tracks = state.stream?.getAudioTracks() || [];
+  if (!tracks.length || tracks.some(track => track.readyState !== 'live')) return 'disconnected';
+  if (tracks.some(track => track.muted)) return 'muted';
+  return 'ready';
+}
+function notifyInput(input) {
+  if (!state.liveId || state.privacyActive || state.stopping) return;
+  state.inputState = input;
+  window.go1.reportLiveInput(state.liveId, input);
+  const notices = { muted: 'Audio input muted; session remains open.', disconnected: 'Audio disconnected. Reconnect audio to continue this session.', suspended: 'Audio paused. Reconnect audio to resume.' };
+  if (notices[input]) setStatus(notices[input], 'active');
+  $('reconnectAudioButton').hidden = false;
+}
+function watchLiveInput(stream, id) {
+  for (const track of stream.getAudioTracks()) {
+    const update = () => {
+      if (state.stream === stream && state.liveId === id && !state.stopping) notifyInput(currentInputState());
+    };
+    track.addEventListener('mute', update);
+    track.addEventListener('unmute', update);
+    track.addEventListener('ended', update, { once: true });
+  }
+}
+async function reconnectLiveAudio() {
+  if (!state.liveId || state.stopping || state.privacyActive || state.reconnecting) return;
+  const id = state.liveId;
+  state.reconnecting = true;
+  $('reconnectAudioButton').disabled = true;
+  let replacement, source;
+  try {
+    replacement = await acquireCaptureStream();
+    if (state.liveId !== id || state.stopping || state.privacyActive || !state.audioContext) throw new Error('Recording was cancelled.');
+    source = state.audioContext.createMediaStreamSource(new MediaStream(replacement.getAudioTracks()));
+    source.connect(state.worklet);
+    await state.audioContext.resume();
+    if (state.liveId !== id || state.stopping || state.privacyActive) throw new Error('Recording was cancelled.');
+    const previous = state.stream;
+    state.workletSource?.disconnect();
+    state.workletSource = source;
+    state.stream = replacement;
+    watchLiveInput(replacement, id);
+    previous?.getTracks().forEach(track => track.stop());
+    replacement = null; source = null;
+    hideError(); notifyInput(currentInputState()); setStatus('Audio reconnected. Session continues.', 'active');
+  } catch (error) {
+    source?.disconnect(); replacement?.getTracks().forEach(track => track.stop());
+    if (!state.privacyActive && state.liveId === id) showError(error);
+  } finally {
+    state.reconnecting = false;
+    $('reconnectAudioButton').disabled = false;
+  }
+}
+$('reconnectAudioButton').addEventListener('click', reconnectLiveAudio);
 
 async function startRecording() {
   if (state.privacyActive || state.starting || state.recording || state.stopping || state.busy) return;
@@ -333,27 +420,12 @@ async function startRecording() {
   }
   try {
     const system = $('sourceSelect').value === 'system';
-    let stream;
-    if (system) {
-      await window.go1.prepareSystemAudio();
-      if (state.privacyActive) return;
-      stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
-      const audioTrack = stream.getAudioTracks()[0];
-      if (!audioTrack || audioTrack.readyState !== 'live') {
-        stream.getTracks().forEach(t => t.stop());
-        throw new Error('System audio unavailable. Grant System Audio Recording permission in macOS Privacy & Security, then restart GO1.');
-      }
-      // Display video is not used, rendered or saved; disable frames immediately.
-      stream.getVideoTracks().forEach(t => { t.enabled = false; });
-      audioTrack.addEventListener('ended', () => { if (state.recording && !state.stopping) stopRecording(); }, { once: true });
-    } else {
-      if (!await window.go1.requestMicrophone()) throw new Error('Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone.');
-      if (state.privacyActive) return;
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }, video: false });
-    }
-    if (state.privacyActive) { stream.getTracks().forEach(track => track.stop()); return; }
+    const stream = await acquireCaptureStream();
     const audioStream = new MediaStream(stream.getAudioTracks());
     state.stream = stream;
+    for (const track of stream.getAudioTracks()) track.addEventListener('ended', () => {
+      if (state.stream === stream && state.recording && !state.liveId && !state.stopping) stopRecording();
+    }, { once: true });
     if ($('liveToggle').checked) {
       await startLive(audioStream);
       if (state.privacyActive) {
@@ -371,7 +443,7 @@ async function startRecording() {
       $('recordButton').textContent = 'Stop live recording';
       $('recordMessage').textContent = system ? 'Live system-audio transcription' : 'Live microphone transcription';
       $('liveToggle').disabled = true;
-      $('latencyMode').disabled = true;
+      $('latencyMode').disabled = true; $('sensitivitySelect').disabled = true;
       $('sourceSelect').disabled = true;
       $('languageSelect').disabled = true;
       $('translateToggle').disabled = true;
@@ -462,7 +534,7 @@ async function stopRecording() {
       $('recordMessage').textContent = 'Ready to record';
       $('sourceSelect').disabled = false;
       $('liveToggle').disabled = false;
-      $('latencyMode').disabled = false;
+      $('latencyMode').disabled = false; $('sensitivitySelect').disabled = false;
       $('languageSelect').disabled = false;
       $('translateToggle').disabled = false;
     }
@@ -543,7 +615,7 @@ async function enablePresentationPrivacy() {
     $('recordMessage').textContent = 'Ready to record';
     $('sourceSelect').disabled = false;
     $('liveToggle').disabled = false;
-    $('latencyMode').disabled = false;
+    $('latencyMode').disabled = false; $('sensitivitySelect').disabled = false;
     $('languageSelect').disabled = false;
     $('translateToggle').disabled = false;
     resetResults();
@@ -799,6 +871,8 @@ window.go1.onLiveUpdate(({ id, result }) => { if (!state.privacyActive && id ===
 window.go1.onLiveStatus(({ id, status }) => {
   if (state.privacyActive) return;
   if (id !== state.liveId) return;
+  if (status.type === 'warning') { setStatus(status.message, 'active'); return; }
+  if (status.type === 'speech-end') setStatus('Waiting for more speech. Session remains open.', 'active');
   if (status.type === 'error') { showError(status.message); stopRecording(); return; }
   if (status.type === 'transcribing') setStatus(`Live recognition • processed through ${formatClock(status.throughMs)} • queue ${status.backlog || 1}`, 'active');
   if (status.type === 'latency') renderLatency(status.stats);

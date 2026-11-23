@@ -25,6 +25,7 @@ async function boot(preferences = {}, overrides = {}) {
     isContentProtected() { return this.protected; }
     show() { this.events.push(['show']); this.emit('show'); }
     focus() { this.events.push(['focus']); }
+    minimize() { this.minimized = true; this.events.push(['minimize']); }
     isMinimized() { return this.minimized === true; }
     restore() { this.minimized = false; this.emit('restore'); }
     getBounds() { return { x: this.options.x || 0, y: this.options.y || 0, width: this.options.width, height: this.options.height }; }
@@ -336,4 +337,24 @@ test('second launch restores the existing workspace; rejected instance never ini
   assert.equal(primary.invoke('go1:content-protection-info').activity.aiEnabled, true);
   const duplicate = await boot({}, { instanceLock: false });
   assert.equal(duplicate.app.quitRequested, true); assert.equal(duplicate.windows.length, 0);
+});
+
+for (const audioSource of ['microphone','system']) test(`${audioSource}: minimize after ready, retain panel when input disconnects and reject stale events`, async () => {
+  const {windows,invoke,send,sent}=await boot();
+  const id=await invoke('go1:live-start',{audioSource});
+  assert.equal(windows[0].isMinimized(),false);
+  await invoke('go1:live-ready',id);
+  assert.equal(windows[0].isMinimized(),true);assert.equal(windows[1].dead,false);
+  for(const state of ['muted','disconnected','suspended','ready']) {
+    send('go1:live-input-state',{id,state});
+    assert.equal(sent.filter(s=>s.channel==='go1:companion-snapshot').at(-1).data.inputState,state);
+    assert.equal(invoke('go1:content-protection-info').activity.liveSession,true);
+    assert.equal(windows[1].dead,false);
+  }
+  send('go1:live-input-state',{id:'stale',state:'disconnected'});
+  assert.equal(sent.filter(s=>s.channel==='go1:companion-snapshot').at(-1).data.inputState,'ready');
+  await invoke('go1:companion-focus-main',null,windows[1].webContents);
+  assert.equal(windows[0].isMinimized(),false);
+  invoke('go1:privacy-pause');
+  await assert.rejects(invoke('go1:live-ready',id));
 });

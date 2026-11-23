@@ -17,7 +17,7 @@ function freshCompanionState({ role = '', language = 'auto', sessionId = '', ass
   return {
     role: cleanText(role, 120), language: cleanText(language, 10),
     sessionId: cleanText(sessionId, 80), assistancePermitted: assistancePermitted === true,
-    transcript: '', question: '', guidance: '',
+    inputState: 'starting', audioLevel: 0, transcriptionWarning: '', transcript: '', question: '', guidance: '',
     status: 'Listening. Use GO1 to request permitted guidance.'
   };
 }

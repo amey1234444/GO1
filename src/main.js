@@ -75,6 +75,7 @@ function publishCompanion() {
 }
 function protectionInfo() {
   return { ...contentProtection.snapshot(), presentation: liveDock.snapshot(), activity: {
+    workspaceMinimized: Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isMinimized()),
     liveSession: Boolean(liveSession), aiEnabled: Boolean(liveSession && assistPermitted),
     aiRunning: Boolean(assistController), paused: privacyGate.paused
   } };
@@ -163,12 +164,12 @@ ipcMain.handle('go1:companion-question', (event, text) => {
 });
 ipcMain.handle('go1:companion-close', event => {
   companionOnly(event);
-  closeCompanion(false); return true;
+  closeCompanion(false); revealWorkspace(); return true;
 });
 ipcMain.handle('go1:companion-focus-main', async event => {
   companionOnly(event);
   await liveDock.showWorkspace();
-  if (mainWindow && !mainWindow.isDestroyed()) { mainWindow.show(); mainWindow.focus(); }
+  if (mainWindow && !mainWindow.isDestroyed()) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.show(); mainWindow.focus(); }
   return true;
 });
 ipcMain.handle('go1:companion-opacity', async (event, value) => {
@@ -462,6 +463,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   liveSession = new VadLiveSession({
     language,
     latencyMode,
+    sensitivity: options.sensitivity === 'quiet' ? 'quiet' : 'balanced',
     translate: options.translate === true,
     signal: liveController.signal,
     transcribeWindow: (pcm, opts) => sessionWorker.infer(pcm, opts),
@@ -470,13 +472,37 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
       if (companionState && !privacyGate.paused) { companionState = updateTranscript(companionState, result.text || ''); publishCompanion(); }
       if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-update', { id: sessionId, result });
     },
-    onStatus: status => { if (liveId === sessionId && !privacyGate.paused && mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-status', { id: sessionId, status }); }
+    onStatus: status => {
+      if (liveId !== sessionId || privacyGate.paused) return;
+      if (companionState && status.type === 'warning') companionState.transcriptionWarning = String(status.message).slice(0, 600);
+      if (companionState && status.type === 'latency') companionState.transcriptionWarning = '';
+      publishCompanion();
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:live-status', { id: sessionId, status });
+    }
   });
   companionState = freshCompanionState({ role: practiceProfile.role, language, sessionId: liveId, assistancePermitted: assistPermitted });
   try { await openCompanion(); } catch (error) { console.warn('Companion window unavailable:', error.message); }
   publishProtection();
   if (liveId !== sessionId || privacyGate.paused) throw new Error('Session startup cancelled.');
   return sessionId;
+});
+
+ipcMain.handle('go1:live-ready', async (event, id) => {
+  onlyApp(event); privacyGate.assertAllowed();
+  if (!liveSession || id !== liveId) throw new Error('No matching live session.');
+  await openCompanion();
+  if (!liveSession || id !== liveId || privacyGate.paused) throw new Error('Session startup cancelled.');
+  companionState.inputState = 'ready'; publishCompanion();
+  // AudioWorklet has resumed. Minimize only after capture initialization succeeds.
+  mainWindow.minimize();
+  if (process.platform === 'darwin') companionWindow.showInactive();
+  else companionWindow.show();
+  return true;
+});
+ipcMain.on('go1:live-input-state', (event, { id, state } = {}) => {
+  if (!ownWindow(event) || privacyGate.paused || !liveSession || id !== liveId || !companionState) return;
+  if (!['ready', 'muted', 'disconnected', 'suspended'].includes(state)) return;
+  companionState.inputState = state; publishCompanion();
 });
 
 ipcMain.on('go1:live-frame', (event, { id, pcm } = {}) => {
@@ -486,7 +512,9 @@ ipcMain.on('go1:live-frame', (event, { id, pcm } = {}) => {
     const bytes = captureDiagnostics.ingest(pcm);
     liveSession.append(bytes);
     if (captureDiagnostics.shouldPublish() && mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('go1:audio-health', { id, health: captureDiagnostics.snapshot() });
+      const health = captureDiagnostics.snapshot();
+      if (companionState) { companionState.audioLevel = health.rms; publishCompanion(); }
+      mainWindow.webContents.send('go1:audio-health', { id, health });
     }
   } catch (error) {
     liveSession.cancel();
@@ -508,6 +536,7 @@ ipcMain.handle('go1:live-stop', async (event, id) => {
       liveController = null;
       liveId = null;
       publishProtection();
+      revealWorkspace();
     }
   }
 });

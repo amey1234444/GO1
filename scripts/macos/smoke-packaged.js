@@ -18,7 +18,7 @@ const spokenText = 'Hello. This is a test of the local speech recognition system
 const report = {
   schema: 1, startedAt: new Date().toISOString(), sourceCommit: process.env.GITHUB_SHA || null,
   status: 'running', hardwareAudioTested: false, meetingReceiverVerified: false,
-  scope: 'Packaged app, real preload IPC, bundled Whisper/FFmpeg, generated PCM speech and real local Ollama inference.',
+  scope: 'Packaged app, real preload IPC, bundled Whisper/FFmpeg, generated PCM speech, synthetic MediaStream lifecycle and real local Ollama inference.',
   steps: [], speechModel: 'base', aiModel: model, spokenText
 };
 const connections = [], children = [];
@@ -88,7 +88,7 @@ async function connect(target) {
       });
     },
     async evaluate(expression, timeoutMs) {
-      const result = await this.call('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, timeoutMs);
+      const result = await this.call('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true, userGesture: true }, timeoutMs);
       if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);
       return result.result.value;
     }
@@ -311,6 +311,64 @@ async function main() {
     assert.equal(restarted.exitCode, null);
     await next.evaluate(`window.go1.cancelLive(${JSON.stringify(sessionId)})`);
     return { savedAppearance: saved.companion, restored, automaticRecording: idle.activity.liveSession };
+  });
+  // Exercise the real renderer capture lifecycle with synthetic MediaStreams.
+  // Device permissions and microphone/system hardware are deliberately not mocked as passed.
+  const inputPage = await connect(await until(async () => (await targets()).find(t => t.url.endsWith('/index.html'))));
+  const fixtureId = await record('Renderer audio startup minimizes workspace and survives real-time silence', async () => {
+    const sessionId = await inputPage.evaluate(`(async () => {
+      window.qaHealth = null; window.qaRecovered = null;
+      window.go1.onAudioHealth(value => { window.qaHealth = value; });
+      window.go1.onLiveUpdate(value => { window.qaRecovered = value; });
+      window.qaContexts = [];
+      window.qaSilentStream = () => {
+        const ctx = new AudioContext(); const source = ctx.createConstantSource(); source.offset.value = 0;
+        const destination = ctx.createMediaStreamDestination(); source.connect(destination); source.start();
+        window.qaContexts.push(ctx); void ctx.resume(); return destination.stream;
+      };
+      document.getElementById('assistConsent').checked = true;
+      document.getElementById('languageSelect').value = 'en';
+      state.stream = window.qaSilentStream();
+      await startLive(state.stream); state.recording = true;
+      return state.liveId;
+    })()`);
+    await delay(5000);
+    const observed = await inputPage.evaluate('(async()=>({info:await window.go1.captureProtectionInfo(),health:window.qaHealth,result:state.result,recording:state.recording}))()');
+    assert.equal(observed.info.activity.workspaceMinimized,true);
+    assert.equal(observed.info.activity.liveSession,true); assert.equal(observed.recording,true);
+    assert.ok(observed.health.health.frames > 5); assert.equal(observed.health.health.rms,0);
+    assert.ok(!observed.result?.text);
+    report.silentCapture = observed;
+    return sessionId;
+  });
+  const inputPanel = await connect(await until(async () => (await targets()).find(t => t.url.endsWith('/companion.html'))));
+  await record('Ended audio track keeps companion open and explicit reconnect restores capture', async () => {
+    await inputPanel.evaluate('window.go1Companion.setCompact(false)');
+    await inputPage.evaluate("(() => { const track=state.stream.getAudioTracks()[0]; track.stop(); track.dispatchEvent(new Event('ended')); return true; })()");
+    await until(async () => (await inputPanel.evaluate("document.getElementById('inputStateLabel').textContent")) === 'Input lost');
+    assert.equal((await inputPage.evaluate('window.go1.captureProtectionInfo()')).activity.liveSession,true);
+    const lost = await inputPanel.call('Page.captureScreenshot',{format:'png'});
+    await fs.writeFile(path.join(output,'packaged-input-disconnected.png'),Buffer.from(lost.data,'base64'));
+    await inputPanel.evaluate('window.go1Companion.focusWorkspace()');
+    assert.equal((await inputPage.evaluate('window.go1.captureProtectionInfo()')).activity.workspaceMinimized,false);
+    // Substitute only acquisition: the real reconnect/track/worklet/state code still runs.
+    await inputPage.evaluate(`(async () => { const original=acquireCaptureStream; acquireCaptureStream=async()=>window.qaSilentStream();
+      try { await reconnectLiveAudio(); } finally { acquireCaptureStream=original; } return true; })()`);
+    await until(async () => (await inputPanel.evaluate("document.getElementById('inputStateLabel').textContent")) === 'Waiting for audio');
+    const connected = await inputPage.evaluate('(async()=>({id:state.liveId,input:currentInputState(),info:await window.go1.captureProtectionInfo()}))()');
+    assert.equal(connected.id,fixtureId);assert.equal(connected.input,'ready');assert.equal(connected.info.activity.liveSession,true);
+    return { retainedSession:true, reconnected:true, acquisition:'synthetic MediaStream; not hardware permission coverage' };
+  });
+  await record('Native worker exit recovers on the next speech without closing the live session', async () => {
+    const entries=(await run('ps',['-axo','pid=,command='])).stdout.split('\n');
+    const ids=entries.map(line=>line.trim().match(/^(\d+)\s+(.+)$/)).filter(match=>match && match[2].startsWith(native+'/whisper-server')).map(match=>Number(match[1]));
+    assert.equal(ids.length,1);process.kill(ids[0],'SIGKILL');await delay(300);
+    await inputPage.evaluate(`(() => { const bytes=Uint8Array.from(atob(${JSON.stringify(pcmBase64)}), c=>c.charCodeAt(0)); const pcm=new Int16Array(bytes.buffer); for(let offset=0;offset<pcm.length;offset+=3200) window.go1.sendLiveChunk(${JSON.stringify(fixtureId)},pcm.slice(offset,offset+3200)); window.go1.sendLiveChunk(${JSON.stringify(fixtureId)},new Int16Array(16000)); return true; })()`);
+    const result=await until(async()=>{const value=await inputPage.evaluate('window.qaRecovered');return /deployment/i.test(value?.result?.text||'')?value.result:null;},150000);
+    checkWords(result.text);assert.equal((await inputPage.evaluate('window.go1.captureProtectionInfo()')).activity.liveSession,true);
+    await inputPage.evaluate('(async()=>{await stopRecording();for(const ctx of window.qaContexts) await ctx.close();return true;})()');
+    assert.equal((await inputPage.evaluate('window.go1.captureProtectionInfo()')).activity.liveSession,false);
+    return { recoveredTranscript:result.text, sessionRetainedUntilExplicitStop:true };
   });
   report.status = 'passed';
 }
