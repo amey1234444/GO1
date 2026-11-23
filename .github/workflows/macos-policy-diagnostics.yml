@@ -1,0 +1,33 @@
+name: macOS download-policy control experiment
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/macos-policy-diagnostics.yml', 'docs/research/policy-control.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  control:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-26]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: GO1-macOS-arm64-v0.23.0-mac.33
+          run-id: 45086154725
+          github-token: ${{ github.token }}
+          path: distribution
+      - name: Compare quarantined GO1 with an independent minimal app
+        run: python3 docs/research/policy-control.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: GO1-policy-control-${{ matrix.os }}-${{ github.run_id }}
+          path: out/policy-diagnostics/
+          if-no-files-found: error
