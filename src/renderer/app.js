@@ -756,7 +756,7 @@ $('studioForm').addEventListener('submit', async event => {
     $('languageSelect').value = saved.language;
     $('liveToggle').checked = true;
     $('translateToggle').checked = false;
-    $('latencyMode').value = 'fast';
+    // Preserve the user's selected responsiveness and speech sensitivity.
     $('feedbackOutput').hidden = true;
     $('feedbackOutput').textContent = '';
     $('feedbackStatus').textContent = 'Finish your practice recording to enable feedback.';
