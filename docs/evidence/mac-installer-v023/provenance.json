@@ -1,0 +1,42 @@
+{
+  "codeCommit": "40ac7ecea777b0834d238953825c0ff4030f08c9",
+  "diagnosticCommit": "b639fc77cef6b551ed50c32928a83f3a118077e5",
+  "macRun": 45086154725,
+  "captureRun": 45086154722,
+  "controlRun": 45086876645,
+  "releaseTag": "v0.23.0-mac.33",
+  "artifacts": [
+    {
+      "id": 14779790885,
+      "kind": "packaged-evidence",
+      "zipSha256": "2b3b96dd747887fe293faa2532884eb9ba9772f98ac273f6ffc2d0a2b0c8f6a9"
+    },
+    {
+      "id": 14779905362,
+      "kind": "distribution",
+      "zipSha256": "c3d3e8879018ec7359ed3af09b36f14b4d3b95b55f17d0b208ca538323ca44f7"
+    },
+    {
+      "id": 14779861115,
+      "kind": "policy-control-macos-15",
+      "zipSha256": "e98721e6172e14f783b643eb6eeb70f59da78327c43d3efd09defcd5ccc4b83c"
+    },
+    {
+      "id": 14779731909,
+      "kind": "policy-control-macos-26",
+      "zipSha256": "50b490e78652bd72e2cd6cc074968e623368ea6579998bde2ace7a7e66c317cd"
+    }
+  ],
+  "files": {
+    "packaged-smoke.json": "475d5170d9dfe35ec38851d3ce8435e4510962a95d55908e31f9ff693e64c7a5",
+    "download-policy.json": "5cfd5005d773428e6e6d62bb28743a0a1c0c1b7d884741a21e13b6f1b79ff707",
+    "policy-control-macos-15.json": "cc7aca77e0637973af3b5e2cece5ee7f609179f4a2648847eaad5ef6084ef6cc",
+    "policy-control-macos-26.json": "80efb1432ad3e6f25df3f558b25686ceadffada17e587d55da2a94ce388d54f4",
+    "package-integrity.json": "c39bf9ec6641d3fe8f9620dac91a27a94ab562ad08fbcbadc16c2fa6375f32d1",
+    "compression.json": "df620b1c3314dc8245125738187fa877496f7662c73487a026d7956a160bb5d5"
+  },
+  "developerIdNotarized": false,
+  "actualBrowserFinderJourneyTested": false,
+  "hardwareAudioTested": false,
+  "meetingReceiverTested": false
+}

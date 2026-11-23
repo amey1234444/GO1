@@ -1,0 +1,36 @@
+{
+  "diagnosticCommit": "b639fc77cef6b551ed50c32928a83f3a118077e5",
+  "releaseDmgSha256": "7e8ee85a0a4b1a93ba3f97dcc7a3a04c6aa9efdbe810aa0fe02ded93071af158",
+  "macOS": "15.8.2",
+  "controlSource": "int main(void) { return 0; }\n",
+  "controlExecutableSha256": "d75369c80b348265bdbc36a6e824039f159b8680bd833fbc34fef28f22e11a4e",
+  "control": {
+    "gatekeeper": {
+      "exitCode": 3,
+      "output": "/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-policy-control-vafifkr2/PolicyControl.app: rejected\n"
+    },
+    "distribution": {
+      "exitCode": 70,
+      "output": "---------------------------------------------------------------\nNotary Ticket Missing\n    File: PolicyControl.app \n    Severity: Fatal \n    Full Error: A Notarization ticket is not stapled to this application. \n    Type: Distribution Error \n\nInternal Xprotect Error\n    Severity: Fatal \n    Full Error: One or more files in your application triggered an Xprotect \n        error. \n    Type: Distribution Error \n\n---------------------------------------------------------------\nApp has failed one or more pre-distribution checks.\n"
+    },
+    "signatureVerified": true,
+    "internalXprotectError": true
+  },
+  "go1": {
+    "gatekeeper": {
+      "exitCode": 3,
+      "output": "/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-policy-control-vafifkr2/GO1.app: rejected\n"
+    },
+    "distribution": {
+      "exitCode": 70,
+      "output": "---------------------------------------------------------------\nNotary Ticket Missing\n    File: GO1.app \n    Severity: Fatal \n    Full Error: A Notarization ticket is not stapled to this application. \n    Type: Distribution Error \n\nInternal Xprotect Error\n    Severity: Fatal \n    Full Error: One or more files in your application triggered an Xprotect \n        error. \n    Type: Distribution Error \n\n---------------------------------------------------------------\nApp has failed one or more pre-distribution checks.\n"
+    },
+    "signatureVerified": true,
+    "internalXprotectError": true
+  },
+  "securitySettingsChanged": false,
+  "appsLaunched": false,
+  "approvedForDistribution": false,
+  "sameInternalScannerErrorInControl": true,
+  "interpretation": "Same internal scanner error occurs in the independently compiled control; this supports an environment/tool explanation, but does not certify GO1 or waive notarization."
+}

@@ -1,0 +1,36 @@
+{
+  "diagnosticCommit": "b639fc77cef6b551ed50c32928a83f3a118077e5",
+  "releaseDmgSha256": "7e8ee85a0a4b1a93ba3f97dcc7a3a04c6aa9efdbe810aa0fe02ded93071af158",
+  "macOS": "26.7.2",
+  "controlSource": "int main(void) { return 0; }\n",
+  "controlExecutableSha256": "aae834137c2136e81f2eb20308ade063710b6d992d46ebf35c502b3d72d38ca0",
+  "control": {
+    "gatekeeper": {
+      "exitCode": 3,
+      "output": "/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/go1-policy-control-z8bfro3s/PolicyControl.app: rejected\n"
+    },
+    "distribution": {
+      "exitCode": 70,
+      "output": "---------------------------------------------------------------\nAdhoc Signed App\n    Severity: Warning \n    Full Error: This app is adhoc signed. While it may run locally, adhoc \n        signed apps are not suitable for distribution. \n    Type: Distribution Error \n    Suggested Fix: Sign the app with a valid Developer ID certificate for \n        distribution. \n    Documentation: \n        https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution \n\nNotary Ticket Missing\n    File: PolicyControl.app \n    Severity: Fatal \n    Full Error: A Notarization ticket is not stapled to this application. \n    Type: Distribution Error \n    Suggested Fix: If this application has already been uploaded to the Apple \n        notary service, please make sure to attach the ticket with the `stapler \n        staple` command. If not, please upload to the Apple notary service \n        using Xcode or via `notarytool`. \n    Documentation: \n        https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution. \n\nInternal Xprotect Error\n    Severity: Fatal \n    Full Error: One or more files in your application triggered an Xprotect \n        error. \n    Type: Distribution Error \n    Suggested Fix: Please take a sysdiagnose and file a Feedback using Feedback \n        Assistant.app. \n    Documentation: \n\n---------------------------------------------------------------\nApp has failed one or more pre-distribution checks.\n"
+    },
+    "signatureVerified": true,
+    "internalXprotectError": true
+  },
+  "go1": {
+    "gatekeeper": {
+      "exitCode": 3,
+      "output": "/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/go1-policy-control-z8bfro3s/GO1.app: rejected\n"
+    },
+    "distribution": {
+      "exitCode": 70,
+      "output": "---------------------------------------------------------------\nAdhoc Signed App\n    Severity: Warning \n    Full Error: This app is adhoc signed. While it may run locally, adhoc \n        signed apps are not suitable for distribution. \n    Type: Distribution Error \n    Suggested Fix: Sign the app with a valid Developer ID certificate for \n        distribution. \n    Documentation: \n        https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution \n\nNotary Ticket Missing\n    File: GO1.app \n    Severity: Fatal \n    Full Error: A Notarization ticket is not stapled to this application. \n    Type: Distribution Error \n    Suggested Fix: If this application has already been uploaded to the Apple \n        notary service, please make sure to attach the ticket with the `stapler \n        staple` command. If not, please upload to the Apple notary service \n        using Xcode or via `notarytool`. \n    Documentation: \n        https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution. \n\nInternal Xprotect Error\n    Severity: Fatal \n    Full Error: One or more files in your application triggered an Xprotect \n        error. \n    Type: Distribution Error \n    Suggested Fix: Please take a sysdiagnose and file a Feedback using Feedback \n        Assistant.app. \n    Documentation: \n\n---------------------------------------------------------------\nApp has failed one or more pre-distribution checks.\n"
+    },
+    "signatureVerified": true,
+    "internalXprotectError": true
+  },
+  "securitySettingsChanged": false,
+  "appsLaunched": false,
+  "approvedForDistribution": false,
+  "sameInternalScannerErrorInControl": true,
+  "interpretation": "Same internal scanner error occurs in the independently compiled control; this supports an environment/tool explanation, but does not certify GO1 or waive notarization."
+}

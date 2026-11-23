@@ -1,5 +1,9 @@
 # GO1
 
+## v0.23 — 104 MiB DMG and quarantined-copy assessment
+
+**[Direct Apple Silicon DMG — 104.0 MiB](https://github.com/amey1234444/GO1/releases/download/v0.23.0-mac.33/GO1-0.23.0-arm64.dmg)** · [Evidence and limitations](docs/MAC_INSTALLER_V023.md) · [Install guide](docs/INSTALL_MAC.md). Lossless ULMO compression reduces the download by another 20% from v0.22, about 39% from v0.20. All 115 tests and 15 packaged-app stages passed. **This remains an ad-hoc preview: normal Gatekeeper trust has not passed.** The quarantine check records missing notarization and an internal XProtect error reproduced by an independent minimal control on both Mac runners; these are not treated as passed distribution checks. Earlier release sections below are historical.
+
 ## v0.22 — direct Mac DMG and signature verification
 
 **[Direct DMG download — 130.1 MiB](https://github.com/amey1234444/GO1/releases/download/v0.22.0-mac.32/GO1-0.22.0-arm64.dmg)** · [Checksums and release](https://github.com/amey1234444/GO1/releases/tag/v0.22.0-mac.32). 23.5% smaller than v0.20; 115 source tests and all 15 copied-app checks passed. **This preview has a valid ad-hoc signature but Gatekeeper still rejects it; Apple notarization is pending signing credentials.**

@@ -1,0 +1,26 @@
+{
+  "sourceCommit": "40ac7ecea777b0834d238953825c0ff4030f08c9",
+  "version": "0.23.0",
+  "macOS": "15.8.2",
+  "architecture": "arm64",
+  "signing": {
+    "signatureVerified": true,
+    "developerIdNotarized": false,
+    "gatekeeperExitCode": 3
+  },
+  "dmg": {
+    "filename": "GO1-0.23.0-arm64.dmg",
+    "bytes": 109093557,
+    "sha256": "7e8ee85a0a4b1a93ba3f97dcc7a3a04c6aa9efdbe810aa0fe02ded93071af158",
+    "format": "ULMO"
+  },
+  "app": {
+    "bytes": 360276501,
+    "asarBytes": 243577,
+    "asarEntries": 48,
+    "nativeBytes": 71419879,
+    "runtimeOnly": true
+  },
+  "browserDownloadTested": false,
+  "remoteMeetingReceiverTested": false
+}

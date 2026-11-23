@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "40ac7ecea777b0834d238953825c0ff4030f08c9",
+  "signatureVerified": true,
+  "syntheticQuarantineApplied": true,
+  "policyAccepted": false,
+  "assessments": {
+    "gatekeeper": {
+      "exitCode": 3,
+      "output": "/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/go1-download-check-g6y4h70a/GO1.app: rejected\n"
+    },
+    "distribution": {
+      "exitCode": 70,
+      "output": "---------------------------------------------------------------\nNotary Ticket Missing\n    File: GO1.app \n    Severity: Fatal \n    Full Error: A Notarization ticket is not stapled to this application. \n    Type: Distribution Error \n\nInternal Xprotect Error\n    Severity: Fatal \n    Full Error: One or more files in your application triggered an Xprotect \n        error. \n    Type: Distribution Error \n\n---------------------------------------------------------------\nApp has failed one or more pre-distribution checks.\n"
+    }
+  },
+  "browserDownloadTested": false,
+  "finderLaunchTested": false,
+  "quarantineRemoved": false
+}
