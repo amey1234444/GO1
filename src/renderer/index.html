@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="./styles.css" />
   <script src="../practice/question.js" defer></script>
   <script src="./app.js" defer></script>
+  <script src="../capture/crop.js" defer></script>
+  <script src="./oa.js" defer></script>
+  <link rel="stylesheet" href="./oa.css" />
 </head>
 <body>
   <div class="shell">
@@ -19,11 +22,17 @@
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Stop &amp; mask</button><div class="version">GO1 • version 0.18.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Stop &amp; mask</button><div class="version">GO1 • version 0.25.0</div>
     </aside>
     <main class="main">
       <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
       <div class="content">
+        <section class="workspace-modes" aria-label="Workspace mode">
+          <div class="mode-tabs" role="tablist" aria-label="Workflow"><button id="interviewModeTab" class="mode-tab active" type="button" role="tab" aria-selected="true" aria-controls="interviewModePanel">Interview</button><button id="oaModeTab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="oaModePanel">OA practice</button></div>
+          <div class="visibility-actions"><button id="hideAppButton" class="small-button" type="button" disabled>Hide / restore · ⌘D</button><span id="visibilityStatus" role="status">Checking shortcut…</span></div>
+        </section>
+        <p id="workspaceModeStatus" class="microcopy" role="status">Hiding windows keeps processing active. Stop &amp; mask stops it.</p>
+        <div id="interviewModePanel" role="tabpanel" aria-labelledby="interviewModeTab">
         <div class="heading-line" id="transcriptionTitle"><div><div class="eyebrow">SPEECH INTELLIGENCE</div><h1>Audio to text<span class="gradient-dot">.</span></h1><p class="subtitle">Accurate multilingual transcription, completely on your Mac.</p></div><span class="feature-pill"><span class="dot"></span> 99-language model family</span></div>
         <section class="studio" id="interviewStudio" aria-labelledby="studioTitle">
           <div class="studio-hero">
@@ -144,6 +153,25 @@
           <p class="insight-description">After you finish a practice recording, generate role-aware feedback and an example answer for self-study. No AI model is queried while you're recording.</p>
           <div class="studio-actions"><button id="generateFeedbackButton" class="studio-launch" type="button" disabled>Generate practice feedback</button><button id="cancelFeedbackButton" class="studio-save" type="button" hidden>Cancel</button><span id="feedbackStatus" role="status" aria-live="polite">Record and finish an answer to begin.</span></div>
           <div id="feedbackOutput" class="studio-feedback-output" aria-live="polite" hidden></div>
+        </section>
+        </div>
+        <section id="oaModePanel" role="tabpanel" aria-labelledby="oaModeTab" hidden>
+          <div class="studio-hero"><div><div class="studio-tag">GO1 / OA PRACTICE</div><h2>One problem. A clearer approach.</h2><p>Capture or import a permitted practice question, select the relevant region and review it with local AI. No credits or subscription.</p></div></div>
+          <section class="card oa-tools">
+            <div class="oa-controls"><label>Display<select id="oaDisplay" class="select"><option value="">Choose a display</option></select></label><button id="oaRefresh" class="small-button" type="button">Refresh displays</button><button id="oaCapture" class="primary-button" type="button">Capture selected display</button><button id="oaImport" class="secondary-button" type="button">Import image</button><input id="oaFile" type="file" accept="image/png,image/jpeg" hidden></div>
+            <p class="microcopy">Capture hides GO1 briefly, then opens the preview here. Drag to crop with the green cursor. This editor uses the existing workspace; it is not an invisible desktop overlay. OS screen-recording permission applies.</p>
+            <div class="oa-preview" id="oaPreview" hidden><canvas id="oaCanvas" tabindex="0" aria-label="Image crop preview. Drag to select; press Escape to cancel selection."></canvas></div>
+            <div class="oa-controls"><button id="oaApplyCrop" class="small-button" type="button" disabled>Use selection</button><button id="oaResetCrop" class="small-button" type="button" disabled>Select another region</button><button id="oaSave" class="small-button" type="button" disabled>Save PNG</button><button id="oaClear" class="small-button" type="button" disabled>Clear image</button></div>
+            <p id="oaStatus" class="microcopy" role="status" aria-live="polite">No image selected. Nothing is captured automatically.</p>
+          </section>
+          <section class="card oa-tools">
+            <label class="setting-label" for="oaModel">Installed local vision model</label><input id="oaModel" class="studio-input" maxlength="100" placeholder="Enter the exact model name installed in Ollama" spellcheck="false">
+            <p class="microcopy">A text-only model cannot read an image. Ollama must be running; image data is sent only to its localhost API.</p>
+            <label class="setting-label" for="oaQuestion">Question or instructions</label><textarea id="oaQuestion" class="studio-input" rows="3" maxlength="2000">Read this practice problem. Explain the approach, edge cases and time and space complexity.</textarea>
+            <label class="assist-consent"><input id="oaConsent" type="checkbox"> I am allowed to capture this content and use AI for this task.</label>
+            <div class="oa-controls"><button id="oaAsk" class="studio-launch" type="button" disabled>Explain selected image</button><button id="oaCancel" class="studio-save" type="button" hidden>Cancel analysis</button></div>
+            <div id="oaAnswer" class="studio-feedback-output" hidden aria-live="polite"></div>
+          </section>
         </section>
         <footer class="footer"><span>Designed for private, consent-based recording and transcription.</span><span>No API key required</span></footer>
       </div>

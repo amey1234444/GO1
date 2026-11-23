@@ -10,7 +10,7 @@ const vm = require('node:vm');
 const { createRequire } = require('node:module');
 const mainPath = path.join(__dirname, '../src/main.js');
 async function boot(preferences = {}, overrides = {}) {
-  const handlers = new Map(), listeners = new Map(), windows = [], writes = [], sent = [];
+  const handlers = new Map(), listeners = new Map(), shortcuts = new Map(), windows = [], writes = [], sent = [];
   let ready;
   class Window extends EventEmitter {
     constructor(options) {
@@ -23,8 +23,11 @@ async function boot(preferences = {}, overrides = {}) {
     isDestroyed() { return this.dead; }
     setContentProtection(value) { this.events.push(['protect', value]); this.protected = value; }
     isContentProtected() { return this.protected; }
-    show() { this.events.push(['show']); this.emit('show'); }
-    focus() { this.events.push(['focus']); }
+    show() { this.visible = true; this.events.push(['show']); this.emit('show'); }
+    hide() { this.visible = false; this.focused = false; this.events.push(['hide']); }
+    isVisible() { return this.visible === true; }
+    isFocused() { return this.focused === true; }
+    focus() { this.focused = true; this.events.push(['focus']); }
     minimize() { this.minimized = true; this.events.push(['minimize']); }
     isMinimized() { return this.minimized === true; }
     restore() { this.minimized = false; this.emit('restore'); }
@@ -45,7 +48,7 @@ async function boot(preferences = {}, overrides = {}) {
   const area = { x: 0, y: 0, width: 1440, height: 900 };
   const screen = Object.assign(new EventEmitter(), { getPrimaryDisplay: () => ({ workArea: area }), getDisplayMatching: () => ({ workArea: area }) });
   const powerMonitor = new EventEmitter();
-  const electron = { screen, powerMonitor, app, BrowserWindow: Window, ipcMain: { handle: (name, fn) => handlers.set(name, fn), on: (name, fn) => listeners.set(name, fn) }, session: { defaultSession: fakeSession }, globalShortcut: { register: () => true }, systemPreferences: {}, clipboard: {}, desktopCapturer: {}, dialog: {} };
+  const electron = { screen, powerMonitor, app, BrowserWindow: Window, ipcMain: { handle: (name, fn) => handlers.set(name, fn), on: (name, fn) => listeners.set(name, fn) }, session: { defaultSession: fakeSession }, globalShortcut: { register: (key, fn) => { shortcuts.set(key,fn); return true; } }, systemPreferences: {}, clipboard: {}, desktopCapturer: {}, dialog: {} };
   const nodeRequire = createRequire(mainPath);
   const requireMock = name => {
     if (Object.hasOwn(overrides, name)) return overrides[name];
@@ -66,7 +69,7 @@ async function boot(preferences = {}, overrides = {}) {
   }, { filename: mainPath });
   if (ready) await ready();
   const invoke = (channel, payload, sender = windows[0].webContents) => handlers.get(channel)({ sender }, payload);
-  return { app, screen, powerMonitor, area, windows, writes, invoke, sent, send: (channel, payload) => listeners.get(channel)({ sender: windows[0].webContents }, payload) };
+  return { app, screen, powerMonitor, area, shortcuts, windows, writes, invoke, sent, send: (channel, payload) => listeners.get(channel)({ sender: windows[0].webContents }, payload) };
 }
 test('real main process protects workspace, review and companion before loading/showing them', async () => {
   const { windows, invoke } = await boot();
@@ -357,4 +360,40 @@ for (const audioSource of ['microphone','system']) test(`${audioSource}: minimiz
   assert.equal(windows[0].isMinimized(),false);
   invoke('go1:privacy-pause');
   await assert.rejects(invoke('go1:live-ready',id));
+});
+
+test('Cmd+D callback hides every live window and restores the same session; wake cannot reveal it', async () => {
+  const { windows, invoke, shortcuts, powerMonitor } = await boot();
+  const id = await invoke('go1:live-start', { audioSource:'microphone', assistancePermitted:true });
+  await invoke('go1:live-ready',id);
+  const before = windows.map(w=>w.getBounds());
+  assert.equal(invoke('go1:visibility-info').registered,true);
+  shortcuts.get('CommandOrControl+D')();
+  assert.ok(windows.every(w=>!w.isVisible()));
+  assert.equal(invoke('go1:content-protection-info').activity.liveSession,true);
+  assert.equal(invoke('go1:content-protection-info').activity.aiEnabled,true);
+  powerMonitor.emit('resume');
+  await invoke('go1:companion-open');
+  assert.ok(windows.every(w=>!w.isVisible()));
+  shortcuts.get('CommandOrControl+D')();
+  assert.equal(windows[0].isMinimized(),true);
+  assert.equal(windows[1].isVisible(),true);
+  assert.deepEqual(windows.map(w=>w.getBounds()),before);
+  assert.equal(await invoke('go1:live-ready',id),true);
+  shortcuts.get('CommandOrControl+D')();
+  invoke('go1:privacy-pause');
+  shortcuts.get('CommandOrControl+D')();
+  assert.equal(windows[1].dead,true);
+  assert.equal(invoke('go1:privacy-info').paused,true);
+  assert.equal(invoke('go1:content-protection-info').activity.liveSession,false);
+});
+test('screenshot endpoints reject unknown senders and respect Stop & mask',async()=>{
+  const {invoke}=await boot();
+  assert.throws(()=>invoke('go1:visibility-toggle',null,{}),/Unrecognized/);
+  assert.throws(()=>invoke('go1:capture-displays',null,{}),/Unrecognized/);
+  await assert.rejects(invoke('go1:image-assist',{permitted:false}),/Confirm/);
+  invoke('go1:privacy-pause');
+  assert.throws(()=>invoke('go1:capture-displays'),/privacy/i);
+  await assert.rejects(invoke('go1:capture-display','1'),/privacy/i);
+  await assert.rejects(invoke('go1:image-assist',{permitted:true}),/privacy/i);
 });

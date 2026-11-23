@@ -2,7 +2,9 @@
 
 const path = require('node:path');
 const fs = require('node:fs/promises');
-const { app, BrowserWindow, ipcMain, session, systemPreferences, dialog, clipboard, desktopCapturer, globalShortcut, screen, powerMonitor } = require('electron');
+const { app, BrowserWindow, ipcMain, session, systemPreferences, dialog, clipboard, desktopCapturer, globalShortcut, screen, powerMonitor, nativeImage } = require('electron');
+const { WindowVisibility, VISIBILITY_SHORTCUT, registerVisibilityShortcut } = require('./privacy/visibility');
+const { decodePracticeImage } = require('./capture/image');
 const { randomUUID } = require('node:crypto');
 const { getSetup, transcribe } = require('./transcription/engine');
 const { VadLiveSession } = require('./transcription/vad-live');
@@ -55,6 +57,13 @@ const liveDock = new LiveDock({ app, platform: process.platform, onChange: () =>
   publishProtection();
 } });
 let emergencyShortcutRegistered = false;
+let visibilityShortcutRegistered = false;
+let screenshotController = null;
+let screenshotBusy = false;
+const visibility = new WindowVisibility(() => [mainWindow, companionWindow, reviewWindow].filter(Boolean));
+function visibilityInfo() { return { hidden: visibility.hidden, shortcut: VISIBILITY_SHORTCUT, registered: visibilityShortcutRegistered, windows: [['workspace',mainWindow],['companion',companionWindow],['review',reviewWindow]].filter(([,window])=>window && !window.isDestroyed()).map(([role,window])=>({role,visible:window.isVisible(),minimized:window.isMinimized()})) }; }
+function toggleVisibility() { visibility.toggle(); publishProtection(); return visibilityInfo(); }
+
 let coachController = null;
 let assistController = null;
 let assistPermitted = false;
@@ -74,7 +83,7 @@ function publishCompanion() {
   }
 }
 function protectionInfo() {
-  return { ...contentProtection.snapshot(), presentation: liveDock.snapshot(), activity: {
+  return { ...contentProtection.snapshot(), visibility: visibilityInfo(), presentation: liveDock.snapshot(), activity: {
     workspaceMinimized: Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isMinimized()),
     liveSession: Boolean(liveSession), aiEnabled: Boolean(liveSession && assistPermitted),
     aiRunning: Boolean(assistController), paused: privacyGate.paused
@@ -106,10 +115,10 @@ function recoverPresentation() {
   publishProtection();
 }
 function revealWorkspace() {
-  if (!workspaceReady) return;
+  if (!workspaceReady || visibility.blocked) return;
   void liveDock.showWorkspace().then(() => {
     if (!mainWindow || mainWindow.isDestroyed()) createWindow();
-    else { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.show(); mainWindow.focus(); }
+    else { if (visibility.blocked) return; if (mainWindow.isMinimized()) mainWindow.restore(); visibility.show(mainWindow); }
   });
 }
 async function openCompanion() {
@@ -118,7 +127,7 @@ async function openCompanion() {
   if (companionWindow && !companionWindow.isDestroyed()) {
     await liveDock.setCompanionOpen(true);
     if (!companionWindow || companionWindow.isDestroyed() || privacyGate.paused) return false;
-    companionWindow.show(); companionWindow.focus(); publishCompanion(); return true;
+    visibility.show(companionWindow); publishCompanion(); return true;
   }
   const window = new BrowserWindow({
     title: 'GO1 — Live Companion',
@@ -144,8 +153,7 @@ async function openCompanion() {
       if (!window.isDestroyed()) window.close(); return;
     }
     publishCompanion();
-    if (process.platform === 'darwin') window.showInactive();
-    else window.show();
+    visibility.show(window, process.platform === 'darwin');
   });
   window.on('closed', () => { if (companionWindow === window) { companionWindow = null; void liveDock.setCompanionOpen(false); } });
   try { await window.loadFile(path.join(__dirname, 'renderer', 'companion.html')); }
@@ -169,7 +177,7 @@ ipcMain.handle('go1:companion-close', event => {
 ipcMain.handle('go1:companion-focus-main', async event => {
   companionOnly(event);
   await liveDock.showWorkspace();
-  if (mainWindow && !mainWindow.isDestroyed()) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.show(); mainWindow.focus(); }
+  if (mainWindow && !mainWindow.isDestroyed() && !visibility.blocked) { if (mainWindow.isMinimized()) mainWindow.restore(); visibility.show(mainWindow); }
   return true;
 });
 ipcMain.handle('go1:companion-opacity', async (event, value) => {
@@ -205,6 +213,7 @@ ipcMain.handle('go1:companion-privacy', event => {
 function activatePresentationPrivacy(source = 'button') {
   privacyGate.enter();
   liveStarting = null;
+  screenshotController?.abort();
   coachController?.abort();
   assistController?.abort();
   assistPermitted = false;
@@ -255,6 +264,7 @@ function resetWorker() { worker?.close(); worker = null; }
 function closeWorkspaceSession() {
   // Invalidate pending startup before aborting work; macOS can reopen this workspace.
   liveStarting = null;
+  screenshotController?.abort();
   coachController?.abort();
   assistController?.abort();
   activeController?.abort();
@@ -287,7 +297,7 @@ function createWindow() {
     }
   });
   contentProtection.register(mainWindow, 'workspace');
-  mainWindow.once('ready-to-show', () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show(); });
+  mainWindow.once('ready-to-show', () => visibility.show(mainWindow));
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   mainWindow.webContents.on('did-finish-load', () => {
@@ -333,6 +343,7 @@ if (ownsInstance) app.whenReady().then(async () => {
   workspaceReady = true;
   createWindow();
   emergencyShortcutRegistered = registerEmergencyPrivacy(globalShortcut, activatePresentationPrivacy);
+  visibilityShortcutRegistered = registerVisibilityShortcut(globalShortcut, toggleVisibility);
   app.on('activate', revealWorkspace);
   app.on('did-become-active', () => { if (liveDock.requestedHidden) void liveDock.refresh(); });
   for (const event of ['display-added', 'display-removed', 'display-metrics-changed']) screen.on(event, recoverPresentation);
@@ -495,8 +506,7 @@ ipcMain.handle('go1:live-ready', async (event, id) => {
   companionState.inputState = 'ready'; publishCompanion();
   // AudioWorklet has resumed. Minimize only after capture initialization succeeds.
   mainWindow.minimize();
-  if (process.platform === 'darwin') companionWindow.showInactive();
-  else companionWindow.show();
+  visibility.show(companionWindow, process.platform === 'darwin');
   return true;
 });
 ipcMain.on('go1:live-input-state', (event, { id, state } = {}) => {
@@ -619,7 +629,7 @@ ipcMain.handle('go1:review-open', async (event, result) => {
   window.webContents.once('did-finish-load', () => {
     if (privacyGate.paused || window.isDestroyed()) { if (!window.isDestroyed()) window.close(); return; }
     window.webContents.send('go1:review-data', data);
-    window.show();
+    visibility.show(window);
   });
   window.on('closed', () => { if (reviewWindow === window) reviewWindow = null; });
   try { await window.loadFile(path.join(__dirname, 'renderer', 'review.html')); }
@@ -674,6 +684,7 @@ ipcMain.handle('go1:coach-feedback', async (event, transcript) => {
 });
 ipcMain.handle('go1:coach-cancel', event => {
   onlyApp(event);
+  screenshotController?.abort();
   coachController?.abort();
   return true;
 });
@@ -731,3 +742,61 @@ ipcMain.handle('go1:practice-review', (event, result) => {
   if (!result || typeof result !== 'object' || typeof result.text !== 'string' || result.text.length > 250000) throw new Error('Invalid practice transcript.');
   return analysePractice({ text: result.text, durationMs: result.durationMs });
 });
+
+// User-initiated screenshots for permitted practice. No background capture,
+// proctor detection, process disguise or bypass of OS capture permissions.
+ipcMain.handle('go1:visibility-info', event => { onlyApp(event); return visibilityInfo(); });
+ipcMain.handle('go1:visibility-toggle', event => { onlyApp(event); if (!visibilityShortcutRegistered) throw new Error('Show/hide shortcut is unavailable.'); return toggleVisibility(); });
+ipcMain.handle('go1:capture-displays', event => {
+  onlyApp(event); privacyGate.assertAllowed();
+  return screen.getAllDisplays().map((display,index) => ({ id:String(display.id), label:display.label || `Display ${index+1}`, width:display.size.width, height:display.size.height }));
+});
+ipcMain.handle('go1:capture-display', async (event, displayId) => {
+  onlyApp(event); privacyGate.assertAllowed();
+  if (screenshotBusy) throw new Error('A screenshot is already in progress.');
+  const display=screen.getAllDisplays().find(d=>String(d.id)===displayId);
+  if (!display) throw new Error('Choose an available display.');
+  const epoch=privacyGate.snapshot().epoch;
+  const sender=event.sender;
+  screenshotBusy=true;
+  const release=visibility.suspend();
+  try {
+    await new Promise(resolve=>setTimeout(resolve,180));
+    privacyGate.validate(epoch);
+    const sources=await desktopCapturer.getSources({types:['screen'],thumbnailSize:{width:2400,height:2400},fetchWindowIcons:false});
+    privacyGate.assertAllowed();
+    if (!ownWindow(event) || sender.isDestroyed() || privacyGate.snapshot().epoch!==epoch) throw new Error('Screenshot cancelled.');
+    const source=sources.find(value=>value.display_id===displayId);
+    if (!source || source.thumbnail.isEmpty()) throw new Error('Screen capture unavailable. Check Screen Recording permission; protected content may be blank.');
+    const dataUrl=source.thumbnail.toDataURL();
+    decodePracticeImage(nativeImage,dataUrl);
+    return {dataUrl,displayId,...source.thumbnail.getSize()};
+  } finally { screenshotBusy=false; release(); }
+});
+ipcMain.handle('go1:image-save', async (event,dataUrl) => {
+  onlyApp(event); privacyGate.assertAllowed();
+  const image=decodePracticeImage(nativeImage,dataUrl);
+  const epoch=privacyGate.snapshot().epoch;
+  const result=await dialog.showSaveDialog(mainWindow,{title:'Save selected practice image',defaultPath:'GO1-practice-crop.png',filters:[{name:'PNG image',extensions:['png']}]});
+  if (result.canceled || !result.filePath) return false;
+  privacyGate.assertAllowed();
+  if (privacyGate.snapshot().epoch!==epoch) throw new Error('Save cancelled.');
+  await fs.writeFile(result.filePath,image.toPNG(),{mode:0o600});return true;
+});
+ipcMain.handle('go1:image-assist', async (event,payload={}) => {
+  onlyApp(event); privacyGate.assertAllowed();
+  if (payload.permitted!==true) throw new Error('Confirm that image analysis is permitted.');
+  if (typeof payload.requestId!=='string' || !/^[a-zA-Z0-9-]{1,64}$/.test(payload.requestId)) throw new Error('Invalid image request.');
+  if (screenshotController) throw new Error('Image analysis is already running.');
+  const profile=normalizeProfile({...practiceProfile,mode:'coding',model:payload.model});
+  const image=decodePracticeImage(nativeImage,payload.dataUrl);
+  const controller=new AbortController();screenshotController=controller;
+  const epoch=privacyGate.snapshot().epoch;
+  try {
+    const result=await generateLiveGuidance({profile,question:payload.question,context:'This is a user-selected image for permitted coding practice. Read the image, state any unreadable parts, then explain the approach and complexity.',imageBase64:image.toPNG().toString('base64'),signal:controller.signal,timeoutMs:120000,maxDurationMs:300000,
+      onChunk:delta=>{if (!controller.signal.aborted && !privacyGate.paused && ownWindow(event)) event.sender.send('go1:image-assist-chunk',{delta,requestId:payload.requestId});}});
+    if (controller.signal.aborted || privacyGate.paused || privacyGate.snapshot().epoch!==epoch) throw new Error('Image analysis cancelled.');
+    return result;
+  } finally { if(screenshotController===controller)screenshotController=null; }
+});
+ipcMain.handle('go1:image-assist-cancel',event=>{onlyApp(event);screenshotController?.abort();return true;});

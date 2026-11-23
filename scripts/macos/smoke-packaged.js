@@ -244,6 +244,20 @@ async function main() {
     await fs.writeFile(path.join(output, 'packaged-companion-real-inference.png'), Buffer.from(screenshot.data, 'base64'));
     return { answer, chunks: chunks.length, displayed, protection };
   });
+  await record('Local visibility toggle retains protected live transcript and AI state', async () => {
+    const before=await panel.evaluate("({transcript:document.getElementById('transcript').textContent,answer:document.getElementById('guidance').textContent})");
+    const initial=await api('window.go1.visibilityInfo()');assert.equal(initial.registered,true);
+    const hidden=await api('window.go1.toggleVisibility()');
+    assert.equal(hidden.hidden,true);assert.ok(hidden.windows.every(window=>!window.visible));
+    await delay(400);
+    assert.equal((await api('window.go1.captureProtectionInfo()')).activity.liveSession,true);
+    await api('window.go1.showCompanion()');
+    assert.ok((await api('window.go1.visibilityInfo()')).windows.every(window=>!window.visible));
+    const restored=await api('window.go1.toggleVisibility()');assert.equal(restored.hidden,false);
+    const after=await panel.evaluate("({transcript:document.getElementById('transcript').textContent,answer:document.getElementById('guidance').textContent})");
+    assert.deepEqual(after,before);assert.equal(restored.windows.length,initial.windows.length);
+    return {hidden,restored,sameText:true,shortcutRegistered:true,physicalKeypressTested:false};
+  });
   await record('Compact, translucency and close/reopen retain live text', async () => {
     assert.equal(await panel.evaluate('window.go1Companion.setCompact(true)'), true);
     assert.equal(await panel.evaluate('window.go1Companion.setOpacity(.7)'), .7);
@@ -369,6 +383,45 @@ async function main() {
     await inputPage.evaluate('(async()=>{await stopRecording();for(const ctx of window.qaContexts) await ctx.close();return true;})()');
     assert.equal((await inputPage.evaluate('window.go1.captureProtectionInfo()')).activity.liveSession,false);
     return { recoveredTranscript:result.text, sessionRetainedUntilExplicitStop:true };
+  });
+  await record('OA same-window capture, green crop cursor and retained draft', async () => {
+    await inputPage.evaluate("selectWorkspaceMode('oa')");
+    const displays=await inputPage.evaluate('window.go1.captureDisplays()');assert.ok(displays.length>0);
+    const captured=await inputPage.evaluate("window.go1.captureDisplay("+JSON.stringify(displays[0].id)+").then(x=>({width:x.width,height:x.height,valid:x.dataUrl.startsWith('data:image/png;')}))");
+    assert.ok(captured.valid && captured.width>0 && captured.height>0);
+    const count=(await targets()).filter(x=>x.type==='page').length;
+    // A deterministic image makes crop-coordinate assertions independent of desktop contents.
+    await inputPage.evaluate("(async()=>{const c=document.createElement('canvas');c.width=400;c.height=300;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,400,300);x.fillStyle='red';x.fillRect(30,30,340,240);await loadOaImage(c.toDataURL());document.getElementById('oaCanvas').scrollIntoView({block:'center'});return true;})()");
+    const rect=await inputPage.evaluate("(()=>{const c=document.getElementById('oaCanvas'),r=c.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,cursor:getComputedStyle(c).cursor};})()");
+    assert.match(rect.cursor,/crop-cursor/);
+    await inputPage.call('Input.dispatchMouseEvent',{type:'mousePressed',x:rect.x+rect.w*.1,y:rect.y+rect.h*.1,button:'left',clickCount:1});
+    await inputPage.call('Input.dispatchMouseEvent',{type:'mouseMoved',x:rect.x+rect.w*.9,y:rect.y+rect.h*.9,button:'left',buttons:1});
+    await inputPage.call('Input.dispatchMouseEvent',{type:'mouseReleased',x:rect.x+rect.w*.9,y:rect.y+rect.h*.9,button:'left',clickCount:1});
+    const selected=await inputPage.evaluate("({crop:oa.crop,cursor:getComputedStyle(document.getElementById('oaCanvas')).cursor})");
+    assert.ok(selected.crop && selected.crop.width>=318 && selected.crop.width<=322);
+    assert.equal(selected.cursor,'default');
+    await inputPage.evaluate("document.getElementById('oaApplyCrop').click()");
+    await until(async()=> (await inputPage.evaluate('oa.image.width'))<400);
+    const draft=await inputPage.evaluate("({image:oaPng(),question:document.getElementById('oaQuestion').value})");
+    await inputPage.evaluate('window.go1.toggleVisibility()');
+    assert.ok((await inputPage.evaluate('window.go1.visibilityInfo()')).windows.every(window=>!window.visible));
+    await inputPage.evaluate('window.go1.toggleVisibility()');
+    assert.deepEqual(await inputPage.evaluate("({image:oaPng(),question:document.getElementById('oaQuestion').value})"),draft);
+    assert.equal((await targets()).filter(x=>x.type==='page').length,count);
+    const shot=await inputPage.call('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(output,'packaged-oa-crop.png'),Buffer.from(shot.data,'base64'));
+    return {captured,selected,noAdditionalWindow:true,draftRetained:true};
+  });
+  await record('Real local vision model receives the reviewed crop', async () => {
+    const visionModel='moondream:latest';
+    await run('ollama',['pull',visionModel],{timeout:900000,maxBuffer:32*1024*1024,env:{...process.env,OLLAMA_HOST:'127.0.0.1:11434'}});
+    await inputPage.evaluate("document.getElementById('oaModel').value='moondream:latest';document.getElementById('oaQuestion').value='What color is the large square in this image? Keep the answer short.';document.getElementById('oaConsent').checked=true;updateOaControls();document.getElementById('oaAsk').click();true");
+    await until(async()=>!(await inputPage.evaluate('oa.running')),360000);
+    const result=await inputPage.evaluate("({answer:document.getElementById('oaAnswer').textContent,status:document.getElementById('oaStatus').textContent})");
+    assert.match(result.status,/Analysis complete/);assert.match(result.answer,/red/i);
+    const shot=await inputPage.call('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(output,'packaged-oa-vision.png'),Buffer.from(shot.data,'base64'));
+    await inputPage.evaluate("window.go1.pauseForPresentation()");
+    await until(async()=>await inputPage.evaluate("oa.image===null && document.getElementById('oaAnswer').textContent===''"));
+    return {model:visionModel,...result,privacyClearedImage:true,scope:'Simple color fixture; not a coding/OCR accuracy benchmark'};
   });
   report.status = 'passed';
 }

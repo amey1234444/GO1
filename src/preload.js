@@ -2,6 +2,14 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('go1', Object.freeze({
+  visibilityInfo: () => ipcRenderer.invoke('go1:visibility-info'),
+  toggleVisibility: () => ipcRenderer.invoke('go1:visibility-toggle'),
+  captureDisplays: () => ipcRenderer.invoke('go1:capture-displays'),
+  captureDisplay: id => ipcRenderer.invoke('go1:capture-display', id),
+  saveImage: image => ipcRenderer.invoke('go1:image-save', image),
+  analyseImage: payload => ipcRenderer.invoke('go1:image-assist', payload),
+  cancelImageAnalysis: () => ipcRenderer.invoke('go1:image-assist-cancel'),
+  onImageAnalysisChunk: callback => { const cb = (_event,data) => callback(data); ipcRenderer.on('go1:image-assist-chunk',cb); return () => ipcRenderer.removeListener('go1:image-assist-chunk',cb); },
   installModel: id => ipcRenderer.invoke('go1:model-install', id),
   cancelModelDownload: () => ipcRenderer.invoke('go1:model-cancel'),
   selectModel: id => ipcRenderer.invoke('go1:model-select', id),

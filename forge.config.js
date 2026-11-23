@@ -13,7 +13,7 @@ const packagerConfig = {
   extendInfo: {
     NSMicrophoneUsageDescription: 'GO1 records microphone audio only when you start a session.',
     NSAudioCaptureUsageDescription: 'GO1 captures Mac system playback audio only after you explicitly select it and grant permission.',
-    NSScreenCaptureDescription: 'GO1 requests system capture permission to access computer audio; it does not save video frames.'
+    NSScreenCaptureDescription: 'GO1 requests screen capture permission for explicitly selected screenshots and system audio. It does not continuously record video.'
   }
 };
 // An opt-in Mac release must bundle all transcription executables.

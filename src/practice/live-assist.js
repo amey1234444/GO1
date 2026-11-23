@@ -2,6 +2,7 @@
 
 const { normalizeProfile, LANGUAGES } = require('./session');
 const { suggestQuestion } = require('./question');
+const { requireLocalVisionModel } = require('./vision-model');
 const ENDPOINT = 'http://127.0.0.1:11434/api/chat';
 
 function buildGuidanceMessages(profileInput, questionInput, contextInput = '') {
@@ -30,9 +31,10 @@ function buildGuidanceMessages(profileInput, questionInput, contextInput = '') {
     }) }
   ];
 }
-async function generateLiveGuidance({ profile, question, context = '', signal, onChunk = () => {}, fetchImpl = fetch, timeoutMs = 45000, maxDurationMs = 180000 }) {
+async function generateLiveGuidance({ profile, question, context = '', signal, onChunk = () => {}, fetchImpl = fetch, imageBase64, timeoutMs = 45000, maxDurationMs = 180000 }) {
   const normalized = normalizeProfile(profile);
   const messages = buildGuidanceMessages(normalized, question, context);
+  if (imageBase64) messages[messages.length - 1].images = [imageBase64];
   const controller = new AbortController();
   const cancel = () => controller.abort(signal?.reason || new Error('Canceled.'));
   if (signal?.aborted) cancel();
@@ -50,6 +52,7 @@ async function generateLiveGuidance({ profile, question, context = '', signal, o
   const cancelRead = () => { if (reader) void reader.cancel(controller.signal.reason).catch(() => {}); };
   controller.signal.addEventListener('abort', cancelRead, { once: true });
   try {
+    if (imageBase64) await requireLocalVisionModel(normalized.model, { fetchImpl, signal: controller.signal });
     response = await fetchImpl(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

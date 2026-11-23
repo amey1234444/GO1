@@ -643,6 +643,7 @@ async function disablePresentationPrivacy() {
     await window.go1.resumeFromPresentation();
     privacyEpoch += 1;
     state.privacyActive = false;
+    window.dispatchEvent(new Event('go1-privacy-resumed'));
     renderCaptureState(); renderAudioLevel();
     $('privacyCurtain').hidden = true;
     $('privacyButton').disabled = false;

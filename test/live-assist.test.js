@@ -95,3 +95,16 @@ test('stop cancels an in-flight live stream without delivering later output',asy
   controller.abort(new Error('Stopped.'));await rejected;
   assert.equal(stream.canceled(),true);assert.deepEqual(chunks,['partial']);
 });
+test('image guidance sends reviewed image bytes only to the local model after capability checks',async()=>{
+  const calls=[],encoder=new TextEncoder();
+  const fetchImpl=async(url,options)=>{
+    calls.push(url);
+    if(url.endsWith('/api/tags'))return {ok:true,json:async()=>({models:[{name:'vision:latest'}]})};
+    if(url.endsWith('/api/show'))return {ok:true,json:async()=>({capabilities:['vision','completion']})};
+    const body=JSON.parse(options.body);assert.deepEqual(body.messages.at(-1).images,['cG5n']);
+    return {ok:true,body:new ReadableStream({start(c){c.enqueue(encoder.encode('{"message":{"content":"Reviewed image"},"done":true}\n'));c.close();}})};
+  };
+  const answer=await generateLiveGuidance({profile:{...profile,model:'vision'},question:'Explain this image?',imageBase64:'cG5n',fetchImpl});
+  assert.equal(answer,'Reviewed image');assert.equal(calls.length,3);
+  assert.ok(calls.every(url=>url.startsWith('http://127.0.0.1:11434/')));
+});
