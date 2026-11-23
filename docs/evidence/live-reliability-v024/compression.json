@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "06a9c789d0eb9f29c4022b24b8bf940f6f918e66",
+  "original": {
+    "format": "UDBZ",
+    "bytes": 136401330,
+    "sha256": "4c90373b4a72dbe084130db5fe1ed0077af458b6300eb0d4f96aa6e7fba10ef7"
+  },
+  "candidate": {
+    "format": "ULMO",
+    "bytes": 109091041,
+    "sha256": "4409208e7090e82be3453d4740023513261c97464cf06825cc2a9c5781ce6521"
+  },
+  "selected": {
+    "format": "ULMO",
+    "bytes": 109091041,
+    "sha256": "4409208e7090e82be3453d4740023513261c97464cf06825cc2a9c5781ce6521"
+  },
+  "savedBytes": 27310289,
+  "scope": "Lossless container compression. Mounted app contents and signatures are verified in subsequent steps."
+}

@@ -1,5 +1,11 @@
 # GO1
 
+## v0.24 — quiet-session recovery and workspace minimization
+
+**[Download Apple Silicon DMG — 104.0 MiB](https://github.com/amey1234444/GO1/releases/download/v0.24.0-mac.36/GO1-0.24.0-arm64.dmg)** · [Changes, actual screenshots and proof](docs/LIVE_SESSION_RELIABILITY_V024.md) · [Install guide](docs/INSTALL_MAC.md).
+
+The workspace minimizes after live audio is ready. Silence and recoverable transcription errors keep the session open; disconnected input has an explicit reconnect action. Added quiet-voice sensitivity, bounded local speech recovery, and inactivity-aware AI streaming. **127 tests and all 18 packaged Mac checks passed**, including real inference and synthetic renderer capture/reconnect. Physical microphone/system-audio and remote meeting receivers remain unverified. This is still an **ad-hoc, not Apple-notarized preview**; normal Gatekeeper trust has not passed. Earlier sections below are historical.
+
 ## v0.23 — 104 MiB DMG and quarantined-copy assessment
 
 **[Direct Apple Silicon DMG — 104.0 MiB](https://github.com/amey1234444/GO1/releases/download/v0.23.0-mac.33/GO1-0.23.0-arm64.dmg)** · [Evidence and limitations](docs/MAC_INSTALLER_V023.md) · [Install guide](docs/INSTALL_MAC.md). Lossless ULMO compression reduces the download by another 20% from v0.22, about 39% from v0.20. All 115 tests and 15 packaged-app stages passed. **This remains an ad-hoc preview: normal Gatekeeper trust has not passed.** The quarantine check records missing notarization and an internal XProtect error reproduced by an independent minimal control on both Mac runners; these are not treated as passed distribution checks. Earlier release sections below are historical.

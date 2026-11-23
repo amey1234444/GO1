@@ -2,9 +2,9 @@
 
 ## Download the DMG directly
 
-Current: **[GO1-0.23.0-arm64.dmg — 104.0 MiB](https://github.com/amey1234444/GO1/releases/download/v0.23.0-mac.33/GO1-0.23.0-arm64.dmg)** · [Checksum](https://github.com/amey1234444/GO1/releases/download/v0.23.0-mac.33/GO1-0.23.0-arm64.dmg.sha256). This is an **ad-hoc preview** with verified signature integrity, but it is **not Apple-notarized** and its CI Gatekeeper assessment was rejected. The quarantined-copy assessment also reported a missing notarization ticket and an internal XProtect error. See the [current evidence and control experiment](MAC_INSTALLER_V023.md). A normally trusted first launch remains unverified.
+Current: **[GO1-0.24.0-arm64.dmg — 104.0 MiB](https://github.com/amey1234444/GO1/releases/download/v0.24.0-mac.36/GO1-0.24.0-arm64.dmg)** · [Checksum](https://github.com/amey1234444/GO1/releases/download/v0.24.0-mac.36/GO1-0.24.0-arm64.dmg.sha256). This is an **ad-hoc preview** with verified signature integrity, but it is **not Apple-notarized** and its CI Gatekeeper assessment was rejected. The quarantined-copy assessment also reported a missing notarization ticket and an internal XProtect error. See the [v0.24 evidence](LIVE_SESSION_RELIABILITY_V024.md) and [independent policy control experiment](MAC_INSTALLER_V023.md). A normally trusted first launch remains unverified.
 
-Open [GO1 Releases](https://github.com/amey1234444/GO1/releases) and choose the latest Mac release. Under **Assets**, download **GO1-0.23.0-arm64.dmg** and its `.sha256` checksum. Do not download the automatically generated source ZIP/tarball. The release title and evidence state whether it is **Apple-notarized** or an **ad-hoc preview**.
+Open [GO1 Releases](https://github.com/amey1234444/GO1/releases) and choose the latest Mac release. Under **Assets**, download **GO1-0.24.0-arm64.dmg** and its `.sha256` checksum. Do not download the automatically generated source ZIP/tarball. The release title and evidence state whether it is **Apple-notarized** or an **ad-hoc preview**.
 
 GitHub Actions artifacts still download as ZIP archives; that is a GitHub artifact wrapper. The release asset is the direct DMG download. Never rename a ZIP to DMG. See [v0.23 packaging and policy evidence](MAC_INSTALLER_V023.md) and [Apple signing setup](MAC_INSTALLER_V022.md#apple-signed-distribution-setup).
 
@@ -22,8 +22,8 @@ This installer targets **Apple Silicon (ARM64)**. It is not an Intel build. Chec
 Do not keep using the old app or disable Gatekeeper. Download a fresh copy from the release, and verify it in Terminal from the download directory:
 
 ```sh
-shasum -a 256 -c GO1-0.23.0-arm64.dmg.sha256
-hdiutil verify GO1-0.23.0-arm64.dmg
+shasum -a 256 -c GO1-0.24.0-arm64.dmg.sha256
+hdiutil verify GO1-0.24.0-arm64.dmg
 codesign --verify --deep --strict --verbose=2 /Applications/GO1.app
 spctl --assess --type execute --verbose=4 /Applications/GO1.app
 ```
@@ -41,7 +41,8 @@ The reported screenshot was confirmed to come from opening an earlier download. 
 2. For optional AI, install [Ollama for Mac](https://ollama.com/download/mac), keep it running, and install a model, for example `ollama pull qwen3:4b`. Enter the installed model name in GO1, save context and use **Check local AI**. Transcription works without Ollama.
 3. Select your audio source and grant the microphone/system-audio permissions requested for that source. Choose **Launch live companion** and enable AI guidance if wanted.
 4. Keep **Live capture protection (stealth)** enabled. **Hide Dock icon with live companion** is a separate Mac presentation preference. Both leave transcription and enabled AI running.
-5. The companion's workspace arrow restores the Dock and workspace. Closing the companion or stopping the session restores the Dock too. **Stop & mask** deliberately stops processing and clears private text; it is not the live-protection toggle.
+5. The main workspace minimizes after the audio pipeline is ready. Silence keeps the live session open. If the companion reports **Input lost**, use its workspace arrow and **Reconnect audio**; your current session and recognized text are retained. Try **Quiet voices** for soft speech or **Balanced** responsiveness with a slow model.
+6. The companion's workspace arrow restores the Dock and workspace. Closing the companion or stopping the session restores the Dock too. **Stop & mask** deliberately stops processing and clears private text; it is not the live-protection toggle.
 
 ## Verify your meeting setup
 

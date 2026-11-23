@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "06a9c789d0eb9f29c4022b24b8bf940f6f918e66",
+  "release": "https://github.com/amey1234444/GO1/releases/tag/v0.24.0-mac.36",
+  "workflowRun": 45148155847,
+  "artifactId": 14806101279,
+  "artifactZipSha256": "ffe6617070c077be3860fa98c145d538d85f1579228ba82770a5621a4590436d",
+  "artifactDigestVerifiedBeforeExtraction": true,
+  "files": {
+    "packaged-smoke.json": "806843a514fbe6246805b8da9a77476b39f5deab3c8ac5223df097d3a14e8213",
+    "package-integrity.json": "37c79eb618442f7c1306a63b1dfc4822ee8921ade45df971c441612a99fcccc8",
+    "compression.json": "87a14349cbc95a9c709176a800d500f0885e9556c39c26596a863872c0296a4e",
+    "download-policy.json": "f412529689d38a81b4baeab9232cadd771f9c10d5dc60c91a192cb0336f3dac0",
+    "framework-comparison.json": "1f7089c3ce5d11a67bf71a5263243560c439d8e80f5db0a9be63b31d98b37f34",
+    "signing.json": "d95a3714f638786c6bbcf3eba7a6b2ff67c21d1eeb518f8ca4095c2ec9143ed9",
+    "packaged-companion-compact.png": "fde086e74cb158c2d787a6e866dd9348167154dd5be5540de681e8d19db473c9",
+    "packaged-companion-real-inference.png": "58d7c8f1cbeda73fc707d4480dc12080a7d341c0320ae3039b4610b71c4d12b1",
+    "packaged-input-disconnected.png": "c571bb4246dfbf9fefee399775743d23d95d8e6d7f2d793943ec57ede804a1e3"
+  },
+  "screenshots": "Unmodified Page.captureScreenshot images of the actual packaged app on the macOS runner. Not meeting receiver images.",
+  "hardwareAudioTested": false,
+  "meetingReceiverVerified": false,
+  "notarized": false
+}
