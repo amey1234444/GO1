@@ -19,7 +19,7 @@ const report = {
   schema: 1, startedAt: new Date().toISOString(), sourceCommit: process.env.GITHUB_SHA || null,
   status: 'running', hardwareAudioTested: false, meetingReceiverVerified: false,
   scope: 'Packaged app, real preload IPC, bundled Whisper/FFmpeg, generated PCM speech, synthetic MediaStream lifecycle and real local Ollama inference.',
-  steps: [], speechModel: 'base', aiModel: model, spokenText
+  steps: [], speechModel: 'base-q5_1', aiModel: model, spokenText
 };
 const connections = [], children = [];
 let temp, mount, mounted = false;
@@ -163,10 +163,13 @@ async function main() {
     }
     return setup;
   });
-  await record('First-run speech model installation and selection', async () => {
-    const installed = await workspace.evaluate("window.go1.installModel('base')", 600000);
-    assert.equal(installed.installed, true);
-    const setup = await api("window.go1.selectModel('base')"); assert.equal(setup.ready, true);
+  await record('First-run bundled speech model is ready without a download', async () => {
+    const setup = await api('window.go1.checkSetup()');
+    assert.equal(setup.selectedModel, 'base-q5_1');
+    assert.equal(setup.ready, true);
+    assert.equal(setup.models['base-q5_1'].source, 'bundled');
+    assert.equal(await fs.realpath(setup.model), path.join(await fs.realpath(path.join(bundle, 'Contents/Resources/models')), 'ggml-base-q5_1.bin'));
+    const installed = { bundled: true, downloaded: false };
     await api(`window.go1.savePracticeProfile({role:'Software Engineer', language:'en', mode:'technical', model:${JSON.stringify(model)}})`);
     const status = await api('window.go1.localCoachStatus()'); assert.ok(status.online && status.models.includes(model));
     return { installed, setup, status };
@@ -417,6 +420,7 @@ async function main() {
     await inputPage.evaluate("document.getElementById('oaModel').value='moondream:latest';document.getElementById('oaQuestion').value='What color is the large square in this image? Keep the answer short.';document.getElementById('oaConsent').checked=true;updateOaControls();document.getElementById('oaAsk').click();true");
     await until(async()=>!(await inputPage.evaluate('oa.running')),360000);
     const result=await inputPage.evaluate("({answer:document.getElementById('oaAnswer').textContent,status:document.getElementById('oaStatus').textContent})");
+    report.visionResult = result;
     assert.match(result.status,/Analysis complete/);assert.match(result.answer,/red/i);
     const shot=await inputPage.call('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(output,'packaged-oa-vision.png'),Buffer.from(shot.data,'base64'));
     await inputPage.evaluate("window.go1.pauseForPresentation()");

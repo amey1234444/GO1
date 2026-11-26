@@ -15,7 +15,7 @@ GitHub Actions artifacts still download as ZIP archives; that is a GitHub artifa
 3. Eject the mounted image and open **Applications → GO1**. Avoid an old Downloads copy or Dock shortcut pointing at a stale app.
 4. Grant microphone/system-audio permissions only for the audio source you choose.
 
-This installer targets **Apple Silicon (ARM64)**. It is not an Intel build. Check **Apple menu → About This Mac** for the chip type. Speech model weights download separately; optional local AI requires Ollama.
+This installer targets **Apple Silicon (ARM64)**. It is not an Intel build. Check **Apple menu → About This Mac** for the chip type. From v0.26 onward, the Mac DMG includes multilingual Base Compact speech weights; optional local AI still requires Ollama. Earlier releases require a separate speech-model download.
 
 ## If macOS reports “damaged”
 
@@ -37,7 +37,7 @@ The reported screenshot was confirmed to come from opening an earlier download. 
 
 ## First session
 
-1. Under **Speech recognition model**, choose a multilingual model and click **Install / select**. Base is a smaller initial download; Small is the app default. FFmpeg, FFprobe, Whisper CLI and Whisper server are bundled; model weights download separately.
+1. In v0.26+, Base Compact is bundled and selected automatically on a fresh install. Begin recording immediately after granting microphone permission. In **Settings → Speech engine**, larger models can be downloaded optionally. FFmpeg, FFprobe, Whisper CLI and Whisper server are included.
 2. For optional AI, install [Ollama for Mac](https://ollama.com/download/mac), keep it running, and install a model, for example `ollama pull qwen3:4b`. Enter the installed model name in GO1, save context and use **Check local AI**. Transcription works without Ollama.
 3. Select your audio source and grant the microphone/system-audio permissions requested for that source. Choose **Launch live companion** and enable AI guidance if wanted.
 4. Keep **Live capture protection (stealth)** enabled. **Hide Dock icon with live companion** is a separate Mac presentation preference. Both leave transcription and enabled AI running.

@@ -128,11 +128,12 @@ async function reviewPractice(result) {
 }
 function showError(error) {
   if (state.privacyActive) return;
+  if ($('workspaceError')) { $('workspaceError').hidden = false; $('workspaceError').textContent = error instanceof Error ? error.message : String(error); }
   $('errorBox').hidden = false;
   $('errorBox').textContent = error instanceof Error ? error.message : String(error);
   setStatus('Something went wrong');
 }
-function hideError() { $('errorBox').hidden = true; }
+function hideError() { $('errorBox').hidden = true; if ($('workspaceError')) { $('workspaceError').hidden = true; $('workspaceError').textContent = ''; } }
 function renderSetup(status) {
   // macOS currently provides explicit system playback capture. Windows offers
   // microphone and imported-file transcription until a supported audio path is built.
@@ -143,14 +144,14 @@ function renderSetup(status) {
     ? 'Windows: microphone or imported audio only. System playback capture is not yet available. Recording requires consent.'
     : 'Mac system playback requires macOS 14.2+ and recording permission. GO1 does not save display video.';
   $('setupAlert').hidden = status.ready && Boolean(status.whisperServer);
-  $('modelSelect').value = status.selectedModel || 'small';
+  $('modelSelect').value = status.selectedModel || 'base-q5_1';
   const installed = status.models?.[status.selectedModel]?.installed;
-  if (!state.modelDownloading) $('modelProgress').textContent = installed ? `Selected model: ${status.selectedModel} (installed).` : `Selected model: ${status.selectedModel} (download required).`;
+  if (!state.modelDownloading) $('modelProgress').textContent = installed ? `Selected: ${status.selectedModel} · ${status.models?.[status.selectedModel]?.source === 'bundled' ? 'included with GO1 · ready offline' : 'installed on this device'}.` : `Selected model: ${status.selectedModel} (download required).`;
   if (!status.ready || !status.whisperServer) {
     const missingTools = [!status.ffmpeg && 'FFmpeg', !status.ffprobe && 'FFprobe', !status.whisper && 'whisper-cli', !status.whisperServer && 'whisper-server'].filter(Boolean);
     $('setupMessage').textContent = missingTools.length
       ? `Missing tools: ${missingTools.join(', ')}. ${status.platform === 'win32' ? 'Run PowerShell scripts/setup-windows.ps1 and follow its dependency instructions' : 'Reinstall the latest bundled Mac DMG, or run scripts/setup-macos.sh for a source checkout'}, then press Recheck.`
-      : 'One-time setup: choose a speech model below and click Install / select. Base is a smaller download; Small is the default. The recording tools are already included.';
+      : 'One-time setup: choose a speech model below and click Install / select. The Mac DMG includes Base Compact. Larger models are optional. The recording tools are already included.';
   }
   $('recordButton').disabled = !status.ready || !status.whisperServer || state.busy;
   $('transcribeFileButton').disabled = !status.ready || !state.file || state.busy;
@@ -622,7 +623,7 @@ async function enablePresentationPrivacy() {
     clearInsights();
     $('transcriptBody').textContent = '';
     $('segmentList').replaceChildren();
-    $('errorBox').hidden = true;
+    hideError();
     $('processingPane').hidden = true;
     $('exportMenu').hidden = true;
     $('privacyCurtainStatus').textContent = 'Microphone and playback capture stopped. Private transcripts cleared.';

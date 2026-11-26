@@ -101,10 +101,21 @@ test('image guidance sends reviewed image bytes only to the local model after ca
     calls.push(url);
     if(url.endsWith('/api/tags'))return {ok:true,json:async()=>({models:[{name:'vision:latest'}]})};
     if(url.endsWith('/api/show'))return {ok:true,json:async()=>({capabilities:['vision','completion']})};
-    const body=JSON.parse(options.body);assert.deepEqual(body.messages.at(-1).images,['cG5n']);
-    return {ok:true,body:new ReadableStream({start(c){c.enqueue(encoder.encode('{"message":{"content":"Reviewed image"},"done":true}\n'));c.close();}})};
+    const body=JSON.parse(options.body);assert.equal(url,'http://127.0.0.1:11434/api/generate');assert.deepEqual(body.images,['cG5n']);assert.equal(body.prompt,'Explain this image?');assert.equal(body.messages,undefined);
+    return {ok:true,body:new ReadableStream({start(c){c.enqueue(encoder.encode('{"response":"Reviewed image","done":true}'));c.close();}})};
   };
   const answer=await generateLiveGuidance({profile:{...profile,model:'vision'},question:'Explain this image?',imageBase64:'cG5n',fetchImpl});
   assert.equal(answer,'Reviewed image');assert.equal(calls.length,3);
   assert.ok(calls.every(url=>url.startsWith('http://127.0.0.1:11434/')));
+});
+test('chat parser preserves split UTF-8 and final completion without newline', async () => {
+  const raw = new TextEncoder().encode('{"message":{"content":"नमस्ते"},"done":false}\n{"done":true}');
+  const fetchImpl = async () => ({ ok:true, body:new ReadableStream({ start(c) { for (let i=0;i<raw.length;i+=2) c.enqueue(raw.slice(i,i+2)); c.close(); } }) });
+  assert.equal(await generateLiveGuidance({ profile, question:'Explain caching?', fetchImpl }), 'नमस्ते');
+});
+test('empty and truncated completed replies are not reported as success', async () => {
+  for (const [record, message] of [[{done:true}, /empty response/], [{message:{content:'Partial'},done:true,done_reason:'length'}, /response limit/]]) {
+    const fetchImpl = async () => ({ ok:true, body:new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode(JSON.stringify(record))); c.close(); } }) });
+    await assert.rejects(generateLiveGuidance({profile,question:'Explain caching?',fetchImpl}), message);
+  }
 });

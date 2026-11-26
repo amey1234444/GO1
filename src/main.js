@@ -47,7 +47,7 @@ let liveStarting = null;
 let captureDiagnostics = null;
 let worker = null;
 let manager = null;
-let selectedModel = 'small';
+let selectedModel = process.platform === 'darwin' && app.isPackaged ? 'base-q5_1' : 'small';
 let displayPermissionUntil = 0;
 const privacyGate = new PrivacyGate();
 const contentProtection = new ContentProtection({ platform: process.platform });
@@ -319,6 +319,10 @@ if (ownsInstance) app.whenReady().then(async () => {
     const file = await fs.readFile(profilePath(), 'utf8');
     if (file.length <= 16000) practiceProfile = normalizeProfile(JSON.parse(file));
   } catch { /* A missing or invalid local profile uses safe defaults. */ }
+  // Restore optional models when present; fall back to the bundled engine if
+  // an older install selected a model that is no longer on disk.
+  const availableModels = modelState(modelDirectory());
+  if (!availableModels[selectedModel]?.installed && availableModels['base-q5_1']?.installed) selectedModel = 'base-q5_1';
   manager = new ModelManager({ directory: modelDirectory(), onProgress: data => {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:model-progress', data);
   } });

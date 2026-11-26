@@ -4,6 +4,7 @@ const { normalizeProfile, LANGUAGES } = require('./session');
 const { suggestQuestion } = require('./question');
 const { requireLocalVisionModel } = require('./vision-model');
 const ENDPOINT = 'http://127.0.0.1:11434/api/chat';
+const IMAGE_ENDPOINT = 'http://127.0.0.1:11434/api/generate';
 
 function buildGuidanceMessages(profileInput, questionInput, contextInput = '') {
   const profile = normalizeProfile(profileInput);
@@ -34,7 +35,7 @@ function buildGuidanceMessages(profileInput, questionInput, contextInput = '') {
 async function generateLiveGuidance({ profile, question, context = '', signal, onChunk = () => {}, fetchImpl = fetch, imageBase64, timeoutMs = 45000, maxDurationMs = 180000 }) {
   const normalized = normalizeProfile(profile);
   const messages = buildGuidanceMessages(normalized, question, context);
-  if (imageBase64) messages[messages.length - 1].images = [imageBase64];
+
   const controller = new AbortController();
   const cancel = () => controller.abort(signal?.reason || new Error('Canceled.'));
   if (signal?.aborted) cancel();
@@ -53,10 +54,15 @@ async function generateLiveGuidance({ profile, question, context = '', signal, o
   controller.signal.addEventListener('abort', cancelRead, { once: true });
   try {
     if (imageBase64) await requireLocalVisionModel(normalized.model, { fetchImpl, signal: controller.signal });
-    response = await fetchImpl(ENDPOINT, {
+    // Completion-style vision models (including Moondream) need their native
+    // prompt template, not the role/JSON chat envelope used for talking points.
+    const request = imageBase64
+      ? { model: normalized.model, prompt: question.trim(), images: [imageBase64], stream: true, options: { temperature: 0.2, num_predict: 500 } }
+      : { model: normalized.model, messages, stream: true, options: { temperature: 0.2, num_predict: 500 } };
+    response = await fetchImpl(imageBase64 ? IMAGE_ENDPOINT : ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: normalized.model, messages, stream: true, options: { temperature: 0.2, num_predict: 500 } }),
+      body: JSON.stringify(request),
       signal: controller.signal
     });
     if (!response.ok) throw new Error(`Local Ollama returned HTTP ${response.status}. Check that ${normalized.model} is installed.`);
@@ -64,31 +70,43 @@ async function generateLiveGuidance({ profile, question, context = '', signal, o
     controller.signal.throwIfAborted();
     reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let pending = '', answer = '', complete = false, bytes = 0;
+    let pending = '', answer = '', complete = false, bytes = 0, finishReason = '';
+    const consume = line => {
+      if (!line.trim()) return;
+      let obj;
+      try { obj = JSON.parse(line); } catch { throw new Error('Malformed response from local AI.'); }
+      if (obj.error) throw new Error(String(obj.error));
+      const delta = imageBase64 ? obj.response : obj.message?.content;
+      const thinking = imageBase64 ? obj.thinking : obj.message?.thinking;
+      if (delta || thinking || obj.done) progress();
+      if (typeof delta === 'string' && delta) {
+        answer += delta;
+        if (answer.length > 14000) throw new Error('Local AI guidance too long.');
+        onChunk(delta);
+      }
+      if (obj.done === true) { complete = true; finishReason = obj.done_reason || ''; }
+    };
     for (;;) {
       const { done, value } = await reader.read();
       controller.signal.throwIfAborted();
-      if (done) break;
+      if (done) {
+        pending += decoder.decode();
+        consume(pending); // The final JSON record need not end with a newline.
+        break;
+      }
       bytes += value.byteLength;
       if (bytes > 1_000_000) throw new Error('Local AI response too large.');
       pending += decoder.decode(value, { stream: true });
       let pos;
       while ((pos = pending.indexOf('\n')) !== -1) {
-        const line = pending.slice(0, pos).trim(); pending = pending.slice(pos+1);
-        if (!line) continue;
-        const obj = JSON.parse(line);
-        if (obj.error) throw new Error(String(obj.error));
-        if (obj.message?.content || obj.message?.thinking || obj.done) progress();
-        if (obj.message?.content) {
-          const delta = String(obj.message.content);
-          answer += delta;
-          if (answer.length > 14000) throw new Error('Local AI guidance too long.');
-          onChunk(delta);
-        }
-        if (obj.done) complete = true;
+        const line = pending.slice(0, pos); pending = pending.slice(pos + 1);
+        consume(line);
       }
+      if (complete) break;
     }
-    if (!complete || !answer.trim()) throw new Error('Local AI did not complete the response.');
+    if (!complete) throw new Error('Local AI did not complete the response: the stream ended before its completion marker.');
+    if (!answer.trim()) throw new Error(`Local AI returned an empty response from ${normalized.model}${finishReason ? ' (' + finishReason + ')' : ''}. Try another installed model.`);
+    if (finishReason === 'length') throw new Error('Local AI reached its response limit. Ask a shorter or more focused question.');
     return answer.trim();
   } catch (error) {
     if (controller.signal.aborted) throw controller.signal.reason;
@@ -103,4 +121,4 @@ async function generateLiveGuidance({ profile, question, context = '', signal, o
   }
 }
 
-module.exports = { suggestQuestion, buildGuidanceMessages, generateLiveGuidance, ENDPOINT };
+module.exports = { suggestQuestion, buildGuidanceMessages, generateLiveGuidance, ENDPOINT, IMAGE_ENDPOINT };

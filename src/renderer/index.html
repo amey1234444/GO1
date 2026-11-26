@@ -11,37 +11,46 @@
   <script src="../capture/crop.js" defer></script>
   <script src="./oa.js" defer></script>
   <link rel="stylesheet" href="./oa.css" />
+  <link rel="stylesheet" href="./workspace.css" />
+  <script src="./workspace.js" defer></script>
 </head>
 <body>
   <div class="shell">
     <aside class="sidebar">
       <div class="logo"><span class="logo-mark">G<span>1</span></span><div><strong>GO1</strong><small>VOICE WORKSPACE</small></div></div>
       <nav class="navigation" aria-label="Main navigation">
-        <div class="nav-label">WORKSPACE</div>
-        <a class="nav-item selected" href="#interviewStudio"><span class="nav-icon">◈</span><span>Interview studio</span><span class="nav-dot"></span></a><a class="nav-item" href="#transcriptionTitle"><span class="nav-icon">◎</span><span>Transcription</span></a>
+        <div class="nav-label">YOUR WORKSPACE</div>
+        <button class="nav-item selected" data-view="home" type="button"><span class="nav-icon">⌂</span>Overview</button>
+        <button class="nav-item" data-view="audio" type="button"><span class="nav-icon">≋</span>Transcription</button>
+        <button class="nav-item" data-view="guidance" type="button"><span class="nav-icon">✦</span>Live guidance</button>
+        <button class="nav-item" data-view="oa" type="button"><span class="nav-icon">▣</span>Image studio</button>
+        <div class="nav-label nav-section">AFTER YOUR SESSION</div>
+        <button class="nav-item" data-view="insights" type="button"><span class="nav-icon">◷</span>Review &amp; insights</button>
+        <button class="nav-item" data-view="settings" type="button"><span class="nav-icon">⚙</span>Settings</button>
       </nav>
       <div class="side-spacer"></div>
       <div class="privacy-panel"><span class="privacy-symbol">◈</span><strong>Private by default</strong><p>Your audio stays on this device. GO1 runs local speech recognition without uploading recordings to a cloud service.</p><span class="local-chip">● Local processing</span></div>
-      <button id="privacyButton" class="privacy-action" type="button">Stop &amp; mask</button><div class="version">GO1 • version 0.25.0</div>
+      <button id="privacyButton" class="privacy-action" type="button">Stop &amp; mask</button><div class="version">GO1 • version 0.26.0</div>
     </aside>
     <main class="main">
-      <header class="topbar"><span>WORKSPACE <span class="breadcrumb">/</span> TRANSCRIPTION</span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
+      <header class="topbar"><span>GO1 <span class="breadcrumb">/</span> <strong id="viewTitle">Overview</strong></span><span id="captureIndicator" class="capture-indicator idle" role="status" aria-live="polite">Capture off</span></header>
       <div class="content">
+        <div id="workspaceError" class="error-box" role="alert" hidden></div>
         <section class="workspace-modes" aria-label="Workspace mode">
           <div class="mode-tabs" role="tablist" aria-label="Workflow"><button id="interviewModeTab" class="mode-tab active" type="button" role="tab" aria-selected="true" aria-controls="interviewModePanel">Interview</button><button id="oaModeTab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="oaModePanel">OA practice</button></div>
           <div class="visibility-actions"><button id="hideAppButton" class="small-button" type="button" disabled>Hide / restore · ⌘D</button><span id="visibilityStatus" role="status">Checking shortcut…</span></div>
         </section>
         <p id="workspaceModeStatus" class="microcopy" role="status">Hiding windows keeps processing active. Stop &amp; mask stops it.</p>
         <div id="interviewModePanel" role="tabpanel" aria-labelledby="interviewModeTab">
-        <div class="heading-line" id="transcriptionTitle"><div><div class="eyebrow">SPEECH INTELLIGENCE</div><h1>Audio to text<span class="gradient-dot">.</span></h1><p class="subtitle">Accurate multilingual transcription, completely on your Mac.</p></div><span class="feature-pill"><span class="dot"></span> 99-language model family</span></div>
-        <section class="studio" id="interviewStudio" aria-labelledby="studioTitle">
+        <div class="heading-line" id="transcriptionTitle" data-workspace-view="home"><div><div class="eyebrow">YOUR SPACE TO THINK</div><h1>Ready for your next conversation?</h1><p class="subtitle">Prepare your context. Capture the conversation. Keep the useful parts.</p></div><span class="feature-pill"><span class="dot"></span> Multilingual speech</span></div>
+        <section class="studio" data-workspace-view="home" id="interviewStudio" aria-labelledby="studioTitle">
           <div class="studio-hero">
-            <div><div class="studio-tag"><span class="studio-tag-dot"></span> GO1 / INTERVIEW STUDIO</div><h2 id="studioTitle">Prepare for your next <em>conversation.</em></h2><p>Set your role and language, record a permitted discussion, view live captions, and request on-screen talking points using optional local AI. Everything stays on your device.</p></div>
+            <div><div class="studio-tag"><span class="studio-tag-dot"></span> SESSION SETUP</div><h2 id="studioTitle">A little preparation.<br>A clearer <em>conversation.</em></h2><p>Choose your role and language, then open your live companion. Speech becomes text on your device; optional AI helps you review and reflect.</p></div>
             <div class="studio-orbit" aria-hidden="true"><div class="studio-orbit-inner">G<span>1</span></div></div>
           </div>
           <div class="studio-layout">
             <form id="studioForm" class="studio-form">
-              <div class="studio-form-head"><span>01 / PRACTICE CONTEXT</span><span class="form-note">Saved locally · never uploaded</span></div>
+              <div class="studio-form-head"><span>YOUR CONTEXT</span><span class="form-note">Saved locally · never uploaded</span></div>
               <div class="studio-form-grid">
                 <label>Target role <input class="studio-input" id="studioRole" name="role" maxlength="120" required placeholder="e.g. Backend Software Engineer" value="Software Engineer"></label>
                 <label>Interview language <select class="studio-input" id="studioLanguage" name="language"><option value="en">English</option><option value="auto">Auto-detect</option><option value="hi">Hindi</option><option value="mr">Marathi</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="pt">Portuguese</option><option value="ar">Arabic</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="ta">Tamil</option><option value="te">Telugu</option><option value="gu">Gujarati</option><option value="bn">Bengali</option><option value="kn">Kannada</option><option value="ml">Malayalam</option><option value="pa">Punjabi</option><option value="ur">Urdu</option><option value="ne">Nepali</option><option value="nl">Dutch</option><option value="ru">Russian</option><option value="uk">Ukrainian</option><option value="fa">Persian</option><option value="tr">Turkish</option><option value="th">Thai</option><option value="vi">Vietnamese</option><option value="id">Indonesian</option><option value="ms">Malay</option><option value="sw">Swahili</option><option value="he">Hebrew</option><option value="pl">Polish</option><option value="sv">Swedish</option><option value="fi">Finnish</option><option value="el">Greek</option><option value="it">Italian</option></select></label>
@@ -50,12 +59,12 @@
                 <label class="wide-field">Role description <textarea class="studio-input" id="studioRoleDescription" name="roleDescription" maxlength="1600" rows="2" placeholder="What will you be responsible for in this role?"></textarea></label>
                 <label class="wide-field">Job description <textarea class="studio-input" id="studioJobDescription" name="jobDescription" maxlength="10000" rows="4" placeholder="Paste the job requirements, technologies and responsibilities here..."></textarea></label>
               </div>
-              <div class="studio-actions"><button id="launchPracticeButton" type="submit" class="studio-launch">Launch live companion <span aria-hidden="true">↗</span></button><button id="savePracticeButton" type="button" class="studio-save">Save context</button><span id="studioStatus" role="status" aria-live="polite">Ready to configure</span></div>
+              <div class="studio-actions"><button id="launchPracticeButton" type="submit" class="studio-launch">Launch live companion</button><button id="savePracticeButton" type="button" class="studio-save">Save context</button><span id="studioStatus" role="status" aria-live="polite">Ready to configure</span></div>
             </form>
-            <div class="studio-info"><div class="studio-info-head">02 / SESSION FLOW</div><div class="studio-flow-row"><span>01</span><div><strong>Configure</strong><p>Role, context, language and focus</p></div></div><div class="studio-flow-row"><span>02</span><div><strong>Capture a permitted session</strong><p>Local Whisper captions while you speak</p></div></div><div class="studio-flow-row"><span>03</span><div><strong>Review and improve</strong><p>Use local Ollama for optional guidance and post-session review</p></div></div><div class="studio-divider"></div><div class="studio-ai-status" id="studioAiStatus">AI coach: not checked</div><button id="checkCoachButton" type="button" class="studio-save">Check local AI</button><div class="studio-small">Live capture protection keeps transcription and enabled AI running. Stop &amp; mask is a separate emergency action.</div></div>
+            <div class="studio-info"><div class="studio-info-head">HOW IT WORKS</div><div class="studio-flow-row"><span>01</span><div><strong>Configure</strong><p>Role, context, language and focus</p></div></div><div class="studio-flow-row"><span>02</span><div><strong>Capture a permitted session</strong><p>Local Whisper captions while you speak</p></div></div><div class="studio-flow-row"><span>03</span><div><strong>Review and improve</strong><p>Use local Ollama for optional guidance and post-session review</p></div></div><div class="studio-divider"></div><div class="studio-ai-status" id="studioAiStatus">AI coach: not checked</div><button id="checkCoachButton" type="button" class="studio-save">Check local AI</button><div class="studio-small">Live capture protection keeps transcription and enabled AI running. Stop &amp; mask is a separate emergency action.</div></div>
           </div>
         </section>
-        <section class="meeting-safe" aria-labelledby="meetingSafeTitle">
+        <section class="meeting-safe" data-workspace-view="settings" aria-labelledby="meetingSafeTitle">
           <div class="meeting-safe-copy"><div class="meeting-safe-eyebrow">SHARE-SAFE PRESENTATIONS</div><h2 id="meetingSafeTitle">Control what you present</h2><p>Live capture protection requests that GO1 stay out of screen captures while transcription and enabled AI keep running. Share a selected other window or tab, and verify the receiving device. Stop &amp; mask separately ends processing and clears private text.</p></div>
           <div class="meeting-safe-actions"><label for="meetingPlatform">Meeting app</label><select id="meetingPlatform" class="select"><option value="meet">Google Meet</option><option value="teams">Microsoft Teams</option><option value="zoom">Zoom</option></select><button id="shareSafeButton" class="secondary-button" type="button">Stop capture &amp; mask transcript</button><span id="privacyShortcutStatus" class="shortcut-note" role="status">Checking privacy shortcut...</span></div>
           <div class="capture-protection-controls">
@@ -70,22 +79,23 @@
           <p class="meeting-safe-help" id="meetingHelp" role="status">Select the platform to see sharing guidance.</p><details class="receiver-check"><summary>How to verify what the other participant sees</summary><p>Use two consenting test accounts on separate devices. Enable live capture protection, start a permitted session and confirm that a fresh spoken phrase and AI response appear locally. Share a selected other window, then separately test your entire screen; inspect both on the receiving device while GO1 remains open. Do not press Stop &amp; mask during this test: it deliberately stops transcription and AI. If GO1 is visible remotely, full-screen exclusion has failed for that configuration.</p><p>Record the macOS version, meeting application version, share source and receiver screenshot. Repeat for Google Meet, Teams and Zoom.</p></details>
         </section>
         <div id="setupAlert" class="setup-alert" role="status" aria-live="polite" hidden><div><strong>Local transcription engine setup required</strong><p id="setupMessage"></p></div><button id="recheckButton" class="small-button" type="button">Recheck</button></div>
-        <div class="card model-manager" id="modelManager" style="margin-bottom:16px;padding:20px">
-          <div class="settings-head">LOCAL MODEL MANAGER</div>
-          <p class="microcopy">Download multilingual speech models directly to your Mac. A model is never uploaded to our servers.</p>
+        <div class="card model-manager" data-workspace-view="settings" id="modelManager">
+          <div class="settings-head">SPEECH ENGINE</div>
+          <p class="microcopy">Base Compact is included in the Mac app and works offline. Choose an optional larger model for higher accuracy.</p>
           <label class="setting-label" for="modelSelect">Speech recognition model</label>
           <div class="model-control"><select id="modelSelect" class="select">
+            <option value="base-q5_1" selected>Base Compact — included with GO1</option>
             <option value="base">Base — fastest, lower accuracy</option>
-            <option value="small" selected>Small — balanced</option>
+            <option value="small">Small — balanced</option>
             <option value="medium">Medium — higher accuracy</option>
             <option value="large-v3-turbo">Large v3 Turbo — capable Macs</option>
           </select><button type="button" id="installModelButton" class="small-button">Install / select</button><button type="button" id="cancelModelButton" class="small-button" hidden>Cancel</button></div>
           <button type="button" id="installVadButton" class="small-button">Install Silero VAD (optional)</button>
           <div id="modelProgress" role="status" aria-live="polite" class="microcopy">Model status will appear here.</div>
         </div>
-        <div class="workspace-grid">
+        <div class="workspace-grid" data-workspace-view="audio">
           <section class="card input-card" aria-labelledby="sourceTitle">
-            <div class="card-heading"><div><span class="card-overline">01 / INPUT</span><h2 id="sourceTitle">Choose your audio</h2></div><span class="round-icon">♫</span></div>
+            <div class="card-heading"><div><span class="card-overline">AUDIO SOURCE</span><h2 id="sourceTitle">Choose your audio</h2></div><span class="round-icon">♫</span></div>
             <div class="mode-tabs" role="tablist" aria-label="Audio source"><button class="mode-tab active" id="recordTab" type="button" role="tab" aria-selected="true">● Record microphone</button><button class="mode-tab" id="uploadTab" type="button" role="tab" aria-selected="false">↥ Upload file</button></div>
             <div id="recordPanel" class="source-panel">
             <label class="setting-label" for="sourceSelect">Recording source</label>
@@ -100,7 +110,7 @@
             <div class="footnote">Powered by the multilingual Whisper model. Recognition accuracy depends on audio quality, language and model size.</div>
           </section>
           <section class="card results-card" aria-labelledby="resultsTitle">
-            <div class="card-heading"><div><span class="card-overline">02 / OUTPUT</span><h2 id="resultsTitle">Your transcript</h2></div><div class="action-group"><button class="small-button" id="openReviewButton" type="button" disabled title="Open a separate review of a completed practice session">Practice review</button><button class="icon-button" id="copyButton" title="Copy transcript" aria-label="Copy transcript" disabled>⧉</button><button class="icon-button" id="exportButton" title="Export transcript" aria-label="Export transcript" disabled>⇩</button></div></div>
+            <div class="card-heading"><div><span class="card-overline">LIVE TRANSCRIPT</span><h2 id="resultsTitle">Your transcript</h2></div><div class="action-group"><button class="small-button" id="openReviewButton" type="button" disabled title="Open a separate review of a completed practice session">Practice review</button><button class="icon-button" id="copyButton" title="Copy transcript" aria-label="Copy transcript" disabled>⧉</button><button class="icon-button" id="exportButton" title="Export transcript" aria-label="Export transcript" disabled>⇩</button></div></div>
             <div id="statusLine" class="status-line" role="status" aria-live="polite"><span class="pulse-dot"></span><span id="statusText">Waiting for audio</span></div>
             <div id="emptyResult" class="empty-result"><div class="document-image">≡<span>···</span></div><h3>Words will appear here</h3><p>Record your voice with optional rolling live captions, or upload audio for a timestamped transcript.</p></div>
             <div id="transcriptContent" hidden><div class="result-meta"><span id="resultLanguage" class="meta-chip">Language: —</span><span id="resultDuration" class="meta-chip">Duration: —</span><span id="resultSegments" class="meta-chip">0 segments</span></div><div class="transcript-body" id="transcriptBody" tabindex="0" aria-label="Transcript text"></div><div class="segment-heading">TIMESTAMPED SEGMENTS</div><div id="segmentList" class="segment-list"></div></div>
@@ -139,8 +149,8 @@
             <p class="feedback-observation" id="practiceObservation">Record your own mock-interview answer or transcribe a practice file to review pace and potential filler words.</p>
           </section>
         </div>
-        <section class="card live-assist" id="liveAssist" aria-labelledby="liveAssistTitle">
-          <div class="card-heading"><div><span class="card-overline">05 / CONSENT-BASED LIVE ASSIST</span><h2 id="liveAssistTitle">Live meeting guidance</h2></div><span class="studio-local-tag">● Local Ollama · Visible UI</span></div>
+        <section class="card live-assist" data-workspace-view="guidance" id="liveAssist" aria-labelledby="liveAssistTitle">
+          <div class="card-heading"><div><span class="card-overline">LIVE GUIDANCE</span><h2 id="liveAssistTitle">Live meeting guidance</h2></div><span class="studio-local-tag">● Local Ollama · Visible UI</span></div>
           <p class="insight-description">For meetings or interviews where AI assistance and recording are authorized. GO1 identifies possible questions from live captions. Suggestions require your click; they are not guaranteed correct.</p>
           <label class="assist-consent"><input type="checkbox" id="assistConsent" /> I have permission to record this discussion and use an AI assistant.</label>
           <label class="setting-label" for="assistQuestion">Possible question · edit before requesting guidance</label>
@@ -148,8 +158,8 @@
           <div class="studio-actions"><button class="studio-launch" id="assistGenerate" type="button" disabled>Suggest talking points</button><button class="studio-save" id="showCompanionButton" type="button" disabled>Show companion</button><button class="studio-save" id="assistCancel" type="button" hidden>Cancel</button><span id="assistStatus" role="status" aria-live="polite">Start a live session and enable permitted guidance.</span></div>
           <div class="studio-feedback-output" id="assistOutput" hidden aria-live="polite"></div>
         </section>
-        <section class="card studio-coaching" id="studioCoaching" aria-labelledby="studioCoachTitle">
-          <div class="card-heading"><div><span class="card-overline">06 / AFTER-SESSION STUDY</span><h2 id="studioCoachTitle">Role-aware practice coach</h2></div><span class="studio-local-tag">● Ollama · localhost</span></div>
+        <section class="card studio-coaching" data-workspace-view="insights" id="studioCoaching" aria-labelledby="studioCoachTitle">
+          <div class="card-heading"><div><span class="card-overline">PRACTICE COACH</span><h2 id="studioCoachTitle">Role-aware practice coach</h2></div><span class="studio-local-tag">● Ollama · localhost</span></div>
           <p class="insight-description">After you finish a practice recording, generate role-aware feedback and an example answer for self-study. No AI model is queried while you're recording.</p>
           <div class="studio-actions"><button id="generateFeedbackButton" class="studio-launch" type="button" disabled>Generate practice feedback</button><button id="cancelFeedbackButton" class="studio-save" type="button" hidden>Cancel</button><span id="feedbackStatus" role="status" aria-live="polite">Record and finish an answer to begin.</span></div>
           <div id="feedbackOutput" class="studio-feedback-output" aria-live="polite" hidden></div>

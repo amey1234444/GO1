@@ -1,3 +1,9 @@
+## GO1 v0.26 release update
+
+Download and inspect build history at [GO1 Release Desk](https://go1-release-desk.velvetywoodpecker16.chatgpt.site/). Sign-in is required; credentials are managed server-side, not in this repository. New verified DMGs publish there through GitHub OIDC, without static upload credentials. Historical GitHub releases remain available.
+
+See [v0.26 implementation and verification](docs/RELEASE_V026.md).
+
 # GO1
 
 ## v0.24 — quiet-session recovery and workspace minimization
@@ -72,7 +78,7 @@ Launching a consent-based live session opens a compact 94%-opacity **ordinary ma
 
 ## macOS first: testable ARM64 DMG (v0.10.0)
 
-The **macOS Apple Silicon DMG workflow** now builds and bundles `ffmpeg`, `ffprobe`, `whisper-cli`, and a persistent `whisper-server` in `GO1.app/Contents/Resources/native/bin`. The model is downloaded on the first launch from inside GO1; no per-minute API charges. For local builds, run `bash scripts/build-macos-native.sh && npm run make:mac`, then `GO1_BUNDLE_NATIVE=1 bash scripts/verify-dmg.sh`. Full Mac installation and recording checklist: [docs/MAC_FIRST_INSTALL_AND_QA.md](docs/MAC_FIRST_INSTALL_AND_QA.md).
+The **macOS Apple Silicon DMG workflow** now builds and bundles `ffmpeg`, `ffprobe`, `whisper-cli`, and a persistent `whisper-server` in `GO1.app/Contents/Resources/native/bin`. The Mac DMG also bundles the multilingual Base Compact (base-q5_1) speech model. It is selected on first launch, so audio-to-text works without Homebrew or another download. Larger speech models and local Ollama AI are optional. For local builds, run `bash scripts/build-macos-native.sh && node scripts/bundle-speech-model.js && npm run make:mac`, then `GO1_BUNDLE_NATIVE=1 bash scripts/verify-dmg.sh`. Full Mac installation and recording checklist: [docs/MAC_FIRST_INSTALL_AND_QA.md](docs/MAC_FIRST_INSTALL_AND_QA.md).
 
 **Privacy boundary:** presentation privacy stops recording and masks transcripts. The app does not offer anti-capture or invisible interview assistance. The preview DMG is unsigned and must be tested on your Mac; macOS will require user permission for microphone or system playback capture.
 
@@ -90,7 +96,7 @@ GO1 now has a **visible, consent-based mock-interview studio** with independentl
 
 The app talks to Ollama only on `127.0.0.1:11434`. There is no embedded API key. If Ollama is unavailable, transcription and deterministic practice statistics continue working, and the coach shows a clear error. The coach uses the saved role/JD context and the completed transcript, but may produce incorrect information; review its suggestions. There is **no live hidden answer generation**, no anti-capture invisibility, and Presentation Privacy cancels active work.
 
-On macOS, build the unsigned DMG with `bash scripts/build-macos-native.sh && npm run make:mac`; the existing GitHub macOS workflow performs installation verification of the bundled transcription binaries. Physical microphone tests, speech quality and notarization remain separate requirements.
+On macOS, build the unsigned DMG with `bash scripts/build-macos-native.sh && node scripts/bundle-speech-model.js && npm run make:mac`; the existing GitHub macOS workflow performs installation verification of the bundled transcription binaries. Physical microphone tests, speech quality and notarization remain separate requirements.
 
 
 GO1 is a **local-first Electron application for consent-based recording and transcription**. It has two recording sources—microphone and macOS system playback audio—plus file import and exports. No model API key, cloud account, or subscription is required for local speech recognition.
