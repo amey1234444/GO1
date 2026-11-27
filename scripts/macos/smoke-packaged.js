@@ -174,6 +174,17 @@ async function main() {
     const status = await api('window.go1.localCoachStatus()'); assert.ok(status.online && status.models.includes(model));
     return { installed, setup, status };
   });
+  await record('Workspace navigation preserves context and isolates each view', async () => {
+    const before = await api("({role:document.getElementById('studioRole').value,source:document.getElementById('sourceSelect').value,model:document.getElementById('modelSelect').value})");
+    for (const view of ['home','settings','audio','guidance','insights','home']) {
+      const visible = await api(`(() => {showWorkspaceView(${JSON.stringify(view)}); return [...document.querySelectorAll('[data-workspace-view]')].filter(x=>!x.hidden).map(x=>x.dataset.workspaceView);})()`);
+      assert.ok(visible.length > 0 && visible.every(value => value === view), `Unexpected visible content in ${view}: ${visible}`);
+    }
+    assert.deepEqual(await api("({role:document.getElementById('studioRole').value,source:document.getElementById('sourceSelect').value,model:document.getElementById('modelSelect').value})"),before);
+    const shot = await workspace.call('Page.captureScreenshot',{format:'png'});
+    await fs.writeFile(path.join(output,'packaged-workspace-overview.png'),Buffer.from(shot.data,'base64'));
+    return {views:6,contextRetained:true};
+  });
   const id = await record('Live session opens a protected companion', async () => {
     const id = await api(`window.go1.startLive({language:'en',audioSource:'microphone',latencyMode:'balanced',assistancePermitted:true})`);
     const info = await api('window.go1.captureProtectionInfo()');

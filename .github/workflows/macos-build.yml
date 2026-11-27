@@ -46,7 +46,14 @@ jobs:
           (npm run check && npm test) 2>&1 | tee out/release-evidence/checks.log
       - name: Verify native window capture-protection API state
         run: npm run smoke:protection
+      - name: Restore compiled native runtime
+        id: native-cache
+        uses: actions/cache@v4
+        with:
+          path: build/native
+          key: go1-native-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/build-macos-native.sh') }}
       - name: Build bundled transcription tools (ARM64)
+        if: steps.native-cache.outputs.cache-hit != 'true'
         id: native
         run: |
           mkdir -p out/release-evidence
