@@ -105,7 +105,7 @@ $('oaAsk').addEventListener('click',async()=>{
   const epoch=oa.epoch;oa.requestId=crypto.randomUUID();oa.running=true;updateOaControls();$('oaAnswer').textContent='';$('oaAnswer').hidden=false;oaStatus('Analysing with your local vision model…');
   try{const answer=await window.go1.analyseImage({requestId:oa.requestId,dataUrl:oaPng(),model:$('oaModel').value.trim(),question:$('oaQuestion').value,permitted:$('oaConsent').checked});
     if(epoch!==oa.epoch || state.privacyActive)return;$('oaAnswer').textContent=answer;oaStatus('Analysis complete. Verify the interpretation and reasoning.');
-  }catch(error){if(epoch===oa.epoch && !state.privacyActive)oaStatus(error.message+' Check that the installed model supports images.');}
+  }catch(error){if(epoch===oa.epoch && !state.privacyActive)oaStatus(error.message.replace(/^Error invoking remote method '[^']+': (?:Error: )?/, ''));}
   finally{if(epoch===oa.epoch){oa.running=false;updateOaControls();}}
 });
 $('oaCancel').addEventListener('click',async()=>{oa.epoch++;oa.requestId=null;oa.running=false;await window.go1.cancelImageAnalysis();oaStatus('Analysis cancelled; any partial answer remains for review.');updateOaControls();});

@@ -54,7 +54,7 @@ async function generateLiveGuidance({ profile, question, context = '', signal, o
   controller.signal.addEventListener('abort', cancelRead, { once: true });
   try {
     if (imageBase64) await requireLocalVisionModel(normalized.model, { fetchImpl, signal: controller.signal });
-    // Completion-style vision models (including Moondream) need their native
+    // Completion-style vision models need their native
     // prompt template, not the role/JSON chat envelope used for talking points.
     const request = imageBase64
       ? { model: normalized.model, prompt: question.trim(), images: [imageBase64], stream: true, options: { temperature: 0.2, num_predict: 500 } }

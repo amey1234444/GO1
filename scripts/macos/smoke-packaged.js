@@ -399,13 +399,13 @@ async function main() {
     return { recoveredTranscript:result.text, sessionRetainedUntilExplicitStop:true };
   });
   await record('OA same-window capture, green crop cursor and retained draft', async () => {
-    await inputPage.evaluate("selectWorkspaceMode('oa')");
+    await inputPage.evaluate("document.querySelector('[data-view=oa]').click()");
     const displays=await inputPage.evaluate('window.go1.captureDisplays()');assert.ok(displays.length>0);
     const captured=await inputPage.evaluate("window.go1.captureDisplay("+JSON.stringify(displays[0].id)+").then(x=>({width:x.width,height:x.height,valid:x.dataUrl.startsWith('data:image/png;')}))");
     assert.ok(captured.valid && captured.width>0 && captured.height>0);
     const count=(await targets()).filter(x=>x.type==='page').length;
     // A deterministic image makes crop-coordinate assertions independent of desktop contents.
-    await inputPage.evaluate("(async()=>{const c=document.createElement('canvas');c.width=400;c.height=300;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,400,300);x.fillStyle='red';x.fillRect(30,30,340,240);await loadOaImage(c.toDataURL());document.getElementById('oaCanvas').scrollIntoView({block:'center'});return true;})()");
+    await inputPage.evaluate("(async()=>{const c=document.createElement('canvas');c.width=400;c.height=300;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,400,300);x.fillStyle='red';x.fillRect(110,60,180,180);await loadOaImage(c.toDataURL());document.getElementById('oaCanvas').scrollIntoView({block:'center'});return true;})()");
     const rect=await inputPage.evaluate("(()=>{const c=document.getElementById('oaCanvas'),r=c.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,cursor:getComputedStyle(c).cursor};})()");
     assert.match(rect.cursor,/crop-cursor/);
     await inputPage.call('Input.dispatchMouseEvent',{type:'mousePressed',x:rect.x+rect.w*.1,y:rect.y+rect.h*.1,button:'left',clickCount:1});
@@ -416,6 +416,8 @@ async function main() {
     assert.equal(selected.cursor,'default');
     await inputPage.evaluate("document.getElementById('oaApplyCrop').click()");
     await until(async()=> (await inputPage.evaluate('oa.image.width'))<400);
+    const pixels=await inputPage.evaluate("(()=>{const c=document.getElementById('oaCanvas'),x=c.getContext('2d');return {corner:Array.from(x.getImageData(0,0,1,1).data),center:Array.from(x.getImageData(c.width/2,c.height/2,1,1).data)};})()");
+    assert.deepEqual(pixels.corner,[255,255,255,255]);assert.deepEqual(pixels.center,[255,0,0,255]);
     const draft=await inputPage.evaluate("({image:oaPng(),question:document.getElementById('oaQuestion').value})");
     await inputPage.evaluate('window.go1.toggleVisibility()');
     assert.ok((await inputPage.evaluate('window.go1.visibilityInfo()')).windows.every(window=>!window.visible));
@@ -426,17 +428,25 @@ async function main() {
     return {captured,selected,noAdditionalWindow:true,draftRetained:true};
   });
   await record('Real local vision model receives the reviewed crop', async () => {
-    const visionModel='moondream:latest';
+    // Moondream on Ollama 0.40.16 stops at EOS even outside GO1.
+    // Keep a real image/semantic assertion using LLaVA; never accept empty output.
+    const visionModel='llava:7b';
     await run('ollama',['pull',visionModel],{timeout:900000,maxBuffer:32*1024*1024,env:{...process.env,OLLAMA_HOST:'127.0.0.1:11434'}});
-    await inputPage.evaluate("document.getElementById('oaModel').value='moondream:latest';document.getElementById('oaQuestion').value='What color is the large square in this image? Keep the answer short.';document.getElementById('oaConsent').checked=true;updateOaControls();document.getElementById('oaAsk').click();true");
+    await inputPage.evaluate("document.getElementById('oaModel').value='llava:7b';document.getElementById('oaQuestion').value='What color is the large square in this image? Keep the answer short.';document.getElementById('oaConsent').checked=true;updateOaControls();document.getElementById('oaAsk').click();true");
     await until(async()=>!(await inputPage.evaluate('oa.running')),360000);
     const result=await inputPage.evaluate("({answer:document.getElementById('oaAnswer').textContent,status:document.getElementById('oaStatus').textContent})");
     report.visionResult = result;
+    report.visionModel = (await json('http://127.0.0.1:11434/api/tags')).models.find(item => item.name === visionModel);
     assert.match(result.status,/Analysis complete/);assert.match(result.answer,/red/i);
     const shot=await inputPage.call('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(output,'packaged-oa-vision.png'),Buffer.from(shot.data,'base64'));
+    // A second color prevents a constant answer from satisfying real image validation.
+    await inputPage.evaluate("(async()=>{const c=document.createElement('canvas');c.width=320;c.height=240;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,320,240);x.fillStyle='blue';x.fillRect(70,30,180,180);await loadOaImage(c.toDataURL(),false);document.getElementById('oaAsk').click();return true;})()");
+    await until(async()=>!(await inputPage.evaluate('oa.running')),360000);
+    const blue=await inputPage.evaluate("({answer:document.getElementById('oaAnswer').textContent,status:document.getElementById('oaStatus').textContent})");
+    report.visionBlueResult=blue;assert.match(blue.status,/Analysis complete/);assert.match(blue.answer,/blue/i);
     await inputPage.evaluate("window.go1.pauseForPresentation()");
     await until(async()=>await inputPage.evaluate("oa.image===null && document.getElementById('oaAnswer').textContent===''"));
-    return {model:visionModel,...result,privacyClearedImage:true,scope:'Simple color fixture; not a coding/OCR accuracy benchmark'};
+    return {model:visionModel,...result,blue,privacyClearedImage:true,scope:'Two color fixtures; not a coding/OCR accuracy benchmark'};
   });
   report.status = 'passed';
 }

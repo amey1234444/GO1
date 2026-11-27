@@ -48,7 +48,7 @@ jobs:
         run: npm run smoke:protection
       - name: Restore compiled native runtime
         id: native-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: build/native
           key: go1-native-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/build-macos-native.sh') }}
@@ -59,6 +59,12 @@ jobs:
           mkdir -p out/release-evidence
           set -o pipefail
           bash scripts/build-macos-native.sh 2>&1 | tee out/release-evidence/native.log
+      - name: Cache compiled native runtime
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: build/native
+          key: ${{ steps.native-cache.outputs.cache-primary-key }}
       - name: Bundle verified multilingual speech model
         id: speech
         run: |
