@@ -2,11 +2,11 @@
 
 ## Download the DMG directly
 
-Current: **[GO1-0.24.0-arm64.dmg — 104.0 MiB](https://github.com/amey1234444/GO1/releases/download/v0.24.0-mac.36/GO1-0.24.0-arm64.dmg)** · [Checksum](https://github.com/amey1234444/GO1/releases/download/v0.24.0-mac.36/GO1-0.24.0-arm64.dmg.sha256). This is an **ad-hoc preview** with verified signature integrity, but it is **not Apple-notarized** and its CI Gatekeeper assessment was rejected. The quarantined-copy assessment also reported a missing notarization ticket and an internal XProtect error. See the [v0.24 evidence](LIVE_SESSION_RELIABILITY_V024.md) and [independent policy control experiment](MAC_INSTALLER_V023.md). A normally trusted first launch remains unverified.
+Sign in to [GO1 Release Desk](https://go1-release-desk.velvetywoodpecker16.chatgpt.site/) and choose an available version in **Downloads**. New versions appear only after packaged validation passes. The portal shows size, SHA-256, bundled-model status and build history. Historical v0.24 and earlier downloads remain available; those versions require a separate speech-model download.
 
-Open [GO1 Releases](https://github.com/amey1234444/GO1/releases) and choose the latest Mac release. Under **Assets**, download **GO1-0.24.0-arm64.dmg** and its `.sha256` checksum. Do not download the automatically generated source ZIP/tarball. The release title and evidence state whether it is **Apple-notarized** or an **ad-hoc preview**.
+From v0.26 onward, new DMGs contain the speech runtime and multilingual model. They are not automatically Apple-notarized: check the release label. Developer ID signing credentials are required for normal Gatekeeper trust. See [Apple signing setup](MAC_INSTALLER_V022.md#apple-signed-distribution-setup).
 
-GitHub Actions artifacts still download as ZIP archives; that is a GitHub artifact wrapper. The release asset is the direct DMG download. Never rename a ZIP to DMG. See [v0.23 packaging and policy evidence](MAC_INSTALLER_V023.md) and [Apple signing setup](MAC_INSTALLER_V022.md#apple-signed-distribution-setup).
+Download the `.dmg` itself. Never rename a ZIP archive to DMG.
 
 ## Install and open
 
@@ -19,11 +19,11 @@ This installer targets **Apple Silicon (ARM64)**. It is not an Intel build. Chec
 
 ## If macOS reports “damaged”
 
-Do not keep using the old app or disable Gatekeeper. Download a fresh copy from the release, and verify it in Terminal from the download directory:
+Do not keep using the old app or disable Gatekeeper. Download a fresh copy from the portal. Compare `shasum -a 256` output with the checksum shown for that exact version. For example, substituting your downloaded filename:
 
 ```sh
-shasum -a 256 -c GO1-0.24.0-arm64.dmg.sha256
-hdiutil verify GO1-0.24.0-arm64.dmg
+shasum -a 256 GO1-0.26.0-arm64.dmg
+hdiutil verify GO1-0.26.0-arm64.dmg
 codesign --verify --deep --strict --verbose=2 /Applications/GO1.app
 spctl --assess --type execute --verbose=4 /Applications/GO1.app
 ```

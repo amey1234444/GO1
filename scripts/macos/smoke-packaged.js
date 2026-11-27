@@ -433,7 +433,7 @@ async function main() {
     const visionModel='llava:7b';
     await run('ollama',['pull',visionModel],{timeout:900000,maxBuffer:32*1024*1024,env:{...process.env,OLLAMA_HOST:'127.0.0.1:11434'}});
     await inputPage.evaluate("document.getElementById('oaModel').value='llava:7b';document.getElementById('oaQuestion').value='What color is the large square in this image? Keep the answer short.';document.getElementById('oaConsent').checked=true;updateOaControls();document.getElementById('oaAsk').click();true");
-    await until(async()=>!(await inputPage.evaluate('oa.running')),360000);
+    await until(async()=>!(await inputPage.evaluate('oa.running')),420000);
     const result=await inputPage.evaluate("({answer:document.getElementById('oaAnswer').textContent,status:document.getElementById('oaStatus').textContent})");
     report.visionResult = result;
     report.visionModel = (await json('http://127.0.0.1:11434/api/tags')).models.find(item => item.name === visionModel);
@@ -441,7 +441,7 @@ async function main() {
     const shot=await inputPage.call('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(output,'packaged-oa-vision.png'),Buffer.from(shot.data,'base64'));
     // A second color prevents a constant answer from satisfying real image validation.
     await inputPage.evaluate("(async()=>{const c=document.createElement('canvas');c.width=320;c.height=240;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,320,240);x.fillStyle='blue';x.fillRect(70,30,180,180);await loadOaImage(c.toDataURL(),false);document.getElementById('oaAsk').click();return true;})()");
-    await until(async()=>!(await inputPage.evaluate('oa.running')),360000);
+    await until(async()=>!(await inputPage.evaluate('oa.running')),420000);
     const blue=await inputPage.evaluate("({answer:document.getElementById('oaAnswer').textContent,status:document.getElementById('oaStatus').textContent})");
     report.visionBlueResult=blue;assert.match(blue.status,/Analysis complete/);assert.match(blue.answer,/blue/i);
     await inputPage.evaluate("window.go1.pauseForPresentation()");

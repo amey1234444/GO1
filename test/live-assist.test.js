@@ -119,3 +119,20 @@ test('empty and truncated completed replies are not reported as success', async 
     await assert.rejects(generateLiveGuidance({profile,question:'Explain caching?',fetchImpl}), message);
   }
 });
+
+test('cold model startup has a separate deadline, then token streaming uses the idle limit',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const stream=timedStream();
+  const result=generateLiveGuidance({profile,question:'Explain caching?',fetchImpl:stream.fetchImpl,timeoutMs:100,startupTimeoutMs:300,maxDurationMs:500});
+  const rejected=assert.rejects(result,/stalled/);
+  await flush();t.mock.timers.tick(200);await flush();assert.equal(stream.canceled(),false);
+  stream.send({message:{content:'First token'}});await flush();
+  t.mock.timers.tick(101);await rejected;assert.equal(stream.canceled(),true);
+});
+test('cold model startup is still bounded and cancellable',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const stream=timedStream();
+  const result=generateLiveGuidance({profile,question:'Explain caching?',fetchImpl:stream.fetchImpl,timeoutMs:100,startupTimeoutMs:300,maxDurationMs:500});
+  const rejected=assert.rejects(result,/stalled/);
+  await flush();t.mock.timers.tick(301);await rejected;assert.equal(stream.canceled(),true);
+});

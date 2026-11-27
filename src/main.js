@@ -797,7 +797,7 @@ ipcMain.handle('go1:image-assist', async (event,payload={}) => {
   const controller=new AbortController();screenshotController=controller;
   const epoch=privacyGate.snapshot().epoch;
   try {
-    const result=await generateLiveGuidance({profile,question:payload.question,context:'This is a user-selected image for permitted coding practice. Read the image, state any unreadable parts, then explain the approach and complexity.',imageBase64:image.toPNG().toString('base64'),signal:controller.signal,timeoutMs:120000,maxDurationMs:300000,
+    const result=await generateLiveGuidance({profile,question:payload.question,context:'This is a user-selected image for permitted coding practice. Read the image, state any unreadable parts, then explain the approach and complexity.',imageBase64:image.toPNG().toString('base64'),signal:controller.signal,timeoutMs:45000,startupTimeoutMs:240000,maxDurationMs:360000,
       onChunk:delta=>{if (!controller.signal.aborted && !privacyGate.paused && ownWindow(event)) event.sender.send('go1:image-assist-chunk',{delta,requestId:payload.requestId});}});
     if (controller.signal.aborted || privacyGate.paused || privacyGate.snapshot().epoch!==epoch) throw new Error('Image analysis cancelled.');
     return result;

@@ -32,7 +32,7 @@ function buildGuidanceMessages(profileInput, questionInput, contextInput = '') {
     }) }
   ];
 }
-async function generateLiveGuidance({ profile, question, context = '', signal, onChunk = () => {}, fetchImpl = fetch, imageBase64, timeoutMs = 45000, maxDurationMs = 180000 }) {
+async function generateLiveGuidance({ profile, question, context = '', signal, onChunk = () => {}, fetchImpl = fetch, imageBase64, timeoutMs = 45000, startupTimeoutMs = timeoutMs, maxDurationMs = 180000 }) {
   const normalized = normalizeProfile(profile);
   const messages = buildGuidanceMessages(normalized, question, context);
 
@@ -43,11 +43,13 @@ async function generateLiveGuidance({ profile, question, context = '', signal, o
   // Slow local models may keep producing useful tokens well beyond 45 seconds.
   // Bound inactivity separately from total runtime; a trickle cannot run forever.
   let idleTimer;
-  const progress = () => {
+  const progress = (waitMs = timeoutMs) => {
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => controller.abort(new Error('Local guidance stalled. Check the local model and try again.')), timeoutMs);
+    idleTimer = setTimeout(() => controller.abort(new Error('Local guidance stalled. Check the local model and try again.')), waitMs);
   };
-  progress();
+  // Loading a cold vision model and encoding the image can precede any tokens.
+  // Once output arrives, use the shorter streaming inactivity deadline.
+  progress(startupTimeoutMs);
   const deadline = setTimeout(() => controller.abort(new Error('Local guidance exceeded its time limit. Try a smaller local model.')), maxDurationMs);
   let response, reader;
   const cancelRead = () => { if (reader) void reader.cancel(controller.signal.reason).catch(() => {}); };
