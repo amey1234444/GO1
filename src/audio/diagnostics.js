@@ -14,7 +14,7 @@ function normalizePcm16(frame) {
 // Arrival-gap metrics observe possible stalls, not proven packet loss.
 class CaptureDiagnostics {
   constructor({ source = 'microphone', clock = () => performance.now() } = {}) {
-    if (!['microphone', 'system'].includes(source)) throw new Error('Invalid audio source.');
+    if (!['microphone', 'system', 'both'].includes(source)) throw new Error('Invalid audio source.');
     this.source = source; this.clock = clock;
     this.frames = 0; this.samples = 0; this.clipped = 0;
     this.lastArrival = null; this.lastFrameMs = 0;

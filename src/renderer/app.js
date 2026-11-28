@@ -56,7 +56,7 @@ function renderCaptureState() {
   if (state.privacyActive) { label = 'Privacy mode · stopped'; kind = 'privacy'; }
   else if (state.starting) { label = 'Requesting audio permission'; kind = 'pending'; }
   else if (state.recording) {
-    label = $('sourceSelect').value === 'system' ? 'Recording system audio' : 'Recording microphone';
+    label = $('sourceSelect').value === 'both' ? 'Recording microphone + system' : $('sourceSelect').value === 'system' ? 'Recording system audio' : 'Recording microphone';
     kind = 'recording';
   }
   indicator.textContent = label;
@@ -79,7 +79,7 @@ function renderAudioHealth(health) {
     frames.textContent = '—'; signal.textContent = '—'; gaps.textContent = '—';
     return;
   }
-  source.textContent = health.source === 'system' ? 'System playback · 16 kHz' : 'Microphone · 16 kHz';
+  source.textContent = health.source === 'both' ? 'Microphone + playback · 16 kHz' : health.source === 'system' ? 'System playback · 16 kHz' : 'Microphone · 16 kHz';
   frames.textContent = `${health.frames} frames · ${(health.audioDurationMs / 1000).toFixed(1)}s`;
   signal.textContent = `RMS ${health.rms} · clipping ${health.clippedPercent}%`;
   gaps.textContent = health.longArrivalGaps ? `${health.longArrivalGaps} possible transport stalls` : 'No long arrival gaps';
@@ -139,7 +139,9 @@ function renderSetup(status) {
   // microphone and imported-file transcription until a supported audio path is built.
   const systemOption = $('sourceSelect').querySelector('option[value="system"]');
   if (systemOption) systemOption.disabled = status.systemAudioSupported === false;
-  if (status.systemAudioSupported === false && $('sourceSelect').value === 'system') $('sourceSelect').value = 'microphone';
+  const bothOption = $('sourceSelect').querySelector('option[value="both"]');
+  if (bothOption) bothOption.disabled = status.systemAudioSupported === false;
+  if (status.systemAudioSupported === false && $('sourceSelect').value !== 'microphone') $('sourceSelect').value = 'microphone';
   $('recordSourceHelp').textContent = status.systemAudioSupported === false
     ? 'Windows: microphone or imported audio only. System playback capture is not yet available. Recording requires consent.'
     : 'Mac system playback requires macOS 14.2+ and recording permission. GO1 does not save display video.';
@@ -184,7 +186,7 @@ function selectFile(file) {
   setStatus('Audio file selected');
 }
 function formatClock(ms) { const total = Math.floor(ms / 1000); return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`; }
-function stopTracks() { state.stream?.getTracks().forEach(track => track.stop()); state.stream = null; }
+function stopTracks() { window.GO1Capture.release(state.stream); state.stream = null; }
 function stopClock() { clearInterval(state.timer); state.timer = null; }
 function setBusy(busy) {
   state.busy = busy;
@@ -331,27 +333,15 @@ async function cleanupLive() {
 }
 
 async function acquireCaptureStream() {
-    const system = $('sourceSelect').value === 'system';
-    let stream;
-    if (system) {
-      await window.go1.prepareSystemAudio();
-      if (state.privacyActive) throw new Error('Recording was cancelled.');
-      stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
-      const audioTrack = stream.getAudioTracks()[0];
-      if (!audioTrack || audioTrack.readyState !== 'live') {
-        stream.getTracks().forEach(t => t.stop());
-        throw new Error('System audio unavailable. Grant System Audio Recording permission in macOS Privacy & Security, then restart GO1.');
-      }
-      // Display video is not used, rendered or saved; disable frames immediately.
-      stream.getVideoTracks().forEach(t => { t.enabled = false; });
-    } else {
-      if (!await window.go1.requestMicrophone()) throw new Error('Microphone access denied. Enable it in System Settings → Privacy & Security → Microphone.');
-      if (state.privacyActive) throw new Error('Recording was cancelled.');
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }, video: false });
-    }
-    if (state.privacyActive) { stream.getTracks().forEach(track => track.stop()); throw new Error('Recording was cancelled.'); }
-    return stream;
+  const epoch = privacyEpoch;
+  return window.GO1Capture.acquire({
+    source: $('sourceSelect').value, deviceId: $('microphoneDevice')?.value || '',
+    requestMicrophone: () => window.go1.requestMicrophone(), prepareSystemAudio: () => window.go1.prepareSystemAudio(),
+    mediaDevices: navigator.mediaDevices, allowed: () => !state.privacyActive && epoch === privacyEpoch,
+    AudioContextImpl: AudioContext, MediaStreamImpl: MediaStream
+  });
 }
+
 function currentInputState() {
   const tracks = state.stream?.getAudioTracks() || [];
   if (!tracks.length || tracks.some(track => track.readyState !== 'live')) return 'disconnected';
@@ -394,11 +384,11 @@ async function reconnectLiveAudio() {
     state.workletSource = source;
     state.stream = replacement;
     watchLiveInput(replacement, id);
-    previous?.getTracks().forEach(track => track.stop());
+    window.GO1Capture.release(previous);
     replacement = null; source = null;
     hideError(); notifyInput(currentInputState()); setStatus('Audio reconnected. Session continues.', 'active');
   } catch (error) {
-    source?.disconnect(); replacement?.getTracks().forEach(track => track.stop());
+    source?.disconnect(); window.GO1Capture.release(replacement);
     if (!state.privacyActive && state.liveId === id) showError(error);
   } finally {
     state.reconnecting = false;
@@ -410,6 +400,7 @@ $('reconnectAudioButton').addEventListener('click', reconnectLiveAudio);
 async function startRecording() {
   if (state.privacyActive || state.starting || state.recording || state.stopping || state.busy) return;
   state.starting = true;
+  window.dispatchEvent(new Event('go1-capture-starting'));
   $('recordButton').disabled = true;
   renderCaptureState();
   hideError();
@@ -420,7 +411,7 @@ async function startRecording() {
     return showError(!setup.ready || !setup.whisperServer ? 'Install the local transcription engine and whisper-server first.' : 'This Electron version does not support MediaRecorder.');
   }
   try {
-    const system = $('sourceSelect').value === 'system';
+    const system = $('sourceSelect').value !== 'microphone';
     const stream = await acquireCaptureStream();
     const audioStream = new MediaStream(stream.getAudioTracks());
     state.stream = stream;
@@ -559,6 +550,7 @@ function getExportContent(format, result) {
 // The app does not continue recording, transcribing, or answering while protected.
 async function enablePresentationPrivacy() {
   if (state.privacyActive || state.privacyTransition) return;
+  window.dispatchEvent(new Event('go1-workspace-mask'));
   state.privacyActive = true; // synchronous guard against late microphone permissions and UI updates
   coachRunning = false;
   void window.go1.cancelLiveGuidance();
@@ -668,15 +660,19 @@ function practiceProfileFromForm() {
     jobDescription: $('studioJobDescription').value,
     language: $('studioLanguage').value,
     mode: $('studioMode').value,
-    model: $('studioModel').value
+    model: $('studioModel').value,
+    answerFormat: $('answerFormat').value, answerLength: $('answerLength').value, answerTone: $('answerTone').value,
+    instructions: $('answerInstructions').value, materialIds: window.GO1Library?.selectedIds() || []
   };
 }
 function populatePracticeProfile(profile) {
   for (const [id, key] of [
     ['studioRole','role'], ['studioRoleDescription','roleDescription'],
     ['studioJobDescription','jobDescription'], ['studioLanguage','language'],
-    ['studioMode','mode'], ['studioModel','model']
+    ['studioMode','mode'], ['studioModel','model'], ['answerFormat','answerFormat'],
+    ['answerLength','answerLength'], ['answerTone','answerTone'], ['answerInstructions','instructions']
   ]) if (typeof profile?.[key] === 'string') $(id).value = profile[key];
+  window.dispatchEvent(new CustomEvent('go1-profile-loaded', { detail: profile }));
 }
 function updateStudioState() {
   const locked = state.privacyActive || state.recording || state.starting || state.stopping || state.busy;
@@ -716,7 +712,7 @@ $('assistGenerate').addEventListener('click', async () => {
   try {
     const answer = await window.go1.generateLiveGuidance({question, context: state.result?.text?.slice(-10000) || ''});
     if (epoch === assistRequestEpoch && privacyAtRequest === privacyEpoch && !state.privacyActive) {
-      $('assistOutput').textContent = answer.guidance;
+      window.GO1RichText.render($('assistOutput'), answer.guidance);
       $('assistStatus').textContent = 'Guidance ready. Verify accuracy before relying on it.';
     }
   } catch (error) {
@@ -793,7 +789,7 @@ $('generateFeedbackButton').addEventListener('click', async () => {
     if (epoch !== privacyEpoch || state.privacyActive) return;
     const result = await window.go1.getPracticeFeedback(state.result.text);
     if (epoch === privacyEpoch && !state.privacyActive) {
-      $('feedbackOutput').textContent = result.feedback;
+      window.GO1RichText.render($('feedbackOutput'), result.feedback);
       $('feedbackStatus').textContent = 'Practice feedback complete. Review critically; AI can make mistakes.';
     }
   } catch (error) { if (epoch === privacyEpoch && !state.privacyActive) $('feedbackStatus').textContent = String(error.message || error); }

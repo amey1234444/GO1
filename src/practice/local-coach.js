@@ -24,7 +24,9 @@ async function generatePracticeFeedback({ profile, transcript, signal, onChunk =
   if (signal?.aborted) cancel();
   else signal?.addEventListener('abort', cancel, { once: true });
   const timeout = setTimeout(() => controller.abort(new Error('Local AI inference timed out.')), timeoutMs);
-  let response;
+  let response, reader;
+  const cancelRead = () => { if (reader) void reader.cancel(controller.signal.reason).catch(() => {}); };
+  controller.signal.addEventListener('abort', cancelRead, { once: true });
   try {
     response = await fetchImpl(ENDPOINT, {
       method: 'POST',
@@ -34,30 +36,35 @@ async function generatePracticeFeedback({ profile, transcript, signal, onChunk =
     });
     if (!response.ok) throw new Error(`Ollama returned HTTP ${response.status}. Check that model '${normalized.model}' is installed.`);
     if (!response.body || typeof response.body.getReader !== 'function') throw new Error('Local AI response is not streamable.');
-    const reader = response.body.getReader();
+    controller.signal.throwIfAborted();
+    reader = response.body.getReader();
     const decoder = new TextDecoder();
     let partial = '', text = '', completed = false, bytes = 0;
-    while (true) {
+    const consume = line => {
+      if (!line.trim()) return;
+      let obj;
+      try { obj = JSON.parse(line); } catch { throw new Error('Malformed response from local model.'); }
+      if (obj.error) throw new Error(String(obj.error));
+      if (typeof obj.message?.content === 'string') {
+        text += obj.message.content;
+        if (text.length > 24000) throw new Error('Practice feedback is too long.');
+        onChunk(obj.message.content);
+      }
+      if (obj.done === true) {
+        if (obj.done_reason === 'length') throw new Error('Practice feedback reached its response limit. Use a shorter transcript.');
+        completed = true;
+      }
+    };
+    while (!completed) {
       const { done, value } = await reader.read();
-      if (done) break;
+      controller.signal.throwIfAborted();
+      if (done) { partial += decoder.decode(); consume(partial); break; }
       bytes += value.byteLength;
       if (bytes > 2_000_000) throw new Error('Local AI response exceeds size limit.');
       partial += decoder.decode(value, { stream: true });
       let split;
       while ((split = partial.indexOf('\n')) >= 0) {
-        const line = partial.slice(0, split).trim();
-        partial = partial.slice(split + 1);
-        if (!line) continue;
-        let obj;
-        try { obj = JSON.parse(line); } catch { throw new Error('Malformed response from local model.'); }
-        if (obj.error) throw new Error(String(obj.error));
-        if (obj.message?.content) {
-          const delta = String(obj.message.content);
-          text += delta;
-          if (text.length > 24000) throw new Error('Practice feedback is too long.');
-          onChunk(delta);
-        }
-        if (obj.done) completed = true;
+        const line = partial.slice(0, split); partial = partial.slice(split + 1); consume(line);
       }
     }
     if (!completed) throw new Error('The local model stopped before completing its response.');
@@ -66,7 +73,9 @@ async function generatePracticeFeedback({ profile, transcript, signal, onChunk =
   } finally {
     clearTimeout(timeout);
     signal?.removeEventListener('abort', cancel);
-    if (controller.signal.aborted) { try { await response?.body?.cancel(); } catch {} }
+    controller.signal.removeEventListener('abort', cancelRead);
+    if (reader) { try { await reader.cancel(); } catch {} reader.releaseLock(); }
+    else { try { await response?.body?.cancel(); } catch {} }
   }
 }
 module.exports = { ENDPOINT, TAG_ENDPOINT, localModelStatus, generatePracticeFeedback };

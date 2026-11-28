@@ -59,3 +59,15 @@ test('Ollama unavailable is reported clearly', async()=>{
   assert.equal(status.online,false);
   assert.match(status.message,/not running/);
 });
+
+test('practice feedback accepts final NDJSON without newline and split UTF-8',async()=>{
+  const encoded=new TextEncoder().encode('{"message":{"content":"नमस्कार"},"done":true}');
+  const result=await generatePracticeFeedback({profile:mock,transcript:'A completed recording for feedback.',fetchImpl:async()=>({ok:true,body:new ReadableStream({start(c){for(const byte of encoded)c.enqueue(Uint8Array.of(byte));c.close();}})})});
+  assert.equal(result,'नमस्कार');
+});
+test('practice feedback cancels a stalled reader and releases its stream',async()=>{
+  const controller=new AbortController();let canceled=false;
+  const operation=generatePracticeFeedback({profile:mock,transcript:'A completed recording for feedback.',signal:controller.signal,fetchImpl:async()=>({ok:true,body:new ReadableStream({cancel(){canceled=true;}})})});
+  await new Promise(resolve=>setImmediate(resolve));controller.abort(new Error('Stopped by user'));
+  await assert.rejects(operation,/Stopped by user/);assert.equal(canceled,true);
+});

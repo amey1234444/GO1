@@ -25,6 +25,10 @@ const { generateLiveGuidance } = require('./practice/live-assist');
 const { freshCompanionState, updateTranscript, updateQuestion, addGuidance, opacityFromInput } = require('./companion/state');
 const { companionBounds, companionPreferences } = require('./companion/layout');
 
+const { WorkspaceStore, retrieveMaterials } = require('./workspace/store');
+let workspaceStore;
+const getWorkspaceStore = () => workspaceStore ||= new WorkspaceStore(app.getPath('userData'));
+
 app.setName('GO1');
 const ownsInstance = app.requestSingleInstanceLock();
 if (!ownsInstance) app.quit();
@@ -451,7 +455,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   if (liveSession || liveStarting || activeController) throw new Error('Finish the current session first.');
   const language = String(options.language || 'auto').toLowerCase();
   const audioSource = options.audioSource || 'microphone';
-  if (!['microphone', 'system'].includes(audioSource)) throw new Error('Invalid audio source.');
+  if (!['microphone', 'system', 'both'].includes(audioSource)) throw new Error('Invalid audio source.');
   const latencyMode = options.latencyMode === 'fast' ? 'fast' : 'balanced';
   if (!/^(auto|[a-z]{2,3})$/.test(language)) throw new Error('Invalid language code.');
   if (!setup().modelFound || !setup().whisperServer) throw new Error('Install whisper-server and the selected multilingual model first.');
@@ -641,6 +645,22 @@ ipcMain.handle('go1:review-open', async (event, result) => {
   return true;
 });
 
+// Workspace data never accepts filesystem paths from the renderer.
+ipcMain.handle('go1:workspace-list', async event => {
+  onlyApp(event); const ticket = privacyGate.ticket();
+  const result = await getWorkspaceStore().snapshot(); privacyGate.validate(ticket); return result;
+});
+ipcMain.handle('go1:workspace-put', async (event, { kind, item } = {}) => {
+  onlyApp(event); const ticket = privacyGate.ticket();
+  if (liveSession || liveStarting || activeController) throw new Error('Finish recording before changing saved materials or records.');
+  return getWorkspaceStore().put(kind, item, () => privacyGate.validate(ticket));
+});
+ipcMain.handle('go1:workspace-delete', async (event, { kind, id } = {}) => {
+  onlyApp(event); const ticket = privacyGate.ticket();
+  if (liveSession || liveStarting || activeController) throw new Error('Finish recording before deleting saved items.');
+  return getWorkspaceStore().remove(kind, id, () => privacyGate.validate(ticket));
+});
+
 // A practice profile is stored only in this user's app data; it is not uploaded.
 ipcMain.handle('go1:practice-profile-get', event => { onlyApp(event); return { ...practiceProfile }; });
 ipcMain.handle('go1:practice-profile-save', async (event, profile) => {
@@ -715,8 +735,12 @@ async function generateSessionGuidance({ question, context } = {}) {
     publishCompanion();
   }
   try {
+    const workspace = await getWorkspaceStore().snapshot();
+    privacyGate.validate(ticket);
+    controller.signal.throwIfAborted();
+    const materials = retrieveMaterials(workspace.materials, practiceProfile.materialIds || [], question);
     const guidance = await generateLiveGuidance({
-      profile: practiceProfile, question, context,
+      profile: practiceProfile, question, context, materials,
       signal: controller.signal,
       onChunk: delta => {
         if (liveId === sessionId && !controller.signal.aborted && !privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {

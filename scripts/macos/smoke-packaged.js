@@ -9,6 +9,7 @@ const os = require('node:os');
 const { createHash } = require('node:crypto');
 const { spawn, execFile } = require('node:child_process');
 const { promisify } = require('node:util');
+const { verifyWorkspace } = require('../workspace-ui-checks');
 const { freePort } = require('../../src/transcription/worker');
 const run = promisify(execFile);
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -176,14 +177,23 @@ async function main() {
   });
   await record('Workspace navigation preserves context and isolates each view', async () => {
     const before = await api("({role:document.getElementById('studioRole').value,source:document.getElementById('sourceSelect').value,model:document.getElementById('modelSelect').value})");
-    for (const view of ['home','settings','audio','guidance','insights','home']) {
+    for (const view of ['home','materials','roles','records','settings','audio','guidance','insights','home']) {
       const visible = await api(`(() => {showWorkspaceView(${JSON.stringify(view)}); return [...document.querySelectorAll('[data-workspace-view]')].filter(x=>!x.hidden).map(x=>x.dataset.workspaceView);})()`);
       assert.ok(visible.length > 0 && visible.every(value => value === view), `Unexpected visible content in ${view}: ${visible}`);
     }
     assert.deepEqual(await api("({role:document.getElementById('studioRole').value,source:document.getElementById('sourceSelect').value,model:document.getElementById('modelSelect').value})"),before);
     const shot = await workspace.call('Page.captureScreenshot',{format:'png'});
     await fs.writeFile(path.join(output,'packaged-workspace-overview.png'),Buffer.from(shot.data,'base64'));
-    return {views:6,contextRetained:true};
+    return {views:9,contextRetained:true};
+  });
+  await record('Saved materials, role profiles, records and privacy work in packaged UI', async () => {
+    const result = await verifyWorkspace(api, until, async name => {
+      const shot = await workspace.call('Page.captureScreenshot', {format:'png'});
+      await fs.writeFile(path.join(output,name+'.png'),Buffer.from(shot.data,'base64'));
+    });
+    // Restore the test model after form-driven setup (fresh UI starts at its default).
+    await api(`window.go1.savePracticeProfile({role:'Software Engineer', language:'en', mode:'technical', model:${JSON.stringify(model)}})`);
+    return result;
   });
   const id = await record('Live session opens a protected companion', async () => {
     const id = await api(`window.go1.startLive({language:'en',audioSource:'microphone',latencyMode:'balanced',assistancePermitted:true})`);
@@ -329,6 +339,8 @@ async function main() {
     const restarted = await launch(path.join(bundle, 'Contents/MacOS/GO1'), [`--remote-debugging-port=${port}`, '--remote-debugging-address=127.0.0.1', `--user-data-dir=${path.join(temp, 'profile')}`], 'go1-restarted');
     const next = await connect(await until(async () => (await targets()).find(t => t.type === 'page' && t.url.endsWith('/index.html')), 60000));
     await until(() => next.evaluate('Boolean(window.go1)'));
+    const library = await next.evaluate('window.go1.workspaceList()');
+    assert.equal(library.records.length,1); assert.equal(library.materials.length,1); assert.equal(library.roles.length,1);
     const idle = await next.evaluate('window.go1.captureProtectionInfo()'); assert.equal(idle.activity.liveSession, false);
     const sessionId = await next.evaluate("window.go1.startLive({language:'en', audioSource:'microphone'})");
     const panel = await connect(await until(async () => (await targets()).find(t => t.url.endsWith('/companion.html'))));

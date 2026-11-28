@@ -1,6 +1,6 @@
 'use strict';
 // Navigation changes presentation only; recording and model state stay owned by app.js.
-const viewLabels = { home:'Overview', audio:'Transcription', guidance:'Live guidance', oa:'Image studio', insights:'Review & insights', settings:'Settings' };
+const viewLabels = { home:'Overview', audio:'Transcription', guidance:'Live guidance', oa:'Image studio', insights:'Review & insights', settings:'Settings', materials:'Resumes & knowledge', roles:'Target roles', records:'Session records' };
 function showWorkspaceView(view) {
   if (!Object.hasOwn(viewLabels, view)) return;
   const mode = view === 'oa' ? 'oa' : 'interview';
@@ -12,6 +12,7 @@ function showWorkspaceView(view) {
     button.classList.toggle('selected', selected);
     if (selected) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
   }
+  window.dispatchEvent(new CustomEvent('go1-workspace-view', { detail: view }));
   $('viewTitle').textContent = viewLabels[view];
   document.querySelector('.main').scrollTop = 0;
 }

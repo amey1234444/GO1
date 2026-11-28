@@ -12,3 +12,20 @@ jobs:
           node-version: '22'
       - run: npm run check
       - run: npm test
+  workspace-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - name: Exercise workspace persistence, navigation and privacy in Electron
+        run: xvfb-run -a node scripts/smoke-workspace.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: GO1-workspace-ui-${{ github.run_id }}
+          path: out/workspace-evidence/
+          retention-days: 14
