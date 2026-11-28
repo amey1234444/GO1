@@ -24,7 +24,10 @@ if (process.platform === 'darwin' && process.env.GO1_BUNDLE_NATIVE === '1') {
       throw new Error('Missing native executable ' + name + '. Run scripts/build-macos-native.sh.');
     }
   }
-  packagerConfig.extraResource = [dir];
+  const models = path.join(__dirname, 'build/models');
+  const { modelState } = require('./src/transcription/models');
+  if (!modelState(models, undefined, null)['base-q5_1'].installed) throw new Error('Bundled speech model missing. Run node scripts/bundle-speech-model.js.');
+  packagerConfig.extraResource = [dir, models];
 }
 if (signing) {
   if (!process.env.APPLE_ID || !process.env.APPLE_APP_SPECIFIC_PASSWORD || !process.env.APPLE_TEAM_ID) {

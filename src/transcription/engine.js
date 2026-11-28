@@ -5,6 +5,7 @@ const fsp = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { modelState } = require('./models');
 const { normalizeWhisperJson } = require('./formats');
 
 const MAX_BYTES = 80 * 1024 * 1024;
@@ -43,7 +44,7 @@ function getSetup({ modelDirectory, selectedModel = 'small' }) {
   const ffmpeg = resolveExecutable('ffmpeg', process.env.GO1_FFMPEG_PATH);
   const ffprobe = resolveExecutable('ffprobe', process.env.GO1_FFPROBE_PATH);
   const whisper = resolveExecutable('whisper-cli', process.env.GO1_WHISPER_PATH);
-  const model = process.env.GO1_WHISPER_MODEL || path.join(modelDirectory, `ggml-${selectedModel}.bin`);
+  const model = process.env.GO1_WHISPER_MODEL || modelState(modelDirectory)[selectedModel]?.path || path.join(modelDirectory, `ggml-${selectedModel}.bin`);
   const modelFound = fs.existsSync(model) && fs.statSync(model).size > 1024 * 1024;
   return { ffmpeg, ffprobe, whisper, model, modelFound, ready: Boolean(ffmpeg && ffprobe && whisper && modelFound) };
 }

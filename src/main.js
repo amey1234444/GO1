@@ -25,6 +25,10 @@ const { generateLiveGuidance } = require('./practice/live-assist');
 const { freshCompanionState, updateTranscript, updateQuestion, addGuidance, opacityFromInput } = require('./companion/state');
 const { companionBounds, companionPreferences } = require('./companion/layout');
 
+const { WorkspaceStore, retrieveMaterials } = require('./workspace/store');
+let workspaceStore;
+const getWorkspaceStore = () => workspaceStore ||= new WorkspaceStore(app.getPath('userData'));
+
 app.setName('GO1');
 const ownsInstance = app.requestSingleInstanceLock();
 if (!ownsInstance) app.quit();
@@ -47,7 +51,7 @@ let liveStarting = null;
 let captureDiagnostics = null;
 let worker = null;
 let manager = null;
-let selectedModel = 'small';
+let selectedModel = process.platform === 'darwin' && app.isPackaged ? 'base-q5_1' : 'small';
 let displayPermissionUntil = 0;
 const privacyGate = new PrivacyGate();
 const contentProtection = new ContentProtection({ platform: process.platform });
@@ -319,6 +323,10 @@ if (ownsInstance) app.whenReady().then(async () => {
     const file = await fs.readFile(profilePath(), 'utf8');
     if (file.length <= 16000) practiceProfile = normalizeProfile(JSON.parse(file));
   } catch { /* A missing or invalid local profile uses safe defaults. */ }
+  // Restore optional models when present; fall back to the bundled engine if
+  // an older install selected a model that is no longer on disk.
+  const availableModels = modelState(modelDirectory());
+  if (!availableModels[selectedModel]?.installed && availableModels['base-q5_1']?.installed) selectedModel = 'base-q5_1';
   manager = new ModelManager({ directory: modelDirectory(), onProgress: data => {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('go1:model-progress', data);
   } });
@@ -447,7 +455,7 @@ ipcMain.handle('go1:live-start', async (event, options = {}) => {
   if (liveSession || liveStarting || activeController) throw new Error('Finish the current session first.');
   const language = String(options.language || 'auto').toLowerCase();
   const audioSource = options.audioSource || 'microphone';
-  if (!['microphone', 'system'].includes(audioSource)) throw new Error('Invalid audio source.');
+  if (!['microphone', 'system', 'both'].includes(audioSource)) throw new Error('Invalid audio source.');
   const latencyMode = options.latencyMode === 'fast' ? 'fast' : 'balanced';
   if (!/^(auto|[a-z]{2,3})$/.test(language)) throw new Error('Invalid language code.');
   if (!setup().modelFound || !setup().whisperServer) throw new Error('Install whisper-server and the selected multilingual model first.');
@@ -637,6 +645,22 @@ ipcMain.handle('go1:review-open', async (event, result) => {
   return true;
 });
 
+// Workspace data never accepts filesystem paths from the renderer.
+ipcMain.handle('go1:workspace-list', async event => {
+  onlyApp(event); const ticket = privacyGate.ticket();
+  const result = await getWorkspaceStore().snapshot(); privacyGate.validate(ticket); return result;
+});
+ipcMain.handle('go1:workspace-put', async (event, { kind, item } = {}) => {
+  onlyApp(event); const ticket = privacyGate.ticket();
+  if (liveSession || liveStarting || activeController) throw new Error('Finish recording before changing saved materials or records.');
+  return getWorkspaceStore().put(kind, item, () => privacyGate.validate(ticket));
+});
+ipcMain.handle('go1:workspace-delete', async (event, { kind, id } = {}) => {
+  onlyApp(event); const ticket = privacyGate.ticket();
+  if (liveSession || liveStarting || activeController) throw new Error('Finish recording before deleting saved items.');
+  return getWorkspaceStore().remove(kind, id, () => privacyGate.validate(ticket));
+});
+
 // A practice profile is stored only in this user's app data; it is not uploaded.
 ipcMain.handle('go1:practice-profile-get', event => { onlyApp(event); return { ...practiceProfile }; });
 ipcMain.handle('go1:practice-profile-save', async (event, profile) => {
@@ -711,8 +735,12 @@ async function generateSessionGuidance({ question, context } = {}) {
     publishCompanion();
   }
   try {
+    const workspace = await getWorkspaceStore().snapshot();
+    privacyGate.validate(ticket);
+    controller.signal.throwIfAborted();
+    const materials = retrieveMaterials(workspace.materials, practiceProfile.materialIds || [], question);
     const guidance = await generateLiveGuidance({
-      profile: practiceProfile, question, context,
+      profile: practiceProfile, question, context, materials,
       signal: controller.signal,
       onChunk: delta => {
         if (liveId === sessionId && !controller.signal.aborted && !privacyGate.paused && privacyGate.snapshot().epoch === ticket && mainWindow && !mainWindow.isDestroyed()) {
@@ -793,7 +821,7 @@ ipcMain.handle('go1:image-assist', async (event,payload={}) => {
   const controller=new AbortController();screenshotController=controller;
   const epoch=privacyGate.snapshot().epoch;
   try {
-    const result=await generateLiveGuidance({profile,question:payload.question,context:'This is a user-selected image for permitted coding practice. Read the image, state any unreadable parts, then explain the approach and complexity.',imageBase64:image.toPNG().toString('base64'),signal:controller.signal,timeoutMs:120000,maxDurationMs:300000,
+    const result=await generateLiveGuidance({profile,question:payload.question,context:'This is a user-selected image for permitted coding practice. Read the image, state any unreadable parts, then explain the approach and complexity.',imageBase64:image.toPNG().toString('base64'),signal:controller.signal,timeoutMs:45000,startupTimeoutMs:240000,maxDurationMs:360000,
       onChunk:delta=>{if (!controller.signal.aborted && !privacyGate.paused && ownWindow(event)) event.sender.send('go1:image-assist-chunk',{delta,requestId:payload.requestId});}});
     if (controller.signal.aborted || privacyGate.paused || privacyGate.snapshot().epoch!==epoch) throw new Error('Image analysis cancelled.');
     return result;

@@ -42,7 +42,7 @@ Source: `{integrity['sourceCommit']}`.
 
 Signature integrity, mounted-image validation and {len(smoke['steps'])} packaged-app checks passed, including real local speech/AI inference from a copied app. A synthetic quarantine policy assessment is recorded separately in download-policy.json. Actual browser download/Finder first launch, hardware microphone input and remote meeting receivers were not tested.
 
-Open the DMG, drag GO1.app to Applications, eject the disk and open Applications → GO1. Speech model weights download separately. Optional AI uses a separately installed Ollama.
+Open the DMG, drag GO1.app to Applications, eject the disk and open Applications → GO1. Base Compact multilingual speech weights and native audio tools are included; transcription works offline on first launch. Optional AI uses a separately installed Ollama.
 """
 if not notarized:
     notes += '\n**This preview does not pass normal Developer ID notarization requirements.** It may be blocked by Gatekeeper after a browser download. It is not a warning-free release. See docs/INSTALL_MAC.md for signing setup and diagnosis; do not disable Gatekeeper.\n'

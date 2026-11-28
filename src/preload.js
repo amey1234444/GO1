@@ -2,6 +2,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('go1', Object.freeze({
+  workspaceList: () => ipcRenderer.invoke('go1:workspace-list'),
+  workspacePut: (kind, item) => ipcRenderer.invoke('go1:workspace-put', { kind, item }),
+  workspaceDelete: (kind, id) => ipcRenderer.invoke('go1:workspace-delete', { kind, id }),
   visibilityInfo: () => ipcRenderer.invoke('go1:visibility-info'),
   toggleVisibility: () => ipcRenderer.invoke('go1:visibility-toggle'),
   captureDisplays: () => ipcRenderer.invoke('go1:capture-displays'),

@@ -32,7 +32,14 @@ function normalizeProfile(value) {
   if (!MODES.includes(mode)) throw new Error('Unsupported practice mode.');
   const model = checkText(value.model || 'qwen3:4b', 'Local model name', 100);
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._:/-]*$/.test(model)) throw new Error('Invalid local model name.');
-  return { role, roleDescription, jobDescription, language, mode, model };
+  const answerFormat = value.answerFormat || 'bullets';
+  const answerLength = value.answerLength || 'balanced';
+  const answerTone = value.answerTone || 'conversational';
+  if (!['bullets','structured','concise'].includes(answerFormat) || !['brief','balanced','detailed'].includes(answerLength) || !['conversational','formal','technical'].includes(answerTone)) throw new Error('Invalid answer preferences.');
+  const instructions = checkText(value.instructions || '', 'Answer instructions', 1500);
+  const materialIds = value.materialIds || [];
+  if (!Array.isArray(materialIds) || materialIds.length > 8 || materialIds.some(id => typeof id !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(id))) throw new Error('Select at most 8 valid materials.');
+  return { role, roleDescription, jobDescription, language, mode, model, answerFormat, answerLength, answerTone, instructions, materialIds: [...new Set(materialIds)] };
 }
 function validateTranscript(value) {
   if (typeof value !== 'string' || value.trim().length < 5 || value.length > 60000) {

@@ -34,3 +34,26 @@ test('model installer rejects invalid model contents and removes temporary data'
     assert.deepEqual(await fs.readdir(directory), []);
   } finally { await fs.rm(directory, { recursive: true, force: true }); }
 });
+test('bundled model is ready offline, with no per-user duplicate or network request', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'go1-bundle-'));
+  const directory = path.join(root, 'user'), bundledDirectory = path.join(root, 'bundle');
+  try {
+    await fs.mkdir(bundledDirectory);
+    await fs.writeFile(path.join(bundledDirectory, catalog.test.file), Buffer.concat([Buffer.from('lmgg'), Buffer.alloc(12)]));
+    const state = modelState(directory, catalog, bundledDirectory).test;
+    assert.equal(state.installed, true); assert.equal(state.source, 'bundled');
+    const manager = new ModelManager({ directory, catalog, bundledDirectory, fetchFn: () => { throw new Error('Must not download'); } });
+    assert.equal((await manager.install('test')).cached, true);
+    assert.deepEqual(await fs.readdir(directory), []);
+    await fs.writeFile(path.join(directory, catalog.test.file), Buffer.alloc(16));
+    assert.equal(modelState(directory, catalog, bundledDirectory).test.source, 'bundled');
+  } finally { await fs.rm(root, { recursive: true, force: true }); }
+});
+test('checksum mismatch rejects a valid-looking but tampered speech model', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'go1-hash-'));
+  try {
+    const manager = new ModelManager({ directory, catalog: { test: { ...catalog.test, sha256: '0'.repeat(64) } }, fetchFn: async () => ({ ok:true, headers:{ get:()=> '16' }, body:(async function*(){ yield Buffer.concat([Buffer.from('lmgg'),Buffer.alloc(12)]); })() }) });
+    await assert.rejects(manager.install('test'), /checksum/);
+    assert.deepEqual(await fs.readdir(directory), []);
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});

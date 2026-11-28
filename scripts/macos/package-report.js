@@ -25,6 +25,8 @@ function sizeTree(dir) {
 const sha256 = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const imageInfo = execFileSync('hdiutil', ['imageinfo', '-plist', dmg]);
 const imageFormat = execFileSync('plutil', ['-extract', 'Format', 'raw', '-o', '-', '-'], { input: imageInfo, encoding: 'utf8' }).trim();
+const modelManifest = JSON.parse(fs.readFileSync(path.join(bundle, 'Contents/Resources/models/manifest.json'), 'utf8'));
+if (sha256(path.join(bundle, 'Contents/Resources/models', modelManifest.file)) !== modelManifest.sha256) throw new Error('Packaged speech model checksum mismatch.');
 const report = {
   sourceCommit: process.env.GITHUB_SHA || null,
   version: require('../../package.json').version,
@@ -32,7 +34,9 @@ const report = {
   architecture: 'arm64', signing: JSON.parse(fs.readFileSync(assessmentFile, 'utf8')),
   dmg: { filename: path.basename(dmg), bytes: fs.statSync(dmg).size, sha256: sha256(dmg), format: imageFormat },
   app: { bytes: sizeTree(bundle), asarBytes: fs.statSync(archive).size, asarEntries: entries.length,
-    nativeBytes: sizeTree(path.join(bundle, 'Contents/Resources/native')), runtimeOnly: true },
+    nativeBytes: sizeTree(path.join(bundle, 'Contents/Resources/native')),
+    modelBytes: sizeTree(path.join(bundle, 'Contents/Resources/models')), runtimeOnly: true },
+  bundledSpeech: modelManifest,
   browserDownloadTested: false, remoteMeetingReceiverTested: false
 };
 fs.mkdirSync('out/release-evidence', { recursive: true });

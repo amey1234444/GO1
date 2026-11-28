@@ -41,7 +41,7 @@ window.go1Companion.onSnapshot(snapshot => {
   el('transcript').classList.toggle('empty', !snapshot.transcript);
   el('question').hidden = !snapshot.question;
   el('question').textContent = snapshot.question || '';
-  el('guidance').textContent = snapshot.guidance || 'A little clarity, right when you need it.\nAsk about your conversation below.';
+  window.GO1RichText.render(el('guidance'), snapshot.guidance || 'A little clarity, right when you need it.\nAsk about your conversation below.');
   el('guidance').classList.toggle('empty', !snapshot.guidance);
   el('guidanceStatus').textContent = snapshot.status || 'Ask a question when you need a hand.';
   updateAsk();

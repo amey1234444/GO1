@@ -14,3 +14,4 @@ build/native/
 
 __pycache__/
 *.pyc
+build/models/

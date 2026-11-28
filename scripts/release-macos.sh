@@ -14,6 +14,7 @@ npm install --no-audit --no-fund
 npm run check
 npm test
 bash scripts/build-macos-native.sh
+node scripts/bundle-speech-model.js
 npm run make:mac
 python3 scripts/macos/optimize-dmg.py
 bash scripts/verify-dmg.sh

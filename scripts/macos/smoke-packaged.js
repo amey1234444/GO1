@@ -9,6 +9,7 @@ const os = require('node:os');
 const { createHash } = require('node:crypto');
 const { spawn, execFile } = require('node:child_process');
 const { promisify } = require('node:util');
+const { verifyWorkspace } = require('../workspace-ui-checks');
 const { freePort } = require('../../src/transcription/worker');
 const run = promisify(execFile);
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -19,7 +20,7 @@ const report = {
   schema: 1, startedAt: new Date().toISOString(), sourceCommit: process.env.GITHUB_SHA || null,
   status: 'running', hardwareAudioTested: false, meetingReceiverVerified: false,
   scope: 'Packaged app, real preload IPC, bundled Whisper/FFmpeg, generated PCM speech, synthetic MediaStream lifecycle and real local Ollama inference.',
-  steps: [], speechModel: 'base', aiModel: model, spokenText
+  steps: [], speechModel: 'base-q5_1', aiModel: model, spokenText
 };
 const connections = [], children = [];
 let temp, mount, mounted = false;
@@ -163,13 +164,36 @@ async function main() {
     }
     return setup;
   });
-  await record('First-run speech model installation and selection', async () => {
-    const installed = await workspace.evaluate("window.go1.installModel('base')", 600000);
-    assert.equal(installed.installed, true);
-    const setup = await api("window.go1.selectModel('base')"); assert.equal(setup.ready, true);
+  await record('First-run bundled speech model is ready without a download', async () => {
+    const setup = await api('window.go1.checkSetup()');
+    assert.equal(setup.selectedModel, 'base-q5_1');
+    assert.equal(setup.ready, true);
+    assert.equal(setup.models['base-q5_1'].source, 'bundled');
+    assert.equal(await fs.realpath(setup.model), path.join(await fs.realpath(path.join(bundle, 'Contents/Resources/models')), 'ggml-base-q5_1.bin'));
+    const installed = { bundled: true, downloaded: false };
     await api(`window.go1.savePracticeProfile({role:'Software Engineer', language:'en', mode:'technical', model:${JSON.stringify(model)}})`);
     const status = await api('window.go1.localCoachStatus()'); assert.ok(status.online && status.models.includes(model));
     return { installed, setup, status };
+  });
+  await record('Workspace navigation preserves context and isolates each view', async () => {
+    const before = await api("({role:document.getElementById('studioRole').value,source:document.getElementById('sourceSelect').value,model:document.getElementById('modelSelect').value})");
+    for (const view of ['home','materials','roles','records','settings','audio','guidance','insights','home']) {
+      const visible = await api(`(() => {showWorkspaceView(${JSON.stringify(view)}); return [...document.querySelectorAll('[data-workspace-view]')].filter(x=>!x.hidden).map(x=>x.dataset.workspaceView);})()`);
+      assert.ok(visible.length > 0 && visible.every(value => value === view), `Unexpected visible content in ${view}: ${visible}`);
+    }
+    assert.deepEqual(await api("({role:document.getElementById('studioRole').value,source:document.getElementById('sourceSelect').value,model:document.getElementById('modelSelect').value})"),before);
+    const shot = await workspace.call('Page.captureScreenshot',{format:'png'});
+    await fs.writeFile(path.join(output,'packaged-workspace-overview.png'),Buffer.from(shot.data,'base64'));
+    return {views:9,contextRetained:true};
+  });
+  await record('Saved materials, role profiles, records and privacy work in packaged UI', async () => {
+    const result = await verifyWorkspace(api, until, async name => {
+      const shot = await workspace.call('Page.captureScreenshot', {format:'png'});
+      await fs.writeFile(path.join(output,name+'.png'),Buffer.from(shot.data,'base64'));
+    });
+    // Restore the test model after form-driven setup (fresh UI starts at its default).
+    await api(`window.go1.savePracticeProfile({role:'Software Engineer', language:'en', mode:'technical', model:${JSON.stringify(model)}})`);
+    return result;
   });
   const id = await record('Live session opens a protected companion', async () => {
     const id = await api(`window.go1.startLive({language:'en',audioSource:'microphone',latencyMode:'balanced',assistancePermitted:true})`);
@@ -315,6 +339,8 @@ async function main() {
     const restarted = await launch(path.join(bundle, 'Contents/MacOS/GO1'), [`--remote-debugging-port=${port}`, '--remote-debugging-address=127.0.0.1', `--user-data-dir=${path.join(temp, 'profile')}`], 'go1-restarted');
     const next = await connect(await until(async () => (await targets()).find(t => t.type === 'page' && t.url.endsWith('/index.html')), 60000));
     await until(() => next.evaluate('Boolean(window.go1)'));
+    const library = await next.evaluate('window.go1.workspaceList()');
+    assert.equal(library.records.length,1); assert.equal(library.materials.length,1); assert.equal(library.roles.length,1);
     const idle = await next.evaluate('window.go1.captureProtectionInfo()'); assert.equal(idle.activity.liveSession, false);
     const sessionId = await next.evaluate("window.go1.startLive({language:'en', audioSource:'microphone'})");
     const panel = await connect(await until(async () => (await targets()).find(t => t.url.endsWith('/companion.html'))));
@@ -385,13 +411,13 @@ async function main() {
     return { recoveredTranscript:result.text, sessionRetainedUntilExplicitStop:true };
   });
   await record('OA same-window capture, green crop cursor and retained draft', async () => {
-    await inputPage.evaluate("selectWorkspaceMode('oa')");
+    await inputPage.evaluate("document.querySelector('[data-view=oa]').click()");
     const displays=await inputPage.evaluate('window.go1.captureDisplays()');assert.ok(displays.length>0);
     const captured=await inputPage.evaluate("window.go1.captureDisplay("+JSON.stringify(displays[0].id)+").then(x=>({width:x.width,height:x.height,valid:x.dataUrl.startsWith('data:image/png;')}))");
     assert.ok(captured.valid && captured.width>0 && captured.height>0);
     const count=(await targets()).filter(x=>x.type==='page').length;
     // A deterministic image makes crop-coordinate assertions independent of desktop contents.
-    await inputPage.evaluate("(async()=>{const c=document.createElement('canvas');c.width=400;c.height=300;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,400,300);x.fillStyle='red';x.fillRect(30,30,340,240);await loadOaImage(c.toDataURL());document.getElementById('oaCanvas').scrollIntoView({block:'center'});return true;})()");
+    await inputPage.evaluate("(async()=>{const c=document.createElement('canvas');c.width=400;c.height=300;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,400,300);x.fillStyle='red';x.fillRect(110,60,180,180);await loadOaImage(c.toDataURL());document.getElementById('oaCanvas').scrollIntoView({block:'center'});return true;})()");
     const rect=await inputPage.evaluate("(()=>{const c=document.getElementById('oaCanvas'),r=c.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,cursor:getComputedStyle(c).cursor};})()");
     assert.match(rect.cursor,/crop-cursor/);
     await inputPage.call('Input.dispatchMouseEvent',{type:'mousePressed',x:rect.x+rect.w*.1,y:rect.y+rect.h*.1,button:'left',clickCount:1});
@@ -402,6 +428,8 @@ async function main() {
     assert.equal(selected.cursor,'default');
     await inputPage.evaluate("document.getElementById('oaApplyCrop').click()");
     await until(async()=> (await inputPage.evaluate('oa.image.width'))<400);
+    const pixels=await inputPage.evaluate("(()=>{const c=document.getElementById('oaCanvas'),x=c.getContext('2d');return {corner:Array.from(x.getImageData(0,0,1,1).data),center:Array.from(x.getImageData(c.width/2,c.height/2,1,1).data)};})()");
+    assert.deepEqual(pixels.corner,[255,255,255,255]);assert.deepEqual(pixels.center,[255,0,0,255]);
     const draft=await inputPage.evaluate("({image:oaPng(),question:document.getElementById('oaQuestion').value})");
     await inputPage.evaluate('window.go1.toggleVisibility()');
     assert.ok((await inputPage.evaluate('window.go1.visibilityInfo()')).windows.every(window=>!window.visible));
@@ -412,16 +440,25 @@ async function main() {
     return {captured,selected,noAdditionalWindow:true,draftRetained:true};
   });
   await record('Real local vision model receives the reviewed crop', async () => {
-    const visionModel='moondream:latest';
+    // Moondream on Ollama 0.40.16 stops at EOS even outside GO1.
+    // Keep a real image/semantic assertion using LLaVA; never accept empty output.
+    const visionModel='llava:7b';
     await run('ollama',['pull',visionModel],{timeout:900000,maxBuffer:32*1024*1024,env:{...process.env,OLLAMA_HOST:'127.0.0.1:11434'}});
-    await inputPage.evaluate("document.getElementById('oaModel').value='moondream:latest';document.getElementById('oaQuestion').value='What color is the large square in this image? Keep the answer short.';document.getElementById('oaConsent').checked=true;updateOaControls();document.getElementById('oaAsk').click();true");
-    await until(async()=>!(await inputPage.evaluate('oa.running')),360000);
+    await inputPage.evaluate("document.getElementById('oaModel').value='llava:7b';document.getElementById('oaQuestion').value='What color is the large square in this image? Keep the answer short.';document.getElementById('oaConsent').checked=true;updateOaControls();document.getElementById('oaAsk').click();true");
+    await until(async()=>!(await inputPage.evaluate('oa.running')),420000);
     const result=await inputPage.evaluate("({answer:document.getElementById('oaAnswer').textContent,status:document.getElementById('oaStatus').textContent})");
+    report.visionResult = result;
+    report.visionModel = (await json('http://127.0.0.1:11434/api/tags')).models.find(item => item.name === visionModel);
     assert.match(result.status,/Analysis complete/);assert.match(result.answer,/red/i);
     const shot=await inputPage.call('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(output,'packaged-oa-vision.png'),Buffer.from(shot.data,'base64'));
+    // A second color prevents a constant answer from satisfying real image validation.
+    await inputPage.evaluate("(async()=>{const c=document.createElement('canvas');c.width=320;c.height=240;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,320,240);x.fillStyle='blue';x.fillRect(70,30,180,180);await loadOaImage(c.toDataURL(),false);document.getElementById('oaAsk').click();return true;})()");
+    await until(async()=>!(await inputPage.evaluate('oa.running')),420000);
+    const blue=await inputPage.evaluate("({answer:document.getElementById('oaAnswer').textContent,status:document.getElementById('oaStatus').textContent})");
+    report.visionBlueResult=blue;assert.match(blue.status,/Analysis complete/);assert.match(blue.answer,/blue/i);
     await inputPage.evaluate("window.go1.pauseForPresentation()");
     await until(async()=>await inputPage.evaluate("oa.image===null && document.getElementById('oaAnswer').textContent===''"));
-    return {model:visionModel,...result,privacyClearedImage:true,scope:'Simple color fixture; not a coding/OCR accuracy benchmark'};
+    return {model:visionModel,...result,blue,privacyClearedImage:true,scope:'Two color fixtures; not a coding/OCR accuracy benchmark'};
   });
   report.status = 'passed';
 }
